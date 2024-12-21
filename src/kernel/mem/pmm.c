@@ -7,7 +7,8 @@
 #include <kernel/terminal/terminal.h>
 #include <kernel/utils/alias.h>
 
-#define BLOCK_SIZE 4096        // 4 KB pages
+#define BLOCK_SIZE 4096			// 4 KB pages
+#define BLOCK_SIZE_KB 4			// 4 KB pages
 
 #define MEMORY_AVAILABLE 1
 #define MEMORY_RESERVED 0
@@ -20,9 +21,8 @@ struct mmap_entry_t {
 	uint32_t type;
 } __attribute__((packed));
 
-// adr.............. (addr + length)
-
-// 
+extern uint32_t kernel_start;
+extern uint32_t kernel_size;
 
 
 uint64_t mem_ammount_kb;
@@ -57,13 +57,13 @@ void pmm_init(struct multiboot_info_t* mb_info)
 	detect_memory(mb_info);
 	process_memory_map(mb_info);
 
-	total_blocks = mem_ammount_kb / BLOCK_SIZE;
+	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
 	bitmap_size = total_blocks / (8);
-	mem_bitmap = (uint8_t*)0x100000; // start in 1 MB
+	mem_bitmap = (uint8_t*)(&kernel_start + kernel_size + 1); // start after the kernel
 
 	memset(mem_bitmap, 0, bitmap_size); // init the bitmap
 
-	mem_start = (uint8_t*)0x100000 + bitmap_size;
+	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
 	
 	while((((uintptr_t)mem_start) % 4096) != 0)
 	{
@@ -85,10 +85,10 @@ void *pmm_alloc_block()
 		for (uint32_t j = 0; j < 8; j++)
 		{
 			// the block are free
-			if (get_bit(mem_bitmap + i, j) == 0)
+			if (ptr_get_bit(mem_bitmap + i, j) == 0)
 			{
 				// now in use
-				set_bit(mem_bitmap + i, j);
+				ptr_set_bit(mem_bitmap + i, j);
 
 				return (void*)  (mem_start + (i+j) * BLOCK_SIZE);
 			}
@@ -113,7 +113,7 @@ void pmm_free_block(void *ptr)
 	uint32_t byte_index = block_number / 8;
 	uint32_t bit_index  = block_number % 8;
 
-	unset_bit(&mem_bitmap[byte_index], bit_index);
+	ptr_unset_bit(&mem_bitmap[byte_index], bit_index);
 }
 
 void process_memory_map(const struct multiboot_info_t *mb_info)
@@ -140,7 +140,7 @@ void process_memory_map(const struct multiboot_info_t *mb_info)
 				for (unsigned j = 0; j < 8; j++)
 				{
 					// set bit used
-					set_bit(mem_bitmap, j + i);
+					ptr_set_bit(mem_bitmap + i, j);
 				}
 			}
 
