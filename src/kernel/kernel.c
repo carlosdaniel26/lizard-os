@@ -45,7 +45,9 @@ int kernel_main(struct multiboot_info_t* mb_info)
 	printf("address: %u\n", &mb_info->mmap_addr);
 	printf("kernel_start: %u\n", kernel_start);
 
-	//init_paging(mb_info);
+	init_paging();
+
+	printf("initialization finished\n");
 
 	//shit_shell_init();
 	asm volatile("sti");
