@@ -84,9 +84,9 @@ debug:
 
 # Target to use QEMU
 run-debug:
-	qemu-system-i386 -s -S -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt
+	qemu-system-i386 -s -S -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt -m 4G
 run:
-	qemu-system-i386 -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt
+	qemu-system-i386 -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt -m 4G
 
 gdb:
 	gdb -tui -ex "target remote :1234" -x script.gdb
