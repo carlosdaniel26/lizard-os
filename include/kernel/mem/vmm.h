@@ -42,5 +42,4 @@ typedef struct PageTable {
 	
 } PageTable;
 
-void fill_table(struct multiboot_info_t* mb_info);
-void init_paging(struct multiboot_info_t* mb_info);
+void init_paging();

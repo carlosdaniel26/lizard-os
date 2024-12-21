@@ -11,6 +11,7 @@
 #include <kernel/mem/vmm.h>
 
 #define TABLE_SIZE 1024
+#define PAGE_SIZE  4096
 
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
@@ -40,8 +41,6 @@ void configure_paging_directories()
     // give chunks for the pages
     p4_table = pmm_alloc_block();
     p3_table = pmm_alloc_block();
-    memset(p4_table, 0, TABLE_SIZE * sizeof(uint32_t));
-    memset(p3_table, 0, TABLE_SIZE * sizeof(uint32_t));
 
     printf("P4 Table Address: %u, Alignment: %u\n", (uint32_t)p4_table, (uint32_t)p4_table % 4096);
     printf("P3 Table Address: %u, Alignment: %u\n", (uint32_t)p3_table, (uint32_t)p3_table % 4096);
@@ -56,26 +55,21 @@ void configure_paging_directories()
 
 }
 
-void fill_table(struct multiboot_info_t* mb_info)
+typedef uint32_t v_addr;
+void idpaging(uint32_t *first_pte, v_addr from, unsigned size)
 {
-    uint32_t counter = 768;
-    uint32_t base_address = mb_info->mmap_addr;
 
-    while (base_address < kernel_size) 
-	{
-        uint32_t entry = base_address | 0b11;  // write and present bits set
-    	p3_table[counter] = entry;             // fill table_768[counter] with config
-
-        // update counter
-        base_address += 4096;   // go to next physical chunk
-		counter++;              // go to next entry
+    for(; size > 0; from += PAGE_SIZE, size -= PAGE_SIZE, first_pte++)
+    {
+        *first_pte = from | 1; // page present
     }
 }
 
-void init_paging(struct multiboot_info_t* mb_info)
-{
+void init_paging()
+{   
+    printf("initing paging...\n");
 	configure_paging_directories();
-	fill_table(mb_info);
+	idpaging(p3_table, (uint32_t)&kernel_start, (&kernel_end) - (&kernel_start));
 	set_cr3();
     set_cr0();
     //void (*higher_half_entry)() = (void (*)())0xC0000000;
