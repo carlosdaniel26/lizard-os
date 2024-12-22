@@ -53,7 +53,7 @@ void configure_paging_directories()
 }
 
 typedef uint32_t v_addr;
-void idpaging(uint32_t *first_pte, v_addr from, unsigned size)
+void idpaging(uint32_t *first_pte, v_addr from, int size)
 {
 
     for(; size > 0; from += PAGE_SIZE, size -= PAGE_SIZE, first_pte++)
@@ -66,7 +66,9 @@ void init_paging()
 {   
     printf("initing paging...\n");
 	configure_paging_directories();
+    printf("initing paging2...\n");
 	idpaging(p3_table, (uint32_t)&kernel_start, (&kernel_end) - (&kernel_start));
+    printf("initing paging3...\n");
 	set_cr3();
     set_cr0();
     //void (*higher_half_entry)() = (void (*)())0xC0000000;
