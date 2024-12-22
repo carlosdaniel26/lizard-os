@@ -123,16 +123,8 @@ void process_memory_map(const struct multiboot_info_t *mb_info)
 
 	while((uintptr_t)ptr_mmap < mmap_end)
 	{
-		if (ptr_mmap->type == MEMORY_AVAILABLE)
+		if (ptr_mmap->type != MEMORY_AVAILABLE)
 		{
-			printf("Available mem: begin = %u ", ptr_mmap->addr);
-			printf("size = %u\n", ptr_mmap->len);
-		}
-		else
-		{
-			printf("Reserved mem: begin = %u ", ptr_mmap->addr);
-			printf("size = %u\n", ptr_mmap->len);
-
 			unsigned bitmap_byte_index = ptr_mmap->addr / 8;
 
 			for (unsigned i = bitmap_byte_index; i < ptr_mmap->len; i++)
