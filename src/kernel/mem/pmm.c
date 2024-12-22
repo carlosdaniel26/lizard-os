@@ -42,8 +42,6 @@ void detect_memory(struct multiboot_info_t* mb_info)
 void print_ammount_mem_mb()
 {
 	printf("mem ammount kb: %u\n", mem_ammount_kb);
-	printf("blocks: %u\n", total_blocks);
-	printf("bitmap_size: %u\n", bitmap_size);
 	printf("mem_start: %u\n\n", mem_start);
 }
 
