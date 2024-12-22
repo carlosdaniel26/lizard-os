@@ -1,3 +1,6 @@
+#ifndef VMM_H
+#define VMM_H
+
 #include <stdint.h>
 
 #include <multiboot2.h>
@@ -43,3 +46,5 @@ typedef struct PageTable {
 } PageTable;
 
 void init_paging();
+
+#endif

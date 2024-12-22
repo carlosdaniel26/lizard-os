@@ -1,3 +1,6 @@
+#ifndef CPUID_H
+#define CPUID_H
+
 // Vendor strings from CPUs.
 #define CPUID_VENDOR_AMD           "AuthenticAMD"
 #define CPUID_VENDOR_AMD_OLD       "AMDisbetter!" // Early engineering samples of AMD K5 processor
@@ -101,3 +104,5 @@ void get_cpuid(uint32_t code, uint32_t* output);
 void cpuid_get_brand();
 int cpuid_get_feature(uint64_t feature_id);
 void cpuid_print();
+
+#endif

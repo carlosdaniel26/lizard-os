@@ -1,5 +1,6 @@
 #ifdef TARGET_I686
-
+#ifndef IDT_H
+#define IDT_H
 #include <stdint.h>
 
 typedef struct idt_entry_struct {
@@ -18,4 +19,5 @@ typedef struct idt_ptr_struct {
 void init_idt(void);
 void set_idt_descriptor(uint8_t vector, void (*isr)(), uint8_t flags);
 
+#endif
 #endif

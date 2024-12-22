@@ -1,4 +1,6 @@
 #ifdef TARGET_I686
+#ifndef GDT_H
+#define GDT_H
 
 #include <stdint.h>
 
@@ -41,4 +43,5 @@ void init_gdt();
 void set_gdt_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
 void load_gdt();
 
+#endif
 #endif

@@ -1,5 +1,5 @@
-#ifndef INX_H
-#define INX_H
+#ifndef IO_H
+#define IO_H
 
 #include <stdint.h>
 
