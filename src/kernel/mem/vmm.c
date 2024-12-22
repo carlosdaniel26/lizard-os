@@ -41,9 +41,6 @@ void configure_paging_directories()
     // give chunks for the pages
     p4_table = pmm_alloc_block();
     p3_table = pmm_alloc_block();
-
-    printf("P4 Table Address: %u, Alignment: %u\n", (uint32_t)p4_table, (uint32_t)p4_table % 4096);
-    printf("P3 Table Address: %u, Alignment: %u\n", (uint32_t)p3_table, (uint32_t)p3_table % 4096);
     
     uint32_t page_directory;
     
