@@ -14,12 +14,15 @@ uint8_t terminal_background_color;
 uint8_t terminal_color_scheme;
 uint16_t* terminal_buffer;
 
+uint8_t input_column_start;
+uint8_t input_row_start;
+
 void terminal_initialize(void) 
 {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_set_background_color(VGA_COLOR_BLACK);
-	terminal_setcolor(VGA_COLOR_WHITE);
+	terminal_set_background_color(VGA_COLOR_WHITE);
+	terminal_setcolor(VGA_COLOR_BLACK);
 
 	terminal_initialize_buffer();
 	terminal_initialize_background();
@@ -158,9 +161,9 @@ void terminal_update_cursor()
 
 void terminal_backspace()
 {
-	int terminal_column = terminal_get_column();
-
-	if (terminal_column >= 0)
+	if (terminal_row < input_row_start) return;
+	
+	if (terminal_column > input_column_start)
 	{
 		terminal_set_column(terminal_column - 1);
 		terminal_putchar(' ');
@@ -182,8 +185,6 @@ void terminal_handler_input(char scancode)
 
 		terminal_set_row(row+1);
 		terminal_set_column(0);
-
-		print_prompt();
 	}
 	else
 	{
