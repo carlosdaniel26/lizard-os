@@ -1,22 +1,11 @@
-; Declare constants for the multiboot header.
-MBALIGN  equ  1 << 0            ; align loaded modules on page boundaries
-MEMINFO  equ  1 << 1            ; provide memory map
-MBFLAGS  equ  MBALIGN | MEMINFO ; this is the Multiboot 'flag' field
-MAGIC    equ  0x1BADB002        ; 'magic number' lets bootloader find the header
-CHECKSUM equ -(MAGIC + MBFLAGS)	; checksum of above, to prove we are multiboot
-
-; Multiboot header
-section .multiboot
-align 4
-	dd MAGIC
-	dd MBFLAGS
-	dd CHECKSUM
-	dd 0, 0, 0, 0, 0
-
-	dd 0
-	dd 800
-	dd 600
-	dd 32
+section .multiboot2_header
+align 8
+multiboot2_header_start:
+    dd 0xe85250d6  ; Magic number
+    dd 0           ; Architecture (0 para x86)
+    dd multiboot2_header_end - multiboot2_header_start ; Header length
+    dd -(0xe85250d6 + 0 + (multiboot2_header_end - multiboot2_header_start)) ; Checksum
+multiboot2_header_end:
 
 ; Stack
 section .bss
@@ -31,9 +20,8 @@ _start:
 	; configure stack
 	mov esp, stack_top
 
-	; the grub parameters are stored in eax and ebx, so have to pass them for the kernel_main function
-    push eax
-    push ebx
+    push ebx	; multiboot_info
+    push eax	; magic_number
     ; Call the kernel
     extern kernel_main
 	call kernel_main
