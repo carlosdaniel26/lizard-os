@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 int memcmp(const void* aptr, const void* bptr, size_t size)
 {
@@ -63,6 +64,17 @@ size_t strlen(const char* str)
     return len;
 }
 
+bool strsIsEqual(const char *str1, const char *str2, size_t size)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        if (str1[i] != str2[i])
+            return 0;
+    }
+
+    return 1;
+}
+
 void unsigned_to_string(uint64_t value, char *str) 
 {
     char buffer[20];
@@ -87,7 +99,23 @@ void unsigned_to_string(uint64_t value, char *str)
     str[i] = '\0'; // null in the end
 }
 
-unsigned get_unsigned2string_final_size(unsigned value)
+unsigned get_unsigned2string_final_size(uint64_t value)
+{
+    unsigned i = 0;
+    
+    if (value == 0)
+        return 1;
+
+    while (value > 0)
+    {
+        value /= 10;
+        i++;
+    }
+
+    return i;
+}
+
+unsigned get_u64tostring_final_size(uint64_t value)
 {
     unsigned i = 0;
     

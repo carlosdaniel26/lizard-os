@@ -66,7 +66,25 @@ int printf(const char* restrict format, ...) {
 				return -1;
 			written += len;
 			
-		} else if (*format == 'u') {
+		} 
+		else if (strsIsEqual(format, "llu", 3)) {
+			format+=3;
+			uint64_t number = (uint64_t) va_arg(parameters, uint64_t);
+			if (!maxrem) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			uint32_t size = get_unsigned2string_final_size(number);
+			char str[size];
+			memset(str, 0, sizeof(str));
+
+			unsigned_to_string((uint64_t)number, str);
+			if (!print(str, sizeof(str)))
+				return -1;
+			written += size;
+
+		}
+		else if (*format == 'u') {
 			format++;
 			unsigned number = (unsigned) va_arg(parameters, unsigned);
 			if (!maxrem) {
@@ -82,7 +100,8 @@ int printf(const char* restrict format, ...) {
 				return -1;
 			written++;
 
-		}  else {
+		}
+		else {
 			format = format_begun_at;
 			size_t len = strlen(format);
 			if (maxrem < len) {
