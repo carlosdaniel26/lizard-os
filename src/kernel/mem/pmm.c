@@ -15,7 +15,7 @@
 
 struct mmap_entry_t {
 	uint32_t size; // size exclude itself when stores the size of the struct
-	
+
 	uint64_t addr;
 	uint64_t len;
 	uint32_t type;
@@ -42,6 +42,8 @@ void detect_memory(struct multiboot_info_t* mb_info)
 void print_ammount_mem_mb()
 {
 	printf("mem ammount kb: %u\n", mem_ammount_kb);
+	printf("blocks: %u\n", total_blocks);
+	printf("bitmap_size: %u\n", bitmap_size);
 	printf("mem_start: %u\n\n", mem_start);
 }
 
@@ -116,27 +118,36 @@ void pmm_free_block(void *ptr)
 
 void process_memory_map(const struct multiboot_info_t *mb_info)
 {
-	struct mmap_entry_t *ptr_mmap = (struct mmap_entry_t*)(uintptr_t)	mb_info->mmap_addr;
-	uintptr_t mmap_end = mb_info->mmap_addr + mb_info->mmap_length;
+    struct mmap_entry_t *ptr_mmap = (struct mmap_entry_t*) mb_info->mmap_addr;
+    uintptr_t mmap_end = mb_info->mmap_addr + mb_info->mmap_length;
 
-	while((uintptr_t)ptr_mmap < mmap_end)
-	{
-		if (ptr_mmap->type != MEMORY_AVAILABLE)
-		{
-			unsigned bitmap_byte_index = ptr_mmap->addr / 8;
+    while ((uintptr_t)ptr_mmap < mmap_end)
+    {
+        uint64_t addr = ptr_mmap->addr;
+        uint64_t len = ptr_mmap->len;
 
-			for (unsigned i = bitmap_byte_index; i < ptr_mmap->len; i++)
-			{
-				for (unsigned j = 0; j < 8; j++)
-				{
-					// set bit used
-					ptr_set_bit(mem_bitmap + i, j);
-				}
-			}
+        if (ptr_mmap->type == MEMORY_AVAILABLE)
+        {
+            printf("Available mem: begin = %llu ", addr);
+            printf("size = %llu\n", len);
+        }
+        else
+        {
+            printf("Reserved mem: begin = %llu ", addr);
+            printf("size = %llu\n", len);
 
-		}
-		
-		// i++
-		ptr_mmap = (struct mmap_entry_t*)((uintptr_t)ptr_mmap + ptr_mmap->size + sizeof(ptr_mmap->size));
-	}
+            unsigned start_block = addr / BLOCK_SIZE;
+            unsigned end_block = (addr + len) / BLOCK_SIZE;
+
+            for (unsigned i = start_block; i < end_block; i++)
+            {
+                unsigned byte_index = i / 8;
+                unsigned bit_index = i % 8;
+
+                ptr_set_bit(mem_bitmap + byte_index, bit_index);
+            }
+        }
+
+        ptr_mmap = (struct mmap_entry_t*)((uintptr_t)ptr_mmap + ptr_mmap->size + sizeof(ptr_mmap->size));
+    }
 }
