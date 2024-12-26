@@ -3,6 +3,7 @@
  * https://youtu.be/oD1_3iL12mU?si=d3vTPy--fcKyRxD6
  */
 
+#ifdef SODOAOSDOA
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -74,3 +75,6 @@ void init_paging()
     //void (*higher_half_entry)() = (void (*)())0xC0000000;
     //higher_half_entry();
 }
+
+
+#endif

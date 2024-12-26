@@ -101,6 +101,22 @@ int printf(const char* restrict format, ...) {
 			written++;
 
 		}
+		else if (*format == 'x') {
+			format++;
+			unsigned number = (unsigned) va_arg(parameters, unsigned);
+			if (!maxrem) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			uint32_t size = get_unsigned2string_final_size(number) + 1; // +1 for null terminator
+			char str[size];
+			memset(str, 0, sizeof(str));
+
+			unsigned_to_hexstring((uint64_t)number, str);
+			if (!print(str, sizeof(str)))
+				return -1;
+			written++;
+		}
 		else {
 			format = format_begun_at;
 			size_t len = strlen(format);

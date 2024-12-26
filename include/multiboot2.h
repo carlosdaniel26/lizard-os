@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 // https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#Boot-information
+#define MULTIBOOT2_MAGIC 0x36d76289
 
 
 struct multiboot2_header {
@@ -44,7 +45,7 @@ struct multiboot2_tag {
 
 struct multiboot2_tag_cmdline {
     struct multiboot2_tag tag;
-    char *cmdline;
+    char *string;
 };
 
 struct multiboot2_tag_bootloader_name {
@@ -60,16 +61,24 @@ struct multiboot2_tag_module {
     uint32_t reserved;
 };
 
+struct multiboot_mmap_entry
+{
+    uint64_t addr;
+    uint64_t len;
+    #define MULTIBOOT_MEMORY_AVAILABLE              1
+    #define MULTIBOOT_MEMORY_RESERVED               2
+    #define MULTIBOOT_MEMORY_ACPI_RECLAIMABLE       3
+    #define MULTIBOOT_MEMORY_NVS                    4
+    #define MULTIBOOT_MEMORY_BADRAM                 5
+    uint32_t type;
+    uint32_t zero;
+};
+
 struct multiboot2_tag_mmap {
     struct multiboot2_tag tag;
     uint32_t size;
     uint32_t version;
-    struct mmap_entry {
-        uint64_t addr;
-        uint64_t len;
-        uint32_t type;
-        uint32_t reserved;
-    } entries[];
+    struct multiboot_mmap_entry entries[0];
 };
 
 struct multiboot2_tag_vbe {
@@ -96,6 +105,6 @@ struct multiboot_info_t
   uint32_t checksum;
 };
 
-void process_multiboot_tags(struct multiboot_info_t *multiboot2_info);
+void process_multiboot2_tags(unsigned long magic_number,unsigned long addr);
 
 #endif

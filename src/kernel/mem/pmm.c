@@ -1,3 +1,5 @@
+#ifdef SODOAOSDOA
+
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -31,14 +33,6 @@ uint8_t *mem_start;
 uint32_t bitmap_size;
 uint8_t total_blocks;
 
-void detect_memory(struct multiboot_info_t* mb_info)
-{
-	if (mb_info->flags & 0x01)
-	{
-		mem_ammount_kb = (mb_info->mem_lower + mb_info->mem_upper);
-	}
-}
-
 void print_ammount_mem_mb()
 {
 	printf("mem ammount kb: %u\n", mem_ammount_kb);
@@ -56,6 +50,7 @@ void pmm_init(struct multiboot_info_t* mb_info)
 {
 	detect_memory(mb_info);
 	process_memory_map(mb_info);
+	
 
 	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
 	bitmap_size = total_blocks / (8);
@@ -151,3 +146,4 @@ void process_memory_map(const struct multiboot_info_t *mb_info)
         ptr_mmap = (struct mmap_entry_t*)((uintptr_t)ptr_mmap + ptr_mmap->size + sizeof(ptr_mmap->size));
     }
 }
+#endif
