@@ -41,9 +41,9 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	cpuid_get_brand();
 
 	cpuid_print();
-	//pmm_init(mb_info);
+	pmm_init();
 	
-	printf("kernel_start: %u\n", &kernel_start);
+	printf("kernel_start: %u\nkernel_end: %u\n", &kernel_start, &kernel_end);
 
 	//init_paging();
 

@@ -1,5 +1,3 @@
-#ifdef SODOAOSDOA
-
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -23,22 +21,23 @@ struct mmap_entry_t {
 	uint32_t type;
 } __attribute__((packed));
 
-extern uint32_t kernel_start;
-extern uint32_t kernel_size;
+extern uint8_t kernel_start;
+extern uint8_t kernel_end;
 
-
+uint64_t mem_ammount_b;
 uint64_t mem_ammount_kb;
 uint8_t *mem_bitmap;
 uint8_t *mem_start;
 uint32_t bitmap_size;
-uint8_t total_blocks;
+uint32_t total_blocks;
 
 void print_ammount_mem_mb()
 {
-	printf("mem ammount kb: %u\n", mem_ammount_kb);
+	printf("mem ammount: %uKB\n", mem_ammount_kb);
 	printf("blocks: %u\n", total_blocks);
-	printf("bitmap_size: %u\n", bitmap_size);
-	printf("mem_start: %u\n\n", mem_start);
+	printf("bitmap_size: %uB\n", bitmap_size);
+	printf("mem_bitmap: %uB\n", mem_bitmap);
+	printf("mem_start: %uB\n\n", mem_start);
 }
 
 uint32_t get_block_number(void *ptr)
@@ -46,46 +45,42 @@ uint32_t get_block_number(void *ptr)
 	return ((uintptr_t)ptr - (uintptr_t)mem_start) / BLOCK_SIZE;
 }
 
-void pmm_init(struct multiboot_info_t* mb_info)
+void pmm_init()
 {
-	detect_memory(mb_info);
-	process_memory_map(mb_info);
-	
-
 	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
 	bitmap_size = total_blocks / (8);
-	mem_bitmap = (uint8_t*)(&kernel_start + kernel_size + 1); // start after the kernel
+
+	mem_bitmap = &kernel_end + 1;
 
 	memset(mem_bitmap, 0, bitmap_size); // init the bitmap
 
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
-	
-	while((((uintptr_t)mem_start) % 4096) != 0)
-	{
-		mem_start++;
-	}
 
 	/**
 	 * [1MB][BITMAP][MEM]
 	 */
-
+	terminal_initialize();
 	print_ammount_mem_mb();
 }
 
 void *pmm_alloc_block()
 {
-	for (uint32_t i = 0; i < total_blocks; i++)
+	uint32_t block_id = 1;
+
+	// bytes
+	for (uint32_t i = 0; i < bitmap_size; i++)
 	{
 		// bits
 		for (uint32_t j = 0; j < 8; j++)
 		{
+			block_id ++;
 			// the block are free
 			if (ptr_get_bit(mem_bitmap + i, j) == 0)
 			{
 				// now in use
 				ptr_set_bit(mem_bitmap + i, j);
 
-				return (void*)  (mem_start + (i+j) * BLOCK_SIZE);
+				return (void*)  (mem_start + (block_id * BLOCK_SIZE));
 			}
 			// the block are in use
 			else
@@ -111,39 +106,34 @@ void pmm_free_block(void *ptr)
 	ptr_unset_bit(&mem_bitmap[byte_index], bit_index);
 }
 
-void process_memory_map(const struct multiboot_info_t *mb_info)
+void test_all_blocks()
 {
-    struct mmap_entry_t *ptr_mmap = (struct mmap_entry_t*) mb_info->mmap_addr;
-    uintptr_t mmap_end = mb_info->mmap_addr + mb_info->mmap_length;
+	terminal_initialize();
+	uint8_t *ptr;
+	ptr = pmm_alloc_block();
 
-    while ((uintptr_t)ptr_mmap < mmap_end)
-    {
-        uint64_t addr = ptr_mmap->addr;
-        uint64_t len = ptr_mmap->len;
+	uint8_t c = 0;
 
-        if (ptr_mmap->type == MEMORY_AVAILABLE)
-        {
-            printf("Available mem: begin = %llu ", addr);
-            printf("size = %llu\n", len);
-        }
-        else
-        {
-            printf("Reserved mem: begin = %llu ", addr);
-            printf("size = %llu\n", len);
+	while(ptr != NULL)
+	{
+		memset(ptr, 0xFF, BLOCK_SIZE);
+		ptr = pmm_alloc_block();
+		printf("ptr %u done\n", ptr);
+		
+		if (c == 10)
+		{
+			c = 0;
+			terminal_initialize();
+		}
+		c++;
 
-            unsigned start_block = addr / BLOCK_SIZE;
-            unsigned end_block = (addr + len) / BLOCK_SIZE;
-
-            for (unsigned i = start_block; i < end_block; i++)
-            {
-                unsigned byte_index = i / 8;
-                unsigned bit_index = i % 8;
-
-                ptr_set_bit(mem_bitmap + byte_index, bit_index);
-            }
-        }
-
-        ptr_mmap = (struct mmap_entry_t*)((uintptr_t)ptr_mmap + ptr_mmap->size + sizeof(ptr_mmap->size));
-    }
+		if ((( (uint64_t)mem_ammount_kb) * 1024) < (uint64_t)ptr)
+		{
+			terminal_initialize();
+			printf("EITA PORRA\n");
+			while(1){}
+		}
+	}
+	terminal_initialize();
+	printf("DONE\n");
 }
-#endif
