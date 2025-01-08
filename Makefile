@@ -15,7 +15,7 @@ OUTPUT_ISO    = $(BUILD_DIR)/bootable.iso
 # Compiler and linker flags
 LIBS = -lgcc
 CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE_DIR) -I$(LIBS_DIR) -D$(ARCH)
-ASFLAGS = -felf32
+ASFLAGS = -felf32 -g
 LDFLAGS = -T $(SRC_DIR)/linker/linker.ld -ffreestanding -O2 -nostdlib
 
 # Find ALL C, ASM sources

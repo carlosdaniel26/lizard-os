@@ -1,80 +1,47 @@
-/**
- * https://en.wikipedia.org/wiki/Control_register
- * https://youtu.be/oD1_3iL12mU?si=d3vTPy--fcKyRxD6
- */
-
-#ifdef SODOAOSDOA
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-
 #include <kernel/mem/pmm.h>
-#include <kernel/mem/vmm.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdio.h>
 
-#define TABLE_SIZE 1024
-#define PAGE_SIZE  4096
+#define PAGE_SIZE 4096
 
-extern uint32_t kernel_start;
-extern uint32_t kernel_end;
-extern uint32_t kernel_size;
+uint32_t *page_directory;
+uint32_t *page_table;
 
-uint32_t *p4_table;
-uint32_t *p3_table;
+extern void setup_paging_asm(uint32_t *page_directory, uint32_t *page_table);
 
-void set_cr3() 
+void setup_paging()
 {
-    __asm__ volatile("mov %0, %%cr3" : : "r" (p4_table));
-}
+    // Aloca e configura o diretório de páginas
+    page_directory = (uint32_t *)pmm_alloc_block();
+    if (!page_directory)
+    {
+        printf("Falha ao alocar o diretório de páginas\n");
+        return;
+    }
 
-void set_cr0() 
-{
-    uint32_t cr0_value;
+    // Aloca e configura a tabela de páginas
+    page_table = (uint32_t *)pmm_alloc_block();
+    if (!page_table)
+    {
+        printf("Falha ao alocar a tabela de páginas\n");
+        return;
+    }
 
-    __asm__ volatile("mov %%cr0, %0" : "=r" (cr0_value));
+    // Configure a tabela de páginas (mapeamento de identidade para os primeiros 4MB)
+    for (int i = 0; i < 1024; i++)
+    {
+        page_table[i] = (i * PAGE_SIZE) | 0b11; // Define os bits de presente e escrita
+    }
 
-    cr0_value |= 0x80000001;
-
-    __asm__ volatile("mov %0, %%cr0" : : "r" (cr0_value));
-}
-
-void configure_paging_directories()
-{
-    // give chunks for the pages
-    p4_table = pmm_alloc_block();
-    p3_table = pmm_alloc_block();
-    
-    uint32_t page_directory;
-    
-    /* p4[0] -> p3 */
-    page_directory = (uint32_t)p3_table & 0xFFFFF000; // get the address align to 4KB
-    page_directory |= 0b11; // set present and write bits
-
-    p4_table[0] = page_directory;
-
+    // Chama a função em assembly para configurar o diretório de páginas e ativar a paginação
 }
 
 typedef uint32_t v_addr;
 void idpaging(uint32_t *first_pte, v_addr from, int size)
 {
-
-    for(; size > 0; from += PAGE_SIZE, size -= PAGE_SIZE, first_pte++)
+    for (; size > 0; from += PAGE_SIZE, size -= PAGE_SIZE, first_pte++)
     {
-        *first_pte = from | 1; // page present
+        *first_pte = from | 1; // página presente
     }
 }
-
-void init_paging()
-{   
-    printf("initing paging...\n");
-	configure_paging_directories();
-    printf("initing paging2...\n");
-	idpaging(p3_table, (uint32_t)&kernel_start, (&kernel_end) - (&kernel_start));
-    printf("initing paging3...\n");
-	set_cr3();
-    set_cr0();
-    //void (*higher_half_entry)() = (void (*)())0xC0000000;
-    //higher_half_entry();
-}
-
-
-#endif
