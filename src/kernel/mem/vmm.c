@@ -11,7 +11,7 @@ extern uint32_t kernel_end;
 
 void enable_paging() 
 {
-    uint32_t page_ammount = (uint32_t)(&kernel_end) / 4096;
+    uint32_t page_ammount = (uint32_t)(&kernel_end+4096) / 4096;
     uint32_t address = 0x0; // First P_Address to map
 
     for (uint32_t i = 0; i < page_ammount; i++) 
@@ -24,6 +24,7 @@ void enable_paging()
 
         address += PAGE_SIZE_BYTES;
     }
+    enable_paging_registers();
 }
 
 void enable_paging_registers()
