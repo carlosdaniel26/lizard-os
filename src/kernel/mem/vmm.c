@@ -9,7 +9,7 @@ uint32_t page_table[ENTRY_AMMOUNT] __attribute__((aligned(4096)));
 
 extern uint32_t kernel_end;
 
-void enable_paging_c() 
+void enable_paging() 
 {
     uint32_t page_ammount = (uint32_t)(&kernel_end) / 4096;
     uint32_t address = 0x0; // First P_Address to map
