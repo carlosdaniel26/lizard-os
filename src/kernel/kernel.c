@@ -45,11 +45,11 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	
 	printf("kernel_start: %u\nkernel_end: %u\n", &kernel_start, &kernel_end);
 
-	extern void enable_paging();
+	extern void enable_paging_c();
 
 	printf("initialization finished\n");
 
-	enable_paging();
+	enable_paging_c();
 	shit_shell_init();
 
 	while(1) {
