@@ -55,6 +55,12 @@ void pmm_init()
 	memset(mem_bitmap, 0, bitmap_size); // init the bitmap
 
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
+	
+	/* Align 4096 */
+	while((uintptr_t)mem_start % 4096 != 0)
+	{
+		mem_start++;
+	}
 
 	/**
 	 * [1MB][BITMAP][MEM]
