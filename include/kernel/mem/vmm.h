@@ -45,6 +45,6 @@ typedef struct PageTable {
 	
 } PageTable;
 
-void setup_paging();
+void enable_paging();
 
 #endif

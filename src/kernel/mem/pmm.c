@@ -126,13 +126,6 @@ void test_all_blocks()
 			terminal_initialize();
 		}
 		c++;
-
-		if ((( (uint64_t)mem_ammount_kb) * 1024) < (uint64_t)ptr)
-		{
-			terminal_initialize();
-			printf("EITA PORRA\n");
-			while(1){}
-		}
 	}
 	terminal_initialize();
 	printf("DONE\n");

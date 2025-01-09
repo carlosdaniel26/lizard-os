@@ -9,24 +9,6 @@ uint32_t page_table[ENTRY_AMMOUNT] __attribute__((aligned(4096)));
 
 extern uint32_t kernel_end;
 
-void enable_paging() 
-{
-    uint32_t page_ammount = (uint32_t)(&kernel_end+4096) / 4096;
-    uint32_t address = 0x0; // First P_Address to map
-
-    for (uint32_t i = 0; i < page_ammount; i++) 
-    {
-        uint32_t page_dir_index = address >> 12; // Get the page number
-
-        uint32_t entry = address;
-        entry |= PRESENT_WRITABLE;
-        page_table[page_dir_index] = entry;
-
-        address += PAGE_SIZE_BYTES;
-    }
-    enable_paging_registers();
-}
-
 void enable_paging_registers()
 {
     // Link page table in page directory
@@ -53,3 +35,20 @@ void enable_paging_registers()
     );
 }
 
+void enable_paging() 
+{
+    uint32_t page_ammount = (uint32_t)(&kernel_end+4096) / 4096;
+    uint32_t address = 0x0; // First P_Address to map
+
+    for (uint32_t i = 0; i < page_ammount; i++) 
+    {
+        uint32_t page_dir_index = address >> 12; // Get the page number
+
+        uint32_t entry = address;
+        entry |= PRESENT_WRITABLE;
+        page_table[page_dir_index] = entry;
+
+        address += PAGE_SIZE_BYTES;
+    }
+    enable_paging_registers();
+}
