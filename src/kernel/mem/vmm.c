@@ -1,11 +1,11 @@
 #include <stdint.h>
+#include <kernel/mem/pmm.h>
 
-#define ENTRY_AMMOUNT 1024
 #define PRESENT_WRITABLE 0x3
 #define PAGE_SIZE_BYTES 4096
 
-uint32_t page_directory[ENTRY_AMMOUNT] __attribute__((aligned(4096)));
-uint32_t page_table[ENTRY_AMMOUNT] __attribute__((aligned(4096)));
+uint32_t *page_directory;
+uint32_t *page_table;
 
 extern uint32_t kernel_end;
 
@@ -35,9 +35,17 @@ void enable_paging_registers()
     );
 }
 
+void alloc_memory_for_tables()
+{
+    page_directory = pmm_alloc_block();
+    page_table = pmm_alloc_block();
+}
+
 void enable_paging() 
 {
-    uint32_t page_ammount = (uint32_t)(&kernel_end+4096) / 4096;
+    alloc_memory_for_tables();
+
+    uint32_t page_ammount = (uint32_t)(&kernel_end + 4096) / 4096;
     uint32_t address = 0x0; // First P_Address to map
 
     for (uint32_t i = 0; i < page_ammount; i++) 
@@ -50,5 +58,6 @@ void enable_paging()
 
         address += PAGE_SIZE_BYTES;
     }
+
     enable_paging_registers();
 }
