@@ -13,4 +13,5 @@ void print_prompt()
 void shit_shell_init()
 {
 	print_prompt();
+	terminal_enable_cursor(input_column_start-1, input_row_start);
 }

@@ -151,7 +151,7 @@ void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 
 void terminal_update_cursor()
 {
-	uint16_t pos = terminal_row * VGA_WIDTH + terminal_column;
+	uint16_t pos = terminal_row * VGA_WIDTH + (terminal_column);
 
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, (uint8_t) (pos & 0xFF));
@@ -169,6 +169,7 @@ void terminal_backspace()
 		terminal_putchar(' ');
 		terminal_set_column(terminal_column - 1);
 	}
+	terminal_update_cursor();
 }
 
 void terminal_handler_input(char scancode)
