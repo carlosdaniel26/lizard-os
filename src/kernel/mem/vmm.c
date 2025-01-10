@@ -13,7 +13,7 @@ void enable_paging_registers()
 {
     // Link page table in page directory
     uint32_t *page_dir = page_directory;
-    page_dir[0] = (uint32_t)page_table | PRESENT_WRITABLE;
+    page_dir[0] = (uintptr_t)page_table | PRESENT_WRITABLE;
 
     // Load the page directory
     __asm__ volatile (
@@ -41,23 +41,35 @@ void alloc_memory_for_tables()
     page_table = pmm_alloc_block();
 }
 
-void enable_paging() 
+void map_page(uint32_t from, uint32_t to)
 {
-    alloc_memory_for_tables();
+    uint32_t page_ammount = to / 4096;
+    uint32_t address = from; // First P_Address to map
 
-    uint32_t page_ammount = (uint32_t)(&kernel_end + 4096) / 4096;
-    uint32_t address = 0x0; // First P_Address to map
-
-    for (uint32_t i = 0; i < page_ammount; i++) 
+    for (uint32_t i = 0; i < page_ammount; i++)
     {
-        uint32_t page_dir_index = address >> 12; // Get the page number
+        uint32_t page_dir_index = address >> 22; // Get the page number
+        if (! (page_dir_index & 1))
+        {
+            uint32_t *p_table = pmm_alloc_block();  
+
+            page_directory[page_dir_index] = (uintptr_t)p_table | PRESENT_WRITABLE;
+        }
+
+        uint32_t page_table_index = (address >> 12) & 0x3FF;
 
         uint32_t entry = address;
         entry |= PRESENT_WRITABLE;
-        page_table[page_dir_index] = entry;
+        page_table[page_table_index] = entry;
 
         address += PAGE_SIZE_BYTES;
     }
+}
 
+void enable_paging() 
+{
+    alloc_memory_for_tables();
+    map_page(0x00, (uint32_t)(&kernel_end + 4096));
+    
     enable_paging_registers();
 }
