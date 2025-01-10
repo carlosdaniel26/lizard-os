@@ -12,6 +12,7 @@ void terminal_set_row(int index);
 int terminal_get_column();
 int terminal_get_row();
 void terminal_initialize_background(void);
+void terminal_clean(void);
 void terminal_initialize_buffer(void);
 void terminal_setcolor(uint8_t color);
 void terminal_set_background_color(uint8_t background_color);
