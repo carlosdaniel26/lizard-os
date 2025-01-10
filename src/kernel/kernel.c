@@ -28,7 +28,6 @@
 
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
-extern uint32_t kernel_size;
 
 void kernel_main(unsigned long magic_number, unsigned long addr) 
 {
