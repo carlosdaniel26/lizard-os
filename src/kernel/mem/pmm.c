@@ -65,7 +65,7 @@ void pmm_init()
 	/**
 	 * [1MB][BITMAP][MEM]
 	 */
-	terminal_initialize();
+	terminal_clean();
 	print_ammount_mem_mb();
 }
 
@@ -114,7 +114,7 @@ void pmm_free_block(void *ptr)
 
 void test_all_blocks()
 {
-	terminal_initialize();
+	terminal_clean();
 	uint8_t *ptr;
 	ptr = pmm_alloc_block();
 
@@ -129,10 +129,10 @@ void test_all_blocks()
 		if (c == 10)
 		{
 			c = 0;
-			terminal_initialize();
+			terminal_clean();
 		}
 		c++;
 	}
-	terminal_initialize();
+	terminal_clean();
 	printf("DONE\n");
 }

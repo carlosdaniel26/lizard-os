@@ -23,7 +23,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
     unsigned size = *(unsigned *) addr;
     printf("MBI size: %u\n", size);
 
-    terminal_initialize();
+    terminal_clean();
 
     struct multiboot_tag *tag;
     for (tag = (struct multiboot_tag *) (addr + 8);

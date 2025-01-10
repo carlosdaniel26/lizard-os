@@ -46,6 +46,8 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	enable_paging();
 	printf("initialization finished\n");
+
+	terminal_clean();
 	shit_shell_init();
 
 	while(1) {
