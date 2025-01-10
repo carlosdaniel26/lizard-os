@@ -41,14 +41,13 @@ void alloc_memory_for_tables()
     page_table = pmm_alloc_block();
 }
 
-void map_page(uint32_t from, uint32_t to)
+void map_page(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 {
-    uint32_t page_ammount = to / 4096;
-    uint32_t address = from; // First P_Address to map
+    uint32_t page_ammount = length / 4096;
 
     for (uint32_t i = 0; i < page_ammount; i++)
     {
-        uint32_t page_dir_index = address >> 22; // Get the page number
+        uint32_t page_dir_index = v_addr >> 22; // Get the page number
         if (! (page_dir_index & 1))
         {
             uint32_t *p_table = pmm_alloc_block();  
@@ -56,20 +55,23 @@ void map_page(uint32_t from, uint32_t to)
             page_directory[page_dir_index] = (uintptr_t)p_table | PRESENT_WRITABLE;
         }
 
-        uint32_t page_table_index = (address >> 12) & 0x3FF;
+        uint32_t page_table_index = (v_addr >> 12) & 0x3FF;
 
-        uint32_t entry = address;
+        uint32_t entry = p_addr;
         entry |= PRESENT_WRITABLE;
         page_table[page_table_index] = entry;
 
-        address += PAGE_SIZE_BYTES;
+        p_addr += PAGE_SIZE_BYTES;
+        v_addr += PAGE_SIZE_BYTES;
     }
 }
+
+#define identity_paging(addr, length) map_page(addr, length, addr)
 
 void enable_paging() 
 {
     alloc_memory_for_tables();
-    map_page(0x00, (uint32_t)(&kernel_end + 4096));
+    identity_paging(0x00, (uint32_t)(&kernel_end + 4096));
     
     enable_paging_registers();
 }
