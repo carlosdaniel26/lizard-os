@@ -13,6 +13,7 @@
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
 #include <kernel/drivers/keyboard.h>
+#include <kernel/drivers/timer.h>
 #include <kernel/utils/io.h>
 #include <kernel/shit-shell/ss.h>
 
@@ -47,7 +48,10 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	enable_paging();
 	printf("initialization finished\n");
 
+	get_rtc_time();
+
 	terminal_clean();
+	print_rtc_time();
 	shit_shell_init();
 
 	while(1) {

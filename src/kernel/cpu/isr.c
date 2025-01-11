@@ -1,8 +1,11 @@
+#include <stdio.h>
+
 #include <kernel/terminal/terminal.h>
 #include <kernel/terminal/vga.h>
 #include <kernel/cpu/pic.h>
 
 #include <kernel/drivers/keyboard.h>
+#include <kernel/drivers/timer.h>
 
 // ************* ISR *******************
 void isr_divide_by_zero() {
@@ -57,8 +60,16 @@ void interrupt_handler(uint32_t interrupt_id)
             isr_stub_page_fault();
             break;
 
+        case 32:
+            isr_timer();
+            break;
+
         case 33:
             isr_keyboard();
+            break;
+
+        default:
+            printf("unmapped interrupt: %u\n", interrupt_id);
             break;
     }
 
