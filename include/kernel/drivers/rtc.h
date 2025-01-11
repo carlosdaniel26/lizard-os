@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef RTC_H
+#define RTC_H
 
 struct RTC_timer {
 	uint8_t seconds;			// 00

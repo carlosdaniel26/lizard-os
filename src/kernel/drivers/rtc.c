@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <kernel/drivers/timer.h>
+#include <kernel/drivers/rtc.h>
 #include <kernel/utils/io.h>
 
 #define NMI_COMMAND_PORT 0x70
@@ -27,7 +27,6 @@ static uint8_t bcd_to_binary(uint8_t bcd)
 
 void get_rtc_time()
 {
-
 	printf("\n");
 
 	uint8_t *RTC_array = (uint8_t*) &RTC_clock;
