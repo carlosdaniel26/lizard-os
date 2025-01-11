@@ -20,7 +20,7 @@ void isr_timer()
 	printf("OPA CHEGOU\n");
 }
 
-uint8_t bcd_to_binary(uint8_t bcd)
+static uint8_t bcd_to_binary(uint8_t bcd)
 {
     return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
 }
@@ -43,6 +43,6 @@ void get_rtc_time()
 
 void print_rtc_time()
 {
-	printf("date %u/%u/%u\n", RTC_clock.date_of_month, RTC_clock.month, RTC_clock.year);
+	printf("year: 20%u\nmonth:%u\nday:%u\n", RTC_clock.year, RTC_clock.month, RTC_clock.date_of_month);
 	printf("time: %u:%u:%u\n", RTC_clock.hours, RTC_clock.minutes, RTC_clock.seconds);
 }
