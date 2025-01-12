@@ -6,7 +6,7 @@
 #define ptr_set_bit(value, bit)   (*(value) |= (1UL << (bit)))
 #define ptr_unset_bit(value, bit) (*(value) &= ~(1UL << (bit)))
 
-void start_interrupts();
-void stop_interrupts();
+#define start_interrupts()  asm volatile("sti")
+#define stop_interrupts()   asm volatile("cli")
 
 #endif
