@@ -33,3 +33,6 @@ _start:
 .hang:	
 	hlt
 	jmp .hang
+
+times 510-($-$$) db 0 ; Preencher até 510 bytes
+dw 0xAA55              ; Boot signature	
