@@ -5,7 +5,7 @@
 #include <kernel/cpu/pic.h>
 
 #include <kernel/drivers/keyboard.h>
-#include <kernel/drivers/timer.h>
+#include <kernel/drivers/rtc.h>
 
 // ************* ISR *******************
 void isr_divide_by_zero() {
