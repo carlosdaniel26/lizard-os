@@ -23,6 +23,18 @@ static uint8_t bcd_to_binary(uint8_t bcd)
     return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
 }
 
+static void rtc_write(uint8_t reg, uint8_t value)
+{
+	outb(RTC_COMMAND_PORT, reg);
+	outb(RTC_DATA_PORT, value);
+}
+
+static uint8_t rtc_read(uint8_t reg)
+{
+	outb(RTC_COMMAND_PORT, reg);
+	return inb(RTC_DATA_PORT);
+}
+
 void get_rtc_time()
 {
     printf("\nReading RTC Time:\n");
