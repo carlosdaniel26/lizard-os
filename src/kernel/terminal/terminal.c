@@ -133,6 +133,20 @@ void terminal_writestring(const char* data)
 	terminal_write(data, strlen(data));
 }
 
+
+#define VGA_CTRL 0x3D4
+#define VGA_DATA 0x3D5
+
+void set_cursor_style(uint8_t start_line, uint8_t end_line) {
+    // Envia o índice do registrador de início
+    outb(VGA_CTRL, 0x0A);
+    outb(VGA_DATA, start_line);
+
+    // Envia o índice do registrador de fim
+    outb(VGA_CTRL, 0x0B);
+    outb(VGA_DATA, end_line);
+}
+
 void terminal_disable_cursor()
 {
 	outb(0x3D4, 0x0A);
@@ -146,6 +160,7 @@ void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 
 	outb(0x3D4, 0x0B);
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+	set_cursor_style(0, 15);
 }
 
 
