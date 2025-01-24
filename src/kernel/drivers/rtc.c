@@ -8,6 +8,12 @@
 #define RTC_COMMAND_PORT 0x70
 #define RTC_DATA_PORT 0x71
 
+const char *months_strings[] = {
+    "Undefined",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+};
+
 volatile uint32_t tick_count = 0;
 
 struct RTC_timer RTC_clock;
@@ -57,7 +63,7 @@ void print_rtc_time()
 {
     printf("Current RTC Time:\n");
     printf("Year: 20%u\n", RTC_clock.year);
-    printf("Month: %u\n", RTC_clock.month);
+    printf("Month: %s\n", months_strings[RTC_clock.month]);
     printf("Day: %u\n", RTC_clock.date_of_month);
-    printf("Time: %02u:%02u:%02u\n", RTC_clock.hours, RTC_clock.minutes, RTC_clock.seconds);
+    printf("Time: %u:%u:%u\n", RTC_clock.hours, RTC_clock.minutes, RTC_clock.seconds);
 }
