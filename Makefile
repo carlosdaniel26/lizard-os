@@ -14,8 +14,8 @@ OUTPUT_ISO    = $(BUILD_DIR)/bootable.iso
 
 # Compiler and linker flags
 LIBS = -lgcc
-CFLAGS = -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE_DIR) -I$(LIBS_DIR) -D$(ARCH)
-ASFLAGS = -felf32
+CFLAGS = -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE_DIR) -I$(LIBS_DIR) -D$(ARCH) -g
+ASFLAGS = -felf32 -g
 LDFLAGS = -T $(SRC_DIR)/linker/linker.ld -ffreestanding -O2 -nostdlib
 QEMUFLAGS = -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt -m 4G -rtc base=localtime
 
@@ -34,14 +34,6 @@ ALL_OBJ := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, \
 				$(filter $(INCLUDE_DIR)/%, $(ALL_C_SOURCES))) \
 			$(patsubst $(SRC_DIR)/%.asm, $(BUILD_DIR)/%.o, \
 				$(ALL_ASM_SOURCES))
-
-MODE ?= dev
-
-ifeq ($(MODE), debug)
-	CFLAGS += -g
-	ASFLAGS += -g
-endif
-
 # Main target
 all: build $(OUTPUT_ISO)
 
@@ -83,7 +75,7 @@ clean:
 
 dev:
 	$(MAKE) clean
-	$(MAKE)
+	$(MAKE) CFLAGS="$(CFLAGS) -g" ASFLAGS="$(ASFLAGS) -g"
 	$(MAKE) run
 debug:
 	$(MAKE) clean
