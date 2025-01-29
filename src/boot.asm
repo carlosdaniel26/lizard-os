@@ -33,11 +33,5 @@ multiboot2_header_end:
 	extern kernel_main
 	call kernel_main
 
-	; Clear interrupts and infinite loop to prevent the code from stopping
-	cli
-.hang:  
-	hlt
-	jmp .hang
-
 times 510-($-$$) db 0  ; Fill up to 510 bytes
 dw 0xAA55             ; Boot signature

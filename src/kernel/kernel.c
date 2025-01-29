@@ -54,8 +54,8 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	print_rtc_time();
 	shit_shell_init();
 
-	while(1) {
-		
-	}
+	for(;;) {
+    	asm("hlt");
+ 	}
 	
 }
