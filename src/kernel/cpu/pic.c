@@ -9,6 +9,13 @@
 
 extern void *isr_stub_table[];
 
+
+/** 
+ * Remap PIC vectors to avoid conflit with cpu exceptions
+ * By default the interrupts is (0-15), while the cpu exceptions has a range beetween (0-31)
+ * Then here we remap the IRQs to 32-47
+ */
+
 void PIC_remap() 
 {
     // ICW1: Start initialization of PIC
@@ -49,6 +56,6 @@ void PIC_sendEOI(uint8_t irq)
 void init_irq() 
 {    
     outb(0x21, ~(1 << 1));
-    outb(0x21, 0xFD);
+    outb(0x21, 0xFC);
     asm volatile("sti");
 }
