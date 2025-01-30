@@ -21,8 +21,8 @@ void terminal_initialize(void)
 {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_set_background_color(VGA_COLOR_WHITE);
-	terminal_setcolor(VGA_COLOR_BLACK);
+	terminal_set_background_color(VGA_COLOR_BLACK);
+	terminal_setcolor(VGA_COLOR_WHITE);
 
 	terminal_initialize_buffer();
 	terminal_initialize_background();
