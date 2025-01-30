@@ -35,13 +35,13 @@ void PIC_remap()
 
 void PIC_sendEOI(uint8_t irq)
 {
+    /* The Slave Pic has To Be Warned?*/
     if (irq >= 8) {
-        // Se a IRQ for >= 8, significa que o PIC escravo foi acionado
-        outb(PIC2_COMMAND, PIC_EOI); // Enviar EOI para o PIC escravo
+        outb(PIC2_COMMAND, PIC_EOI);
     }
 
-    // Sempre enviar EOI para o PIC mestre
-    outb(PIC1_COMMAND, PIC_EOI); // Enviar EOI para o PIC mestre
+    /* Warn The Master Pic*/
+    outb(PIC1_COMMAND, PIC_EOI);
 }
 
 // IRQs
@@ -49,6 +49,6 @@ void PIC_sendEOI(uint8_t irq)
 void init_irq() 
 {    
     outb(0x21, ~(1 << 1));
-    outb(0x21, 0xFD); // Habilita apenas IRQ1 (0b11111101)
+    outb(0x21, 0xFD);
     asm volatile("sti");
 }
