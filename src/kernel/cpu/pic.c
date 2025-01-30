@@ -57,5 +57,8 @@ void init_irq()
 {    
     outb(0x21, ~(1 << 1));
     outb(0x21, 0xFC);
+
+    unsigned char mask = inb(0x21) | 0x01;
+    outb(0x21, mask);
     asm volatile("sti");
 }

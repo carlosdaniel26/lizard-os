@@ -21,6 +21,7 @@ struct RTC_timer {
 
 
 void isr_timer();
+void enable_rtc_interrupts();
 void get_rtc_time();
 void print_rtc_time();
 
