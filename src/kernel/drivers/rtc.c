@@ -3,6 +3,7 @@
 
 #include <kernel/drivers/rtc.h>
 #include <kernel/utils/io.h>
+#include <kernel/utils/alias.h>
 
 // Ports for RTC communication
 #define RTC_COMMAND_PORT 0x70
@@ -22,6 +23,28 @@ void isr_timer()
 {
     tick_count++;
     printf("Timer tick count: %u\n", tick_count);
+}
+
+void enable_rtc_interrupts()
+{
+    stop_interrupts();
+    uint8_t rate = 0x00;
+    // Enable RTC periodic interrupt
+    outb(RTC_COMMAND_PORT, 0x8B);       // Select register B, disable NMI
+    uint8_t prev = inb(RTC_DATA_PORT);  // Read current value of register B
+    outb(RTC_COMMAND_PORT, 0x8B);       // Set the index again
+    outb(RTC_DATA_PORT, prev | 0x40); // Set bit 6 of register B
+
+    // Ensure rate is within valid range (2 to 15)
+    rate &= 0x0F;
+
+    // Set RTC frequency
+    outb(RTC_COMMAND_PORT, 0x8A);       // Select register A, disable NMI
+    prev = inb(RTC_DATA_PORT);       // Read current value of register A
+    outb(RTC_COMMAND_PORT, 0x8A);       // Reset index to A
+    outb(RTC_DATA_PORT, (prev & 0xF0) | rate); // Write only the rate to register A
+
+    start_interrupts();
 }
 
 static uint8_t bcd_to_binary(uint8_t bcd)
