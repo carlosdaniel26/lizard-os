@@ -5,7 +5,7 @@
 
 #include <string.h>
 
-#define VIDEO_BUFFER_START 0xB8000
+#define DEFAULT_TEXT_FRAMEBUFFER 0xB8000
 
 size_t terminal_row;
 size_t terminal_column;
@@ -68,7 +68,7 @@ void terminal_clean(void)
 
 void terminal_initialize_buffer(void)
 {
-	terminal_buffer = (uint16_t*) VIDEO_BUFFER_START;
+	terminal_buffer = (uint16_t*) DEFAULT_TEXT_FRAMEBUFFER;
 }
 
 void terminal_setcolor(uint8_t color) 
