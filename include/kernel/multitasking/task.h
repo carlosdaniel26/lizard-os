@@ -4,29 +4,28 @@
 #include <stdint.h>
 
 #define MAX_TASKS 256
+#define DEFAULT_STACK_SIZE 1024
 
-typedef enum{
-	TASK_RUNNING,
-	TASK_READY,
-	TASK_BLOCKED,
-	TASK_TERMINED
-
+typedef enum {
+    TASK_RUNNING,
+    TASK_READY,
+    TASK_BLOCKED,
+    TASK_TERMINATED
 } task_state_t;
 
-struct {
-	uint32_t *stack;
-	uint32_t esp;
-	uint32_t ebp;
-	uint32_t eip;
+struct task {
+    uint8_t stack[DEFAULT_STACK_SIZE];
+    uint32_t esp;
+    uint32_t ebp;
+    uint32_t eip;
 
-	task_state_t state;
-	uint32_t id;
-
-} task;
+    task_state_t state;
+    uint32_t id;
+};
 
 int create_task(struct task *task, void (*entry_point)(void));
 void switch_task(struct task *current_task, struct task *next_task);
-task *get_current_task();
+struct task *get_current_task();
 void block_task(struct task *task);
 void terminate_task(struct task *task);
 void scheduler();
