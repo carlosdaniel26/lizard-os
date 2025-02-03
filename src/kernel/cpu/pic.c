@@ -50,15 +50,3 @@ void PIC_sendEOI(uint8_t irq)
     /* Warn The Master Pic*/
     outb(PIC1_COMMAND, PIC_EOI);
 }
-
-// IRQs
-
-void init_irq() 
-{    
-    outb(0x21, ~(1 << 1));
-    outb(0x21, 0xFC);
-
-    unsigned char mask = inb(0x21) | 0x01;
-    outb(0x21, mask);
-    asm volatile("sti");
-}
