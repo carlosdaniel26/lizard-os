@@ -15,6 +15,8 @@
 #define PIC_VECTOR_OFFSET1 32
 #define PIC_VECTOR_OFFSET2 40
 
+#define SLAVE_PIC_HAS_TO_BE_WARNED irq >= 8
+
 extern void *isr_stub_table[];
 
 /** 
@@ -49,11 +51,10 @@ void PIC_remap()
 
 void PIC_sendEOI(uint8_t irq)
 {
-    // The Slave PIC has to be warned?
-    if (irq >= 8) {
+    if (SLAVE_PIC_HAS_TO_BE_WARNED) 
+    {
         outb(PIC2_COMMAND, PIC_EOI);
     }
 
-    // Warn the Master PIC
     outb(PIC1_COMMAND, PIC_EOI);
 }
