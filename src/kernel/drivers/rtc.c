@@ -9,9 +9,6 @@
 #define RTC_COMMAND_PORT 0x70
 #define RTC_DATA_PORT 0x71
 
-/* IRQ */
-#define RTC_IRQ 8
-
 /* PIC Ports*/
 #define PIC2_DATA 0xA1
 
