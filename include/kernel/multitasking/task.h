@@ -5,6 +5,7 @@
 
 #define MAX_TASKS 256
 #define DEFAULT_STACK_SIZE 1024
+#define STACK_END DEFAULT_STACK_SIZE - 1
 
 typedef enum {
     TASK_RUNNING,
@@ -14,7 +15,7 @@ typedef enum {
 } task_state_t;
 
 struct task {
-    uint8_t stack[DEFAULT_STACK_SIZE];
+    uint8_t *stack;
     uint32_t esp;
     uint32_t ebp;
     uint32_t eip;
