@@ -299,8 +299,8 @@ void init_idt(void)
     set_idt_descriptor(0,  stub_0,  0x8E);
     set_idt_descriptor(6,  stub_6,  0x8E);
     set_idt_descriptor(14, stub_14, 0x8E);
-    set_idt_descriptor(32, stub_32, 0x8E);  // timer
     set_idt_descriptor(33, stub_33, 0x8E);  // keyboard
+    set_idt_descriptor(40, stub_40, 0x8E);  // timer
 
 
 
