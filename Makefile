@@ -9,8 +9,8 @@ ISO_DIR 	= ./iso
 INCLUDE_DIR = ./include
 LIBS_DIR	= $(INCLUDE_DIR)/libs
 
-OUTPUT_BINARY = $(BUILD_DIR)/myos.bin
-OUTPUT_ISO    = $(BUILD_DIR)/bootable.iso
+OUTPUT_BINARY = $(BUILD_DIR)/lizard-os.bin
+OUTPUT_ISO    = $(BUILD_DIR)/lizard-os.iso
 
 # Compiler and linker flags
 LIBS = -lgcc
