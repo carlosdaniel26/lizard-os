@@ -2,11 +2,18 @@
 #include <kernel/utils/io.h>
 #include <kernel/arch/idt.h>
 
-#define PIC1_COMMAND    0x20 
-#define PIC1_DATA       0x21
-#define PIC2_COMMAND    0xA0 
-#define PIC2_DATA       0xA1
-#define PIC_EOI         0x20
+#define PIC1_COMMAND    	0x20 
+#define PIC1_DATA       	0x21
+#define PIC2_COMMAND    	0xA0 
+#define PIC2_DATA       	0xA1
+#define PIC_EOI         	0x20
+
+#define PIC_INIT_COMMAND   	0x11
+#define PIC_CASCADE_CONFIG 	0x04
+#define PIC_MODE_CONFIG    	0x01
+
+#define PIC_VECTOR_OFFSET1 32
+#define PIC_VECTOR_OFFSET2 40
 
 extern void *isr_stub_table[];
 
@@ -17,26 +24,27 @@ extern void *isr_stub_table[];
  */
 void PIC_remap() 
 {
-    // ICW1: Start initialization of PIC
-    outb(PIC1_COMMAND, 0x11); // Master PIC
-    outb(PIC2_COMMAND, 0x11); // Slave PIC
+    /* Start initialization of PIC */
+    outb(PIC1_COMMAND, PIC_INIT_COMMAND); // Master PIC
+    outb(PIC2_COMMAND, PIC_INIT_COMMAND); // Slave PIC
 
-    // ICW2: Set interrupt vector offsets
-    outb(PIC1_DATA, 0x20); // Master PIC vector offset (IRQ0-7)
-    outb(PIC2_DATA, 0x28); // Slave PIC vector offset (IRQ8-15)
+    /* Interrupt vector offsets */
+    outb(PIC1_DATA, PIC_VECTOR_OFFSET1); // (IRQ0-7) -> (32-39)
+    outb(PIC2_DATA, PIC_VECTOR_OFFSET2); // (IRQ8-15) -> (40-47)
 
-    // ICW3: Tell Master PIC there is a slave PIC at IRQ2 (0000 0100)
-    outb(PIC1_DATA, 0x04); // Master PIC
-    // Tell Slave PIC its cascade identity (0000 0010)
-    outb(PIC2_DATA, 0x02); // Slave PIC
+    /* Tell Master PIC there is a slave PIC at IRQ2 (0000 0100) */
+    outb(PIC1_DATA, PIC_CASCADE_CONFIG); // Master PIC
+    
+    /* Tell Slave PIC its cascade identity (0000 0010) */
+    outb(PIC2_DATA, 0x02);
 
-    // ICW4: Set PIC to x86 mode
-    outb(PIC1_DATA, 0x01); // Master PIC
-    outb(PIC2_DATA, 0x01); // Slave PIC
+    /* Set PIC to x86 mode */
+    outb(PIC1_DATA, PIC_MODE_CONFIG);
+    outb(PIC2_DATA, PIC_MODE_CONFIG);
 
-    // Unmask all interrupts on the PIC
-    outb(PIC1_DATA, 0xF9); // Master PIC
-    outb(PIC2_DATA, 0xFC); // Slave PIC
+    /* Unmask interrupts on the PIC */
+    outb(PIC1_DATA, 0xF9);
+    outb(PIC2_DATA, 0xFC);
 }
 
 void PIC_sendEOI(uint8_t irq)
