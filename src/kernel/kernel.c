@@ -15,6 +15,7 @@
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/rtc.h>
 #include <kernel/utils/io.h>
+#include <kernel/utils/alias.h>
 #include <kernel/shit-shell/ss.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
@@ -32,12 +33,12 @@ extern uint32_t kernel_end;
 
 void kernel_main(unsigned long magic_number, unsigned long addr) 
 {
+	stop_interrupts();
 	terminal_initialize();
 	process_multiboot2_tags(magic_number, addr);
 
 	init_gdt();
 	init_idt();
-	init_irq();
 	cpuid_get_brand();
 
 	cpuid_print();
@@ -53,7 +54,9 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	terminal_clean();
 	print_rtc_time();
 	shit_shell_init();
-
+	start_interrupts();
+	enable_rtc_interrupts();
+	
 	for(;;) {
     	asm("hlt");
  	}
