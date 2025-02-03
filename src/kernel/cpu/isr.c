@@ -73,5 +73,5 @@ void interrupt_handler(uint32_t interrupt_id)
             break;
     }
 
-    PIC_sendEOI(1);
+    PIC_sendEOI(interrupt_id);
 }
