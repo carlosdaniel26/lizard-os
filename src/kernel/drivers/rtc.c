@@ -21,15 +21,10 @@ const char *months_strings[] = {
     "July", "August", "September", "October", "November", "December"
 };
 
-volatile uint32_t tick_count = 0;
-
 struct RTC_timer RTC_clock;
 
 void isr_timer()
 {
-    tick_count++;
-    //printf("RTC Interrupt! Tick count: %u\n", tick_count);
-
     outb(RTC_COMMAND_PORT, 0x0C);
     inb(RTC_DATA_PORT);
 }
