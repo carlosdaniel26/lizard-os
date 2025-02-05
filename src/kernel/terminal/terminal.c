@@ -201,6 +201,8 @@ void terminal_handler_input(char scancode)
 
 		terminal_set_row(row+1);
 		terminal_set_column(0);
+		print_prompt();
+		terminal_update_cursor();
 	}
 	else
 	{
