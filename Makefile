@@ -1,3 +1,5 @@
+MAKEFLAGS += --no-print-directory
+
 CC = i686-elf-gcc
 AS = nasm
 LD = $(CC)
@@ -39,57 +41,65 @@ all: build $(OUTPUT_ISO)
 
 # Transform the BIN in a ISO to be acceptable for the bootloader
 $(OUTPUT_ISO): $(OUTPUT_BINARY)
-	cp $(OUTPUT_BINARY) $(ISO_DIR)/boot
-	grub-mkrescue -o $(OUTPUT_ISO) $(ISO_DIR)
+	@echo "(OUTPUT_ISO) Creating ISO"
+	@cp $(OUTPUT_BINARY) $(ISO_DIR)/boot
+	@grub-mkrescue -o $(OUTPUT_ISO) $(ISO_DIR) >/dev/null 2>&1
+
 
 # Linking all object files into the final binary output
 $(OUTPUT_BINARY): $(ALL_OBJ)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LIBS)
+	@echo "(LD) Linking Objects"
+	@$(LD) $(LDFLAGS) $^ -o $@ $(LIBS)
 
 # Rule for assembling the boot assembly file into an object file
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "(CC) $<"
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile each .c(C file) found on INCLUDE_DIR recursively to .Os in BUILD_DIR
 $(BUILD_DIR)/%.o: $(INCLUDE_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile each .asm(ASM) found on SRC_DIR recursively to each file .o in BUILD_DIR
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm
+	@echo "(AS) $<"
 	@mkdir -p $(dir $@)
-	$(AS) $(ASFLAGS) $< -o $@
+	@$(AS) $(ASFLAGS) $< -o $@
+	
 
 # Create the build DIR and SUBDIRs
 build:
-	mkdir -p $(BUILD_DIR)
-	mkdir -p $(ISO_DIR)/boot/grub
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(ISO_DIR)/boot/grub
 	@for dir in $(ALL_C_DIRS); do mkdir -p $(BUILD_DIR)/$$dir; done
 	@for dir in $(ALL_ASM_DIRS); do mkdir -p $(BUILD_DIR)/$$dir; done
 
 # Clean build dir
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf $(ISO_DIR)/boot/myos.bin
+	@rm -rf $(BUILD_DIR)
+	@rm -rf $(ISO_DIR)/boot/myos.bin
 
 dev:
-	$(MAKE) clean
-	$(MAKE) CFLAGS="$(CFLAGS) -g" ASFLAGS="$(ASFLAGS) -g"
-	$(MAKE) run
+	@$(MAKE) clean
+	@$(MAKE) CFLAGS="$(CFLAGS) -g" ASFLAGS="$(ASFLAGS) -g"
+	@$(MAKE) run
 debug:
-	$(MAKE) clean
-	$(MAKE)
-	$(MAKE) run-debug
+	@$(MAKE) clean
+	@$(MAKE)
+	@$(MAKE) run-debug
 
 # Target to use QEMU
 run-debug:
-	qemu-system-i386 -s -S $(QEMUFLAGS)
+	@qemu-system-i386 -s -S $(QEMUFLAGS)
+	@echo "(QEMU) Running in debug mode"
 run:
-	qemu-system-i386 $(QEMUFLAGS)
+	@qemu-system-i386 $(QEMUFLAGS)
+	@echo "(QEMU) Running in normal mode"
 
 gdb:
-	gdb -tui -ex "target remote :1234" -x script.gdb
+	@gdb -tui -ex "target remote :1234" -x script.gdb
 
 # Alvo PHONY
 .PHONY: all clean run build
