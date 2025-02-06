@@ -14,17 +14,14 @@ typedef enum {
     TASK_TERMINATED
 } task_state_t;
 
-struct Task {
-    void *kernel_stack_top;
-    void *virtual_address_space;
-    struct Task *next_task;
-    int state;
+struct task {
+    uint8_t *stack;
+    uint32_t esp;
+    uint32_t ebp;
+    uint32_t eip;
 
-    int scheduling_policy;
-    int scheduling_priority;
-    int pid;
-    char task_name[64];              /* for debugging/monitoring purposes */
-    unsigned long cpu_time_consumed; /* CPU time consumed by the task so far */
+    task_state_t state;
+    uint32_t id;
 };
 
 int create_task(struct task *task, void (*entry_point)(void));
