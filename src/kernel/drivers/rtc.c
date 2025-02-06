@@ -12,6 +12,13 @@
 /* PIC Ports*/
 #define PIC2_DATA 0xA1
 
+/* Normalize */
+#define NORMALIZE_RATE(rate) \
+        if ((rate) < 2 || (rate) > 15) { \
+            (rate) = 6; /* Default frequency (1024 Hz) */ \
+        } \
+
+
 const char *months_strings[] = {
     "Undefined",
     "January", "February", "March", "April", "May", "June",
@@ -39,9 +46,7 @@ void enable_rtc_interrupts()
     outb(RTC_DATA_PORT, prev | 0x40);   // Set bit 6 (enable periodic interrupt)
 
     // 3. Set the RTC update rate (frequency)
-    if (rate < 2 || rate > 15) {
-        rate = 6; // Default frequency (1024 Hz)
-    }
+   NORMALIZE_RATE(rate);
 
     outb(RTC_COMMAND_PORT, 0x8A);       // Select Register A
     prev = inb(RTC_DATA_PORT);          // Read current value
