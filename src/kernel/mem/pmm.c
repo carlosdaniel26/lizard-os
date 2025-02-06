@@ -111,28 +111,3 @@ void pmm_free_block(void *ptr)
 
 	ptr_unset_bit(&mem_bitmap[byte_index], bit_index);
 }
-
-void test_all_blocks()
-{
-	terminal_clean();
-	uint8_t *ptr;
-	ptr = pmm_alloc_block();
-
-	uint8_t c = 0;
-
-	while(ptr != NULL)
-	{
-		memset(ptr, 0xFF, BLOCK_SIZE);
-		ptr = pmm_alloc_block();
-		printf("ptr %u done\n", ptr);
-		
-		if (c == 10)
-		{
-			c = 0;
-			terminal_clean();
-		}
-		c++;
-	}
-	terminal_clean();
-	printf("DONE\n");
-}
