@@ -64,11 +64,13 @@ static uint8_t bcd_to_binary(uint8_t bcd)
 // 	outb(RTC_DATA_PORT, value);
 // }
 
-// static uint8_t rtc_read(uint8_t reg)
-// {
-// 	outb(RTC_COMMAND_PORT, reg);
-// 	return inb(RTC_DATA_PORT);
-// }
+static uint8_t rtc_read_b(uint8_t reg)
+{
+	outb(RTC_COMMAND_PORT, reg);
+	uint8_t result = inb(RTC_DATA_PORT);
+
+    return bcd_to_binary(result);
+}
 
 void get_rtc_time()
 {
@@ -79,10 +81,8 @@ void get_rtc_time()
     for (uint8_t reg = 0; reg <= 0xD; reg++)
     {
         // Write the register index to the RTC command port
-        outb(RTC_COMMAND_PORT, reg);
         
-        // Read the data from the RTC data port
-        RTC_array[reg] = bcd_to_binary(inb(RTC_DATA_PORT));
+        RTC_array[reg] = rtc_read_b(reg);
 
         printf("Register 0x%X: %u\n", reg, RTC_array[reg]);
     }
