@@ -149,17 +149,17 @@ void set_cursor_style(uint8_t start_line, uint8_t end_line) {
 
 void terminal_disable_cursor()
 {
-	outb(VGA_CTRL, 0x0A);
-	outb(VGA_CTRL, 0x20);
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
 }
 
 void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 {
-	outb(VGA_CTRL, 0x0A);
-	outb(VGA_CTRL, (inb(VGA_CTRL) & 0xC0) | cursor_start);
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
 
-	outb(VGA_CTRL, 0x0B);
-	outb(VGA_CTRL, (inb(VGA_CTRL) & 0xE0) | cursor_end);
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
 	set_cursor_style(0, 15);
 }
 
@@ -168,10 +168,10 @@ void terminal_update_cursor()
 {
 	uint16_t pos = terminal_row * VGA_WIDTH + (terminal_column);
 
-	outb(VGA_CTRL, 0x0F);
-	outb(VGA_CTRL, (uint8_t) (pos & 0xFF));
-	outb(VGA_CTRL, 0x0E);
-	outb(VGA_CTRL, (uint8_t) ((pos >> 8) & 0xFF));
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
 void terminal_backspace()

@@ -7,21 +7,20 @@
 #define DEFAULT_STACK_SIZE 1024
 #define STACK_END DEFAULT_STACK_SIZE - 1
 
-typedef enum {
-    TASK_RUNNING,
-    TASK_READY,
-    TASK_BLOCKED,
-    TASK_TERMINATED
-} task_state_t;
+struct Task
+{
+  void *kernel_stack_top;
+  void *virtual_address_space;
 
-struct task {
-    uint8_t *stack;
-    uint32_t esp;
-    uint32_t ebp;
-    uint32_t eip;
+  struct Task *next_task;
+  int state; // (running, waiting, ready)
 
-    task_state_t state;
-    uint32_t id;
+  // Optional fields
+  int scheduling_policy;   // Task's scheduling policy
+  int scheduling_priority; // Task's scheduling priority
+  int pid;                 // Process ID the task belongs to
+  char task_name[64];      // Task name (for debugging/monitoring purposes)
+  unsigned long cpu_time_consumed; // CPU time consumed by the task so far
 };
 
 int create_task(struct task *task, void (*entry_point)(void));
