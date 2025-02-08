@@ -2,6 +2,7 @@
 #include <kernel/terminal/vga.h>
 #include <kernel/shit-shell/ss.h>
 #include <kernel/utils/io.h>
+#include <kernel/drivers/keyboard.h>
 
 #include <string.h>
 
@@ -186,7 +187,7 @@ void terminal_handler_input(char scancode)
 {
 	char key = scancode;
 
-	if (key == 0x0E)
+	if (key == KEY_BACKSAPCE)
 	{
 		if (terminal_row == input_row_start && input_column_start < terminal_column)
 		{
@@ -198,7 +199,7 @@ void terminal_handler_input(char scancode)
 			{
 				// Come back to upper line if go to the left limit
 				terminal_row--;
-				terminal_column = VGA_WIDTH - 1
+				terminal_column = VGA_WIDTH - 1;
 			}
 
 			// If came to the start of the input, stop
@@ -214,7 +215,7 @@ void terminal_handler_input(char scancode)
 	}
 
 
-	else if (key == 0x1C)
+	else if (key == KEY_ENTER)
 	{
 		int row = terminal_get_row();
 
