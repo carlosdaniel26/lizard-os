@@ -176,14 +176,9 @@ void terminal_update_cursor()
 
 void terminal_backspace()
 {
-	if (terminal_row < input_row_start) return;
-	
-	if (terminal_column > input_column_start)
-	{
-		terminal_set_column(terminal_column - 1);
-		terminal_putchar(' ');
-		terminal_set_column(terminal_column - 1);
-	}
+	terminal_set_column(terminal_column - 1);
+	terminal_putchar(' ');
+	terminal_set_column(terminal_column - 1);
 	terminal_update_cursor();
 }
 
@@ -193,8 +188,32 @@ void terminal_handler_input(char scancode)
 
 	if (key == 0x0E)
 	{
-		terminal_backspace();
+		if (terminal_row == input_row_start && input_column_start < terminal_column)
+		{
+			terminal_backspace();
+		}
+		else if (terminal_row > input_row_start)
+		{
+			if (terminal_column == 0)
+			{
+				// Come back to upper line if go to the left limit
+				terminal_row--;
+				terminal_column = VGA_WIDTH - 1
+			}
+
+			// If came to the start of the input, stop
+			if (terminal_row == input_row_start && terminal_column < input_column_start)
+			{
+				terminal_column = input_column_start;
+			}
+			else
+			{
+				terminal_backspace();
+			}
+		}
 	}
+
+
 	else if (key == 0x1C)
 	{
 		int row = terminal_get_row();
