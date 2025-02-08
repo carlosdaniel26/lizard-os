@@ -226,7 +226,7 @@ void terminal_handler_input(char scancode)
 	}
 	else
 	{
-		if ((unsigned)scancode < 0x80) // dont handle break codes (< 0x80)
+		if ((unsigned)scancode < 0x80) // dont handle break codes (scancode >= 0x80)
 		{
 			key = convertScancode[(unsigned)scancode];
 	
