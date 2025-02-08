@@ -199,7 +199,7 @@ void terminal_handler_input(char scancode)
 			{
 				// Come back to upper line if go to the left limit
 				terminal_row--;
-				terminal_column = VGA_WIDTH - 1;
+				terminal_column = VGA_WIDTH;
 			}
 
 			// If came to the start of the input, stop
