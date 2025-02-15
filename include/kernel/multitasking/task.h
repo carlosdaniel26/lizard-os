@@ -11,20 +11,20 @@ struct task
 	void *virtual_address_space;
 
 	struct task *next_task;
-	int state; /* (running, waiting, ready)*/
+	uint32_t state; /* (running, waiting, ready)*/
 
-	unsigned long eax, ebx, ecx, edx;
-	unsigned long esi, edi, ebp;
-	unsigned long esp;			   /* Stack pointer*/
-	unsigned long eip;			   /* Instruction pointer*/
-	unsigned long eflags;			/* Flags register*/
+	uint32_t eax, ebx, ecx, edx;
+	uint32_t esi, edi, ebp;
+	uint32_t esp;			   /* Stack pointer*/
+	uint32_t eip;			   /* Instruction pointer*/
+	uint32_t eflags;			/* Flags register*/
 
 	/* Optional fields*/
 	int scheduling_policy;  /* Task's scheduling policy*/
 	int scheduling_priority;/* Task's scheduling priority*/
 	int pid;				/* Process ID the task belongs to*/
 	char name[64];		/* Task name (for debugging/monitoring purposes)*/
-	unsigned long cpu_time_consumed; /* CPU time consumed by the task so far*/
+	uint32_t cpu_time_consumed; /* CPU time consumed by the task so far*/
 };
 
 int create_task(struct task *task, void (*entry_point)(void));
@@ -36,6 +36,7 @@ void scheduler();
 void initialize_task(struct task *task, void (*entry_point)(void));
 void task_exit(void);
 uint32_t get_task_id(struct task *task);
+void print_task_state(struct task *t);
 
 
 
