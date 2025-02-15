@@ -7,12 +7,12 @@
 #define DEFAULT_STACK_SIZE 1024
 #define STACK_END DEFAULT_STACK_SIZE - 1
 
-struct Task
+struct task
 {
 	void *kernel_stack_top;
 	void *virtual_address_space;
 
-	struct Task *next_task;
+	struct task *next_task;
 	int state; /* (running, waiting, ready)*/
 
 	unsigned long eax, ebx, ecx, edx;
