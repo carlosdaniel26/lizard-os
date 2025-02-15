@@ -7,7 +7,7 @@
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/rtc.h>
 
-// ************* ISR *******************
+/* ************* ISR ********************/
 void isr_divide_by_zero() {
 	terminal_setcolor(VGA_COLOR_RED);
 	terminal_writestring("EXCEPTION: Divide by zero\n");
@@ -27,19 +27,19 @@ void isr_page_fault() {
 }
 
 void isr_stub_divide_by_zero() {
-	// Push error code and call the actual ISR
+	/* Push error code and call the actual ISR*/
 	asm volatile("push $0");
 	asm volatile("jmp isr_divide_by_zero");
 }
 
 void isr_stub_invalid_opcode() {
-	// Push error code and call the actual ISR
+	/* Push error code and call the actual ISR*/
 	asm volatile("push $0");
 	asm volatile("jmp isr_invalid_opcode");
 }
 
 void isr_stub_page_fault() {
-	// Push error code and call the actual ISR
+	/* Push error code and call the actual ISR*/
 	asm volatile("push $0");
 	asm volatile("jmp isr_page_fault");
 }

@@ -1,9 +1,9 @@
 #ifndef CPUID_H
 #define CPUID_H
 
-// Vendor strings from CPUs.
+/* Vendor strings from CPUs.*/
 #define CPUID_VENDOR_AMD		   "AuthenticAMD"
-#define CPUID_VENDOR_AMD_OLD	   "AMDisbetter!" // Early engineering samples of AMD K5 processor
+#define CPUID_VENDOR_AMD_OLD	   "AMDisbetter!" /* Early engineering samples of AMD K5 processor*/
 #define CPUID_VENDOR_INTEL		 "GenuineIntel"
 #define CPUID_VENDOR_VIA		   "VIA VIA VIA "
 #define CPUID_VENDOR_TRANSMETA	 "GenuineTMx86"
@@ -22,7 +22,7 @@
 #define CPUID_VENDOR_HYGON		 "HygonGenuine"
 #define CPUID_VENDOR_ELBRUS		"E2K MACHINE "
 
-// Vendor strings from hypervisors.
+/* Vendor strings from hypervisors.*/
 #define CPUID_VENDOR_QEMU		  "TCGTCGTCGTCG"
 #define CPUID_VENDOR_KVM		   " KVMKVMKVM  "
 #define CPUID_VENDOR_VMWARE		"VMwareVMware"
@@ -30,7 +30,7 @@
 #define CPUID_VENDOR_XEN		   "XenVMMXenVMM"
 #define CPUID_VENDOR_HYPERV		"Microsoft Hv"
 #define CPUID_VENDOR_PARALLELS	 " prl hyperv "
-#define CPUID_VENDOR_PARALLELS_ALT " lrpepyh vr " // Sometimes Parallels incorrectly encodes "prl hyperv" as "lrpepyh vr" due to an endianness mismatch.
+#define CPUID_VENDOR_PARALLELS_ALT " lrpepyh vr " /* Sometimes Parallels incorrectly encodes "prl hyperv" as "lrpepyh vr" due to an endianness mismatch.*/
 #define CPUID_VENDOR_BHYVE		 "bhyve bhyve "
 #define CPUID_VENDOR_QNX		   " QNXQVMBSQG "
 

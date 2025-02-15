@@ -13,14 +13,14 @@ struct Task
   void *virtual_address_space;
 
   struct Task *next_task;
-  int state; // (running, waiting, ready)
+  int state; /* (running, waiting, ready)*/
 
-  // Optional fields
-  int scheduling_policy;   // Task's scheduling policy
-  int scheduling_priority; // Task's scheduling priority
-  int pid;				 // Process ID the task belongs to
-  char task_name[64];	  // Task name (for debugging/monitoring purposes)
-  unsigned long cpu_time_consumed; // CPU time consumed by the task so far
+  /* Optional fields*/
+  int scheduling_policy;   /* Task's scheduling policy*/
+  int scheduling_priority; /* Task's scheduling priority*/
+  int pid;				 /* Process ID the task belongs to*/
+  char task_name[64];	  /* Task name (for debugging/monitoring purposes)*/
+  unsigned long cpu_time_consumed; /* CPU time consumed by the task so far*/
 };
 
 int create_task(struct task *task, void (*entry_point)(void));

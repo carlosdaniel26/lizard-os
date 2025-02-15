@@ -31,7 +31,7 @@ int printf(const char* restrict format, ...) {
 			while (format[amount] && format[amount] != '%')
 				amount++;
 			if (maxrem < amount) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
 			if (!print(format, amount))
@@ -47,7 +47,7 @@ int printf(const char* restrict format, ...) {
 			format++;
 			char c = (char) va_arg(parameters, int /* char promotes to int */);
 			if (!maxrem) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
 			if (!print(&c, sizeof(c)))
@@ -59,7 +59,7 @@ int printf(const char* restrict format, ...) {
 			const char* str = va_arg(parameters, const char*);
 			size_t len = strlen(str);
 			if (maxrem < len) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
 			if (!print(str, len))
@@ -71,7 +71,7 @@ int printf(const char* restrict format, ...) {
 			format+=3;
 			uint64_t number = (uint64_t) va_arg(parameters, uint64_t);
 			if (!maxrem) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
 			uint32_t size = get_unsigned2string_final_size(number);
@@ -88,7 +88,7 @@ int printf(const char* restrict format, ...) {
 			format++;
 			unsigned number = (unsigned) va_arg(parameters, unsigned);
 			if (!maxrem) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
 			uint32_t size = get_unsigned2string_final_size(number);
@@ -105,10 +105,10 @@ int printf(const char* restrict format, ...) {
 			format++;
 			unsigned number = (unsigned) va_arg(parameters, unsigned);
 			if (!maxrem) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			uint32_t size = get_unsigned2string_final_size(number) + 1; // +1 for null terminator
+			uint32_t size = get_unsigned2string_final_size(number) + 1; /* +1 for null terminator*/
 			char str[size];
 			memset(str, 0, sizeof(str));
 
@@ -121,7 +121,7 @@ int printf(const char* restrict format, ...) {
 			format = format_begun_at;
 			size_t len = strlen(format);
 			if (maxrem < len) {
-				// TODO: Set errno to EOVERFLOW.
+				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
 			if (!print(format, len))

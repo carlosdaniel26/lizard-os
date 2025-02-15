@@ -139,11 +139,11 @@ void terminal_writestring(const char* data)
 #define VGA_DATA 0x3D5
 
 void set_cursor_style(uint8_t start_line, uint8_t end_line) {
-	// Envia o índice do registrador de início
+	/* Envia o índice do registrador de início*/
 	outb(VGA_CTRL, 0x0A);
 	outb(VGA_DATA, start_line);
 
-	// Envia o índice do registrador de fim
+	/* Envia o índice do registrador de fim*/
 	outb(VGA_CTRL, 0x0B);
 	outb(VGA_DATA, end_line);
 }
@@ -197,12 +197,12 @@ void terminal_handler_input(char scancode)
 		{
 			if (terminal_column == 0)
 			{
-				// Come back to upper line if go to the left limit
+				/* Come back to upper line if go to the left limit*/
 				terminal_row--;
 				terminal_column = VGA_WIDTH;
 			}
 
-			// If came to the start of the input, stop
+			/* If came to the start of the input, stop*/
 			if (terminal_row == input_row_start && terminal_column < input_column_start)
 			{
 				terminal_column = input_column_start;
@@ -226,7 +226,7 @@ void terminal_handler_input(char scancode)
 	}
 	else
 	{
-		if ((unsigned)scancode < 0x80) // dont handle break codes (scancode >= 0x80)
+		if ((unsigned)scancode < 0x80) /* dont handle break codes (scancode >= 0x80)*/
 		{
 			key = convertScancode[(unsigned)scancode];
 

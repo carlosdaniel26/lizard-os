@@ -11,11 +11,11 @@ extern uint32_t kernel_end;
 
 void enable_paging_registers()
 {
-	// Link page table in page directory
+	/* Link page table in page directory*/
 	uint32_t *page_dir = page_directory;
 	page_dir[0] = (uintptr_t)page_table | PRESENT_WRITABLE;
 
-	// Load the page directory
+	/* Load the page directory*/
 	__asm__ volatile (
 		"mov %0, %%eax\n"
 		"mov %%eax, %%cr3\n"
@@ -24,7 +24,7 @@ void enable_paging_registers()
 		: "%eax"
 	);
 
-	// Enable paging in CR0
+	/* Enable paging in CR0*/
 	__asm__ volatile (
 		"mov %%cr0, %%eax\n"
 		"or $0x80000001, %%eax\n"
@@ -47,7 +47,7 @@ void map_page(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 
 	for (uint32_t i = 0; i < page_ammount; i++)
 	{
-		uint32_t page_dir_index = v_addr >> 22; // Get the page number
+		uint32_t page_dir_index = v_addr >> 22; /* Get the page number*/
 		if (! (page_dir_index & 1))
 		{
 			uint32_t *p_table = pmm_alloc_block();

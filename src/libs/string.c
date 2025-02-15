@@ -86,17 +86,17 @@ void unsigned_to_string(uint64_t value, char *str)
 		return;
 	}
 
-	// convert in reverse order
+	/* convert in reverse order*/
 	while (value > 0) {
-		buffer[i++] = (value % 10) + '0';   // (get last digit), convert to ASCII
-		value /= 10;						// decrease number by one decimal case
+		buffer[i++] = (value % 10) + '0';   /* (get last digit), convert to ASCII*/
+		value /= 10;						/* decrease number by one decimal case*/
 	}
 
-	// reverse
+	/* reverse*/
 	for (int j = 0; j < i; j++) {
 		str[j] = buffer[i - j - 1];
 	}
-	str[i] = '\0'; // null in the end
+	str[i] = '\0'; /* null in the end*/
 }
 
 unsigned get_unsigned2string_final_size(uint64_t value)
@@ -135,22 +135,22 @@ void unsigned_to_hexstring(uint64_t value, char *str)
 {
 	const char *hex_digits = "0123456789abcdef";
 	int index = 0;
-	char buffer[17]; // 16 digits + null terminator
+	char buffer[17]; /* 16 digits + null terminator*/
 
-	// Handle zero case
+	/* Handle zero case*/
 	if (value == 0) {
 		str[index++] = '0';
 		str[index] = '\0';
 		return;
 	}
 
-	// Convert number to hex string
+	/* Convert number to hex string*/
 	while (value > 0) {
 		buffer[index++] = hex_digits[value & 0xF];
 		value >>= 4;
 	}
 
-	// Reverse the string
+	/* Reverse the string*/
 	for (int i = 0; i < index; i++) {
 		str[i] = buffer[index - i - 1];
 	}

@@ -65,4 +65,4 @@ struct multiboot_tag_mmap {
 
 void process_multiboot2_tags(unsigned long magic_number, unsigned long addr);
 
-#endif // MULTIBOOT2_H
+#endif /* MULTIBOOT2_H*/

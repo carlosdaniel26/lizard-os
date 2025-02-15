@@ -84,7 +84,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 			}
 			break;
 			default:
-				//printf("Unknown tag type: 0x%x\n", tag->type);
+				/*printf("Unknown tag type: 0x%x\n", tag->type);*/
 				break;
 		}
 	}

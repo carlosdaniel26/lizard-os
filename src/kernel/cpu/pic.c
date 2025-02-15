@@ -27,15 +27,15 @@ extern void *isr_stub_table[];
 void PIC_remap()
 {
 	/* Start initialization of PIC */
-	outb(PIC1_COMMAND, PIC_INIT_COMMAND); // Master PIC
-	outb(PIC2_COMMAND, PIC_INIT_COMMAND); // Slave PIC
+	outb(PIC1_COMMAND, PIC_INIT_COMMAND); /* Master PIC*/
+	outb(PIC2_COMMAND, PIC_INIT_COMMAND); /* Slave PIC*/
 
 	/* Interrupt vector offsets */
-	outb(PIC1_DATA, PIC_VECTOR_OFFSET1); // (IRQ0-7) -> (32-39)
-	outb(PIC2_DATA, PIC_VECTOR_OFFSET2); // (IRQ8-15) -> (40-47)
+	outb(PIC1_DATA, PIC_VECTOR_OFFSET1); /* (IRQ0-7) -> (32-39)*/
+	outb(PIC2_DATA, PIC_VECTOR_OFFSET2); /* (IRQ8-15) -> (40-47)*/
 
 	/* Tell Master PIC there is a slave PIC at IRQ2 (0000 0100) */
-	outb(PIC1_DATA, PIC_CASCADE_CONFIG); // Master PIC
+	outb(PIC1_DATA, PIC_CASCADE_CONFIG); /* Master PIC*/
 
 	/* Tell Slave PIC its cascade identity (0000 0010) */
 	outb(PIC2_DATA, 0x02);

@@ -7,14 +7,14 @@
 #include <kernel/terminal/terminal.h>
 #include <kernel/utils/alias.h>
 
-#define BLOCK_SIZE 4096			// 4 KB pages
-#define BLOCK_SIZE_KB 4			// 4 KB pages
+#define BLOCK_SIZE 4096			/* 4 KB pages*/
+#define BLOCK_SIZE_KB 4			/* 4 KB pages*/
 
 #define MEMORY_AVAILABLE 1
 #define MEMORY_RESERVED 0
 
 struct mmap_entry_t {
-	uint32_t size; // size exclude itself when stores the size of the struct
+	uint32_t size; /* size exclude itself when stores the size of the struct*/
 
 	uint64_t addr;
 	uint64_t len;
@@ -52,7 +52,7 @@ void pmm_init()
 
 	mem_bitmap = &kernel_end + 1;
 
-	memset(mem_bitmap, 0, bitmap_size); // init the bitmap
+	memset(mem_bitmap, 0, bitmap_size); /* init the bitmap*/
 
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
 
@@ -73,22 +73,22 @@ void *pmm_alloc_block()
 {
 	uint32_t block_id = 1;
 
-	// bytes
+	/* bytes*/
 	for (uint32_t i = 0; i < bitmap_size; i++)
 	{
-		// bits
+		/* bits*/
 		for (uint32_t j = 0; j < 8; j++)
 		{
 			block_id ++;
-			// the block are free
+			/* the block are free*/
 			if (ptr_get_bit(mem_bitmap + i, j) == 0)
 			{
-				// now in use
+				/* now in use*/
 				ptr_set_bit(mem_bitmap + i, j);
 
 				return (void*)  (mem_start + (block_id * BLOCK_SIZE));
 			}
-			// the block are in use
+			/* the block are in use*/
 			else
 			{
 				continue;
