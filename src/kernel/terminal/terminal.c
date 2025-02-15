@@ -139,13 +139,13 @@ void terminal_writestring(const char* data)
 #define VGA_DATA 0x3D5
 
 void set_cursor_style(uint8_t start_line, uint8_t end_line) {
-    // Envia o índice do registrador de início
-    outb(VGA_CTRL, 0x0A);
-    outb(VGA_DATA, start_line);
+	// Envia o índice do registrador de início
+	outb(VGA_CTRL, 0x0A);
+	outb(VGA_DATA, start_line);
 
-    // Envia o índice do registrador de fim
-    outb(VGA_CTRL, 0x0B);
-    outb(VGA_DATA, end_line);
+	// Envia o índice do registrador de fim
+	outb(VGA_CTRL, 0x0B);
+	outb(VGA_DATA, end_line);
 }
 
 void terminal_disable_cursor()

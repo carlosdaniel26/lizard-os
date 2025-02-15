@@ -58,7 +58,7 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	enable_rtc_interrupts();
 	
 	for(;;) {
-    	asm("hlt");
+		asm("hlt");
  	}
 	
 }

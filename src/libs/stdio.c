@@ -137,9 +137,9 @@ int printf(const char* restrict format, ...) {
 
 int putchar(char character)
 {
-    terminal_write(&character, sizeof(character));
+	terminal_write(&character, sizeof(character));
 
-    return character;
+	return character;
 }
 
 int puts(const char*);
