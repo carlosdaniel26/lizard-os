@@ -7,8 +7,8 @@
 
 typedef struct PageDirectory {
 	/* bits 0-11 */
-	uint8_t present:      	1;	// is present in memory
-	uint8_t read_write:    	1;	// write(1) read(0)
+	uint8_t present:	  	1;	// is present in memory
+	uint8_t read_write:		1;	// write(1) read(0)
 	uint8_t user:			1;	// acess by user mode
 	uint8_t pwt:			1;	// write-through cache
 	uint8_t pcd: 			1;	// cache disable
@@ -27,8 +27,8 @@ typedef struct PageDirectory {
 typedef struct PageTable {
 
 	/* bits 0-8 */
-	uint8_t present:      	1;	// is present in memory on the moment
-	uint8_t read_write:    	1;	// write(1) read(0) permissions
+	uint8_t present:	  	1;	// is present in memory on the moment
+	uint8_t read_write:		1;	// write(1) read(0) permissions
 	uint8_t user:			1;	// acess by user (0) by all (1)
 	uint8_t pwt:			1;	// disable(0)write-through caching enable (1)
 	uint8_t pcd:			1;	// cache enable(1) cache disable (0)

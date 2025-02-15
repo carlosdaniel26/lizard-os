@@ -5,10 +5,10 @@
 typedef int (*pfnStreamWriteBuf)(char*);
 
 struct Stream {
-    size_t buf_len;
-    size_t buf_i;
-    char *buf;
-    pfnStreamWriteBuf pfn_write_all;
+	size_t buf_len;
+	size_t buf_i;
+	char *buf;
+	pfnStreamWriteBuf pfn_write_all;
 };
 
 bool print(const char* data, size_t length);
