@@ -27,3 +27,6 @@
 
 
 %define TASK_SIZE (CPU_TIME_CONSUMED + 4)
+
+.data
+	tasks:  resb MAX_TASKS * TASK_SIZE ; Alloc task[]
