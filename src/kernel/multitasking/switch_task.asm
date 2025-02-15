@@ -8,16 +8,16 @@
 %define NEXT_TASK             8
 %define STATE                 12
 
-%define EAX_OFFSET            32
-%define EBX_OFFSET            36
-%define ECX_OFFSET            40
-%define EDX_OFFSET            44
-%define ESI_OFFSET            48
-%define EDI_OFFSET            52
-%define EBP_OFFSET            56
-%define ESP_OFFSET            60
-%define EIP_OFFSET            64
-%define EFLAGS_OFFSET         68
+%define EAX            32
+%define EBX            36
+%define ECX            40
+%define EDX            44
+%define ESI            48
+%define EDI            52
+%define EBP            56
+%define ESP            60
+%define EIP            64
+%define EFLAGS         68
 
 %define SCHEDULING_POLICY     16
 %define SCHEDULING_PRIORITY   20
