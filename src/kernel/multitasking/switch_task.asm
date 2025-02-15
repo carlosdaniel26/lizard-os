@@ -30,3 +30,10 @@
 
 .data
 	tasks:  resb MAX_TASKS * TASK_SIZE ; Alloc task[]
+
+; int create_task(struct task *task, void (*entry_point)(void));
+create_task:
+	mov eax, [ebp + 8]	; task
+	mov ebx, [ebp + 12]	; entry_point
+
+	mov [eax + EIP], ebx
