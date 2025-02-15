@@ -28,10 +28,10 @@
 
 %define TASK_SIZE (CPU_TIME_CONSUMED + 4)
 
-.bss:
+section .bss:
 	tasks:  resb (MAX_TASKS * TASK_SIZE) ; Alloc task[]
 
-.text:
+section .text:
 
 ; int create_task(struct task *task, void (*entry_point)(void));
 create_task:
