@@ -28,8 +28,10 @@
 
 %define TASK_SIZE (CPU_TIME_CONSUMED + 4)
 
-.data
-	tasks:  resb MAX_TASKS * TASK_SIZE ; Alloc task[]
+.bss:
+	tasks:  resb (MAX_TASKS * TASK_SIZE) ; Alloc task[]
+
+.text:
 
 ; int create_task(struct task *task, void (*entry_point)(void));
 create_task:
@@ -37,3 +39,4 @@ create_task:
 	mov ebx, [ebp + 12]	; entry_point
 
 	mov [eax + EIP], ebx
+	ret
