@@ -4,8 +4,6 @@
 #include <stdint.h>
 
 #define MAX_TASKS 8
-#define DEFAULT_STACK_SIZE 1024
-#define STACK_END DEFAULT_STACK_SIZE - 1
 
 struct task
 {
