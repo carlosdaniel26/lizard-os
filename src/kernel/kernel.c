@@ -17,6 +17,7 @@
 #include <kernel/utils/io.h>
 #include <kernel/utils/alias.h>
 #include <kernel/shit-shell/ss.h>
+#include <kernel/multitasking/task.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -30,6 +31,8 @@
 
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
+
+extern struct task *tasks;
 
 void kernel_main(unsigned long magic_number, unsigned long addr)
 {
@@ -56,6 +59,10 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	shit_shell_init();
 	start_interrupts();
 	enable_rtc_interrupts();
+
+	tasks = pmm_alloc_block();
+
+	create_task(tasks, &cpuid_get_brand);
 
 	for(;;) {
 		asm("hlt");
