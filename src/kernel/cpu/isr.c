@@ -51,11 +51,11 @@ void interrupt_handler(uint32_t interrupt_id)
 		case 0:
 			isr_stub_divide_by_zero();
 			break;
-		
+
 		case 6:
 			isr_stub_invalid_opcode();
 			break;
-		
+
 		case 14:
 			isr_stub_page_fault();
 			break;

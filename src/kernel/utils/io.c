@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-uint8_t inb(uint16_t port) 
+uint8_t inb(uint16_t port)
 {
 	uint8_t return_value;
 
@@ -13,7 +13,7 @@ uint8_t inb(uint16_t port)
 	return return_value;
 }
 
-void outb(uint16_t port, uint8_t value) 
+void outb(uint16_t port, uint8_t value)
 {
 	__asm__ volatile (
 		"outb %b0, %w1"  // Write a byte to the specified I/O port

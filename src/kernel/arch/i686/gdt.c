@@ -5,7 +5,7 @@ gdt_entry_struct gdt_entry[5];
 
 gdt_ptr_struct gdt_ptr;
 
-void set_gdt_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity) 
+void set_gdt_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity)
 {
 	// Set the base address
 	gdt_entry[num].base_low	= (base & 0xFFFF);
@@ -19,7 +19,7 @@ void set_gdt_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_
 	gdt_entry[num].access	  = access;
 }
 
-static inline void gdt_load() 
+static inline void gdt_load()
 {
 	gdt_ptr.limit = (sizeof(gdt_entry_struct) * 5) - 1;
 	gdt_ptr.base = (uint32_t)&gdt_entry;

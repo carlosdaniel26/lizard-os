@@ -290,7 +290,7 @@ void set_idt_descriptor(uint8_t vector, void (*isr)(), uint8_t flags)
 void init_idt(void)
 {
 	PIC_remap();
-	
+
 	ptr_idt.base  = (uint32_t)&idt[0];
 	ptr_idt.limit = sizeof(idt_entry_struct) * IDT_ENTRIES - 1;
 

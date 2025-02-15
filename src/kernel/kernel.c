@@ -31,7 +31,7 @@
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
 
-void kernel_main(unsigned long magic_number, unsigned long addr) 
+void kernel_main(unsigned long magic_number, unsigned long addr)
 {
 	stop_interrupts();
 	terminal_initialize();
@@ -43,7 +43,7 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	cpuid_print();
 	pmm_init();
-	
+
 	printf("kernel_start: %u\nkernel_end: %u\n", &kernel_start, &kernel_end);
 
 	enable_paging();
@@ -56,9 +56,9 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	shit_shell_init();
 	start_interrupts();
 	enable_rtc_interrupts();
-	
+
 	for(;;) {
 		asm("hlt");
  	}
-	
+
 }

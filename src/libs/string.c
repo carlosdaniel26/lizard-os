@@ -11,7 +11,7 @@ int memcmp(const void* aptr, const void* bptr, size_t size)
 	{
 		if (a[i] != b[i])
 			return 0;
-		
+
 	}
 	return 1;
 }
@@ -28,7 +28,7 @@ void* memcpy(void* dstptr, const void* srcptr, size_t size)
 	return dstptr;
 }
 
-void* memmove(void* dstptr, const void* srcptr, size_t size) 
+void* memmove(void* dstptr, const void* srcptr, size_t size)
 {
 	unsigned char* dst = (unsigned char*) dstptr;
 	const unsigned char* src = (const unsigned char*) srcptr;
@@ -50,7 +50,7 @@ void* memset(void* pointer, int value, size_t size)
 	{
 		p[i] = (unsigned char)value;
 	}
-	
+
 	return pointer;
 }
 
@@ -75,7 +75,7 @@ bool strsIsEqual(const char *str1, const char *str2, size_t size)
 	return 1;
 }
 
-void unsigned_to_string(uint64_t value, char *str) 
+void unsigned_to_string(uint64_t value, char *str)
 {
 	char buffer[20];
 	int i = 0;
@@ -89,7 +89,7 @@ void unsigned_to_string(uint64_t value, char *str)
 	// convert in reverse order
 	while (value > 0) {
 		buffer[i++] = (value % 10) + '0';   // (get last digit), convert to ASCII
-		value /= 10;						// decrease number by one decimal case 
+		value /= 10;						// decrease number by one decimal case
 	}
 
 	// reverse
@@ -102,7 +102,7 @@ void unsigned_to_string(uint64_t value, char *str)
 unsigned get_unsigned2string_final_size(uint64_t value)
 {
 	unsigned i = 0;
-	
+
 	if (value == 0)
 		return 1;
 
@@ -118,7 +118,7 @@ unsigned get_unsigned2string_final_size(uint64_t value)
 unsigned get_u64tostring_final_size(uint64_t value)
 {
 	unsigned i = 0;
-	
+
 	if (value == 0)
 		return 1;
 
@@ -131,7 +131,7 @@ unsigned get_u64tostring_final_size(uint64_t value)
 	return i;
 }
 
-void unsigned_to_hexstring(uint64_t value, char *str) 
+void unsigned_to_hexstring(uint64_t value, char *str)
 {
 	const char *hex_digits = "0123456789abcdef";
 	int index = 0;

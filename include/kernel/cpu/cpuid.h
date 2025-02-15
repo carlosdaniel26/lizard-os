@@ -21,7 +21,7 @@
 #define CPUID_VENDOR_ZHAOXIN       "  Shanghai  "
 #define CPUID_VENDOR_HYGON         "HygonGenuine"
 #define CPUID_VENDOR_ELBRUS        "E2K MACHINE "
- 
+
 // Vendor strings from hypervisors.
 #define CPUID_VENDOR_QEMU          "TCGTCGTCGTCG"
 #define CPUID_VENDOR_KVM           " KVMKVMKVM  "

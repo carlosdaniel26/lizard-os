@@ -65,8 +65,8 @@ int printf(const char* restrict format, ...) {
 			if (!print(str, len))
 				return -1;
 			written += len;
-			
-		} 
+
+		}
 		else if (strsIsEqual(format, "llu", 3)) {
 			format+=3;
 			uint64_t number = (uint64_t) va_arg(parameters, uint64_t);

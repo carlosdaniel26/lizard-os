@@ -51,12 +51,12 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 					   ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
 					   ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
 
-					mem_ammount_kb = 
+					mem_ammount_kb =
 						((struct multiboot_tag_basic_meminfo *) tag)->mem_lower
 						+
 						((struct multiboot_tag_basic_meminfo *) tag)->mem_upper;
 
-				
+
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
 				printf("Boot device 0x%x,%u,%u\n",
@@ -78,7 +78,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 						   (unsigned) (mmap->addr & 0xffffffff),
 						   (unsigned) (mmap->len >> 32),
 						   (unsigned) (mmap->len & 0xffffffff),
-						   (unsigned) mmap->type);  
+						   (unsigned) mmap->type);
 
 				}
 			}

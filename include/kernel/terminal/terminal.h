@@ -72,6 +72,6 @@ static const char convertScancode[128] =
     0,	/* F11 Key */
     0,	/* F12 Key */
     0,	/* All other keys are undefined */
-};		
+};
 
 #endif

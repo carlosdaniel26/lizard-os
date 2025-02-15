@@ -25,7 +25,7 @@ typedef struct PageDirectory {
 } PageDirectory;
 
 typedef struct PageTable {
-	
+
 	/* bits 0-8 */
 	uint8_t present:      	1;	// is present in memory on the moment
 	uint8_t read_write:    	1;	// write(1) read(0) permissions
@@ -42,7 +42,7 @@ typedef struct PageTable {
 
 	/* bits 12-31 */
 	uint32_t address:		20;	// address
-	
+
 } PageTable;
 
 void enable_paging();

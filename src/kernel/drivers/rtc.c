@@ -33,7 +33,7 @@ void isr_timer()
 	inb(RTC_DATA_PORT);
 }
 
-void enable_rtc_interrupts() 
+void enable_rtc_interrupts()
 {
 	uint8_t rate = 6;
 	// 1. Unmask IRQ8 in the PIC
@@ -86,7 +86,7 @@ void get_rtc_time()
 	for (uint8_t reg = 0; reg <= 0xD; reg++)
 	{
 		// Write the register index to the RTC command port
-		
+
 		RTC_array[reg] = rtc_read_b(reg);
 
 		printf("Register 0x%X: %u\n", reg, RTC_array[reg]);
