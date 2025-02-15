@@ -43,6 +43,13 @@ void alloc_memory_for_tables()
 
 void map_page(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 {
+	/* Align Lenght to 4096*/
+	while(length % 4096 != 0)
+	{
+		length++;
+	}
+
+
 	uint32_t page_ammount = length / 4096;
 
 	for (uint32_t i = 0; i < page_ammount; i++)
