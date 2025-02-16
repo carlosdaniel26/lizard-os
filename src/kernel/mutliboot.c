@@ -10,7 +10,8 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 
 	if (magic_number != MULTIBOOT2_MAGIC)
 	{
-		printf("Invalid magic number: %u\n", (unsigned) magic_number);
+		printf("Invalid magic number: 0x%x\n", (unsigned) magic_number);
+		asm("hlt");
 		return;
 	}
 
