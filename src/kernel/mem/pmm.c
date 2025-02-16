@@ -77,7 +77,7 @@ void pmm_init()
 
 void *pmm_alloc_block()
 {
-	uint32_t block_id = 1;
+	uint32_t block_index = 1;
 
 	/* bytes*/
 	for (uint32_t i = 0; i < bitmap_size; i++)
@@ -85,14 +85,14 @@ void *pmm_alloc_block()
 		/* bits*/
 		for (uint32_t j = 0; j < 8; j++)
 		{
-			block_id ++;
+			block_index ++;
 			/* the block are free*/
 			if (ptr_get_bit(mem_bitmap + i, j) == 0)
 			{
 				/* now in use*/
 				ptr_set_bit(mem_bitmap + i, j);
 
-				return (void*)  (mem_start + (block_id * BLOCK_SIZE));
+				return (void*)  (mem_start + (block_index * BLOCK_SIZE));
 			}
 			/* the block are in use*/
 			else
