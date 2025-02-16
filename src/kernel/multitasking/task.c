@@ -22,6 +22,9 @@ void print_task_state(struct task *t)
             printf("Unknown\n");
             break;
     }
+    printf("kernel_stack_top %x\n", t->kernel_stack_top);
+    printf("virtual_address_space %x\n", t->virtual_address_space);
+    printf("next_task %x\n", t->next_task);
     printf("EIP: %x\n", t->eip);
     printf("EAX: %x\n", t->eax);
     printf("EBX: %x\n", t->ebx);
