@@ -5,13 +5,21 @@
 
 #define MAX_TASKS 8
 
+enum task_state {
+    TASK_READY = 0,    /* ready to be executed */
+    TASK_RUNNING = 1,  /* currently being executed */
+    TASK_WAITING = 2,  /* waiting for some event to occur */
+    TASK_EXITED = 3    /* finished execution and is exiting */
+};
+
+
 struct task
 {
 	void *kernel_stack_top;
 	void *virtual_address_space;
 
 	struct task *next_task;
-	uint32_t state; /* (running, waiting, ready)*/
+	enum task_state state;
 
 	uint32_t eax, ebx, ecx, edx;
 	uint32_t esi, edi, ebp;
