@@ -80,7 +80,7 @@ void enable_paging()
 	kernel_end = (uint32_t)&kernel_end;
 
 	alloc_memory_for_tables();
-	identity_paging(0x00, (kernel_end + (4096 * 32)));
+	identity_paging(0x00, (kernel_end + (4096 * 400)));
 
 	enable_paging_registers();
 }
