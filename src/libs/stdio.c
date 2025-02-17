@@ -141,5 +141,3 @@ int putchar(char character)
 
 	return character;
 }
-
-int puts(const char*);
