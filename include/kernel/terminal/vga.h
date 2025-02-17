@@ -1,5 +1,5 @@
-#ifndef _KERNEL_VGA_H
-#define _KERNEL_VGA_h
+#ifndef VGA_H
+#define VGA_h
 
 #include <stdint.h>
 
