@@ -29,36 +29,3 @@ extern pmm_alloc_block
 %define CPU_TIME_CONSUMED     132
 
 %define TASK_SIZE (CPU_TIME_CONSUMED + 4)
-
-
-global tasks
-
-section .text:
-
-; int create_task(struct task *task, void (*entry_point)(void));
-global create_task
-create_task:
-    push ebp
-    mov ebp, esp
-
-    ; Params
-    mov ecx, [ebp + 8]    ; task
-    mov edx, [ebp + 12]   ; entry_point
-
-    ; alloc stack (eax = stack_bottom)
-    push ecx
-    call pmm_alloc_block
-    pop ecx
-
-    ; Go to End of the Page
-    add eax, 4095
-
-    ; Create State
-
-    mov dword [ecx + r_ESP], eax    ; ESP = stack_bottom
-    mov dword [ecx + r_EBP], eax    ; ESP = stack_bottom
-
-    mov dword [ecx + r_EIP], edx    ; EIP = entry_point
-
-    pop ebp
-    ret

@@ -1,8 +1,11 @@
 #include <stdio.h>
 
 #include <kernel/multitasking/task.h>
+#include <kernel/mem/pmm.h>
 
 struct task *tasks;
+
+extern void cpuid_print();
 
 void print_task_state(struct task *t)
 {
@@ -26,6 +29,15 @@ void print_task_state(struct task *t)
 	printf("virtual_address_space 0x%x\n", t->virtual_address_space);
 	printf("next_task 0x%x\n", t->next_task);
 	printf("EIP: 0x%x\n", t->eip);
+    printf("cpuid_print: 0x%x\n", &cpuid_print);
+    if (t->eip == (uint32_t)&cpuid_print)
+    {
+        printf("SAME\n");
+    }
+    else
+    {
+        printf("N SAME\n");
+    }
 	printf("EAX: 0x%x\n", t->eax);
 	printf("EBX: 0x%x\n", t->ebx);
 	printf("ECX: 0x%x\n", t->ecx);
@@ -41,8 +53,9 @@ void print_task_state(struct task *t)
 	printf("CPU Time Consumed: %u\n", t->cpu_time_consumed);
 }
 
-void clean_tasks_state(struct task *task)
+int create_task(struct task *task, void (*entry_point)(void))
 {
+	// Clean Task
 	task->kernel_stack_top = NULL;
 	task->virtual_address_space = NULL;
 	task->next_task = NULL;
@@ -53,9 +66,6 @@ void clean_tasks_state(struct task *task)
 	task->edx = 0;
 	task->esi = 0;
 	task->edi = 0;
-	task->ebp = 0;
-	task->esp = 0;
-	task->eip = 0;
 	task->eflags = 0;
 	task->scheduling_policy = 0;
 	task->scheduling_priority = 0;
@@ -64,4 +74,16 @@ void clean_tasks_state(struct task *task)
 		task->name[i] = 0;
 	}
 	task->cpu_time_consumed = 0;
+
+	/* Create State */
+
+    uint8_t *stack_block = pmm_alloc_block();
+
+
+
+   	task->eip = (uint32_t)entry_point;
+    task->esp = (uint32_t)stack_block;
+    task->ebp = (uint32_t)stack_block;
+
+    return 1;
 }

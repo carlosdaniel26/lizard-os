@@ -37,7 +37,6 @@ void initialize_task(struct task *task, void (*entry_point)(void));
 void task_exit(void);
 uint32_t get_task_id(struct task *task);
 void print_task_state(struct task *t);
-void clean_tasks_state(struct task *task);
 
 
 
