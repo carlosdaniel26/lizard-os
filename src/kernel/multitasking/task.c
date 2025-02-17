@@ -78,12 +78,13 @@ int create_task(struct task *task, void (*entry_point)(void))
 	/* Create State */
 
     uint8_t *stack_block = pmm_alloc_block();
+    uint8_t *stack_top = stack_block + 4095;
 
 
 
    	task->eip = (uint32_t)entry_point;
-    task->esp = (uint32_t)stack_block;
-    task->ebp = (uint32_t)stack_block;
+    task->esp = (uint32_t)stack_top;
+    task->ebp = (uint32_t)stack_top;
 
     return 1;
 }
