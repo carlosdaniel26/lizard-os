@@ -13,6 +13,8 @@
 #define MEMORY_AVAILABLE 1
 #define MEMORY_RESERVED 0
 
+#define get_absolute_bid(addr) ((uintptr_t)addr / 4096)
+
 struct mmap_entry_t {
 	uint32_t size; /* size exclude itself when stores the size of the struct*/
 
@@ -91,7 +93,9 @@ void *pmm_alloc_block()
 				/* now in use*/
 				ptr_set_bit(mem_bitmap + i, j);
 
-				return (void*)  (mem_start + (block_index * BLOCK_SIZE));
+				void *addr = (void*)  (mem_start + (block_index * BLOCK_SIZE));
+
+				return addr;
 			}
 			/* the block are in use*/
 			else
