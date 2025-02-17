@@ -61,10 +61,10 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	enable_rtc_interrupts();
 
 	tasks = pmm_alloc_block();
-	clean_tasks_state(tasks);
 
-	create_task(tasks, &cpuid_get_brand);
+	create_task(tasks, &cpuid_print);
 
+	terminal_clean();
 	print_task_state(tasks);
 
 	for(;;) {
