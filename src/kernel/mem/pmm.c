@@ -85,7 +85,6 @@ void *pmm_alloc_block()
 		/* bits*/
 		for (uint32_t j = 0; j < 8; j++)
 		{
-			block_index ++;
 			/* the block are free*/
 			if (ptr_get_bit(mem_bitmap + i, j) == 0)
 			{
@@ -100,6 +99,7 @@ void *pmm_alloc_block()
 				continue;
 			}
 		}
+		block_index ++;
 	}
 
 	return NULL;
