@@ -33,13 +33,13 @@ uint8_t *mem_start;
 uint32_t bitmap_size;
 uint32_t total_blocks;
 
-void print_ammount_mem_mb()
+void kprint_ammount_mem_mb()
 {
-	printf("mem ammount: %uKB\n", mem_ammount_kb);
-	printf("blocks: %u\n", total_blocks);
-	printf("bitmap_size: %uB\n", bitmap_size);
-	printf("mem_bitmap: %uB\n", mem_bitmap);
-	printf("mem_start: %uB\n\n", mem_start);
+	kprintf("mem ammount: %uKB\n", mem_ammount_kb);
+	kprintf("blocks: %u\n", total_blocks);
+	kprintf("bitmap_size: %uB\n", bitmap_size);
+	kprintf("mem_bitmap: %uB\n", mem_bitmap);
+	kprintf("mem_start: %uB\n\n", mem_start);
 }
 
 uint32_t get_block_number(void *ptr)
@@ -74,7 +74,7 @@ void pmm_init()
 	 * [1MB][BITMAP][MEM]
 	 */
 	terminal_clean();
-	print_ammount_mem_mb();
+	kprint_ammount_mem_mb();
 }
 
 void *pmm_alloc_block()

@@ -3,7 +3,7 @@
 extern uint8_t input_column_start;
 extern uint8_t input_row_start;
 
-void print_prompt()
+void kprint_prompt()
 {
 	terminal_writestring("root: ");
 	input_column_start = terminal_get_column();
@@ -12,6 +12,6 @@ void print_prompt()
 
 void shit_shell_init()
 {
-	print_prompt();
+	kprint_prompt();
 	terminal_enable_cursor(input_column_start-1, input_row_start);
 }

@@ -3,7 +3,7 @@
 
 #include <multiboot2.h>
 
-void print_ammount_mem_mb();
+void kprint_ammount_mem_mb();
 void test_pmm();
 void pmm_init();
 void *pmm_alloc_block();

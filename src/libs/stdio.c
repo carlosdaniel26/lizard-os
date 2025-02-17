@@ -7,7 +7,7 @@
 #include <kernel/terminal/terminal.h>
 
 
-bool print(const char* data, size_t length) {
+bool kprint(const char* data, size_t length) {
 	const unsigned char* bytes = (const unsigned char*) data;
 	for (size_t i = 0; i < length; i++)
 		if (putchar(bytes[i]) == EOF)
@@ -15,7 +15,7 @@ bool print(const char* data, size_t length) {
 	return true;
 }
 
-int printf(const char* restrict format, ...) {
+int kprintf(const char* restrict format, ...) {
 	va_list parameters;
 	va_start(parameters, format);
 
@@ -34,7 +34,7 @@ int printf(const char* restrict format, ...) {
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			if (!print(format, amount))
+			if (!kprint(format, amount))
 				return -1;
 			format += amount;
 			written += amount;
@@ -50,7 +50,7 @@ int printf(const char* restrict format, ...) {
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			if (!print(&c, sizeof(c)))
+			if (!kprint(&c, sizeof(c)))
 				return -1;
 			written++;
 
@@ -62,7 +62,7 @@ int printf(const char* restrict format, ...) {
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			if (!print(str, len))
+			if (!kprint(str, len))
 				return -1;
 			written += len;
 
@@ -79,7 +79,7 @@ int printf(const char* restrict format, ...) {
 			memset(str, 0, sizeof(str));
 
 			unsigned_to_string((uint64_t)number, str);
-			if (!print(str, sizeof(str)))
+			if (!kprint(str, sizeof(str)))
 				return -1;
 			written += size;
 
@@ -96,7 +96,7 @@ int printf(const char* restrict format, ...) {
 			memset(str, 0, sizeof(str));
 
 			unsigned_to_string((uint64_t)number, str);
-			if (!print(str, sizeof(str)))
+			if (!kprint(str, sizeof(str)))
 				return -1;
 			written++;
 
@@ -113,7 +113,7 @@ int printf(const char* restrict format, ...) {
 			memset(str, 0, sizeof(str));
 
 			unsigned_to_hexstring((uint64_t)number, str);
-			if (!print(str, sizeof(str)))
+			if (!kprint(str, sizeof(str)))
 				return -1;
 			written++;
 		}
@@ -124,7 +124,7 @@ int printf(const char* restrict format, ...) {
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			if (!print(format, len))
+			if (!kprint(format, len))
 				return -1;
 			written += len;
 			format += len;

@@ -103,6 +103,6 @@ void init_cpuid();
 void get_cpuid(uint32_t code, uint32_t* output);
 void cpuid_get_brand();
 int cpuid_get_feature(uint64_t feature_id);
-void cpuid_print();
+void cpuid_kprint();
 
 #endif

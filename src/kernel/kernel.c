@@ -44,28 +44,28 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	init_idt();
 	cpuid_get_brand();
 
-	cpuid_print();
+	cpuid_kprint();
 	pmm_init();
 
-	printf("kernel_start: %u\nkernel_end: %u\n", &kernel_start, &kernel_end);
+	kprintf("kernel_start: %u\nkernel_end: %u\n", &kernel_start, &kernel_end);
 
 	enable_paging();
-	printf("initialization finished\n");
+	kprintf("initialization finished\n");
 
 	get_rtc_time();
 
 	terminal_clean();
-	print_rtc_time();
+	kprint_rtc_time();
 	shit_shell_init();
 	start_interrupts();
 	enable_rtc_interrupts();
 
 	tasks = pmm_alloc_block();
 
-	create_task(tasks, &cpuid_print);
+	create_task(tasks, &cpuid_kprint);
 
 	terminal_clean();
-	print_task_state(tasks);
+	kprint_task_state(tasks);
 
 	for(;;) {
 		asm("hlt");

@@ -5,52 +5,52 @@
 
 struct task *tasks;
 
-extern void cpuid_print();
+extern void cpuid_kprint();
 
-void print_task_state(struct task *t)
+void kprint_task_state(struct task *t)
 {
-	printf("Task Name: %s\n", t->name);
-	printf("State: ");
+	kprintf("Task Name: %s\n", t->name);
+	kprintf("State: ");
 	switch (t->state) {
 		case 0:
-			printf("Ready\n");
+			kprintf("Ready\n");
 			break;
 		case 1:
-			printf("Running\n");
+			kprintf("Running\n");
 			break;
 		case 2:
-			printf("Waiting\n");
+			kprintf("Waiting\n");
 			break;
 		default:
-			printf("Unknown\n");
+			kprintf("Unknown\n");
 			break;
 	}
-	printf("kernel_stack_top 0x%x\n", t->kernel_stack_top);
-	printf("virtual_address_space 0x%x\n", t->virtual_address_space);
-	printf("next_task 0x%x\n", t->next_task);
-	printf("EIP: 0x%x\n", t->eip);
-    printf("cpuid_print: 0x%x\n", &cpuid_print);
-    if (t->eip == (uint32_t)&cpuid_print)
+	kprintf("kernel_stack_top 0x%x\n", t->kernel_stack_top);
+	kprintf("virtual_address_space 0x%x\n", t->virtual_address_space);
+	kprintf("next_task 0x%x\n", t->next_task);
+	kprintf("EIP: 0x%x\n", t->eip);
+    kprintf("cpuid_kprint: 0x%x\n", &cpuid_kprint);
+    if (t->eip == (uint32_t)&cpuid_kprint)
     {
-        printf("SAME\n");
+        kprintf("SAME\n");
     }
     else
     {
-        printf("N SAME\n");
+        kprintf("N SAME\n");
     }
-	printf("EAX: 0x%x\n", t->eax);
-	printf("EBX: 0x%x\n", t->ebx);
-	printf("ECX: 0x%x\n", t->ecx);
-	printf("EDX: 0x%x\n", t->edx);
-	printf("ESI: 0x%x\n", t->esi);
-	printf("EDI: 0x%x\n", t->edi);
-	printf("EBP: 0x%x\n", t->ebp);
-	printf("ESP: 0x%x\n", t->esp);
-	printf("EFLAGS: 0x%x\n", t->eflags);
-	printf("Scheduling Policy: %u\n", t->scheduling_policy);
-	printf("Scheduling Priority: %u\n", t->scheduling_priority);
-	printf("PID: %u\n", t->pid);
-	printf("CPU Time Consumed: %u\n", t->cpu_time_consumed);
+	kprintf("EAX: 0x%x\n", t->eax);
+	kprintf("EBX: 0x%x\n", t->ebx);
+	kprintf("ECX: 0x%x\n", t->ecx);
+	kprintf("EDX: 0x%x\n", t->edx);
+	kprintf("ESI: 0x%x\n", t->esi);
+	kprintf("EDI: 0x%x\n", t->edi);
+	kprintf("EBP: 0x%x\n", t->ebp);
+	kprintf("ESP: 0x%x\n", t->esp);
+	kprintf("EFLAGS: 0x%x\n", t->eflags);
+	kprintf("Scheduling Policy: %u\n", t->scheduling_policy);
+	kprintf("Scheduling Priority: %u\n", t->scheduling_priority);
+	kprintf("PID: %u\n", t->pid);
+	kprintf("CPU Time Consumed: %u\n", t->cpu_time_consumed);
 }
 
 int create_task(struct task *task, void (*entry_point)(void))

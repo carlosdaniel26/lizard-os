@@ -69,7 +69,7 @@ void interrupt_handler(uint32_t interrupt_id)
 			break;
 
 		default:
-			printf("unmapped interrupt: %u\n", interrupt_id);
+			kprintf("unmapped interrupt: %u\n", interrupt_id);
 			break;
 	}
 

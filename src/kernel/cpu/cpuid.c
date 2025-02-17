@@ -51,7 +51,7 @@ int cpuid_get_feature(uint64_t feature_id)
 	return (feature_id & registers[2] & registers[3]);
 }
 
-void cpuid_print()
+void cpuid_kprint()
 {
 	terminal_writestring("Cpu brand: ");
 	terminal_writestring(cpu.brand_name);
