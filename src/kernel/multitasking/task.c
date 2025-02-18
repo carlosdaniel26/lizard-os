@@ -29,15 +29,15 @@ void kprint_task_state(struct task *t)
 	kprintf("virtual_address_space 0x%x\n", t->virtual_address_space);
 	kprintf("next_task 0x%x\n", t->next_task);
 	kprintf("EIP: 0x%x\n", t->eip);
-    kprintf("cpuid_kprint: 0x%x\n", &cpuid_kprint);
-    if (t->eip == (uint32_t)&cpuid_kprint)
-    {
-        kprintf("SAME\n");
-    }
-    else
-    {
-        kprintf("N SAME\n");
-    }
+	kprintf("cpuid_kprint: 0x%x\n", &cpuid_kprint);
+	if (t->eip == (uint32_t)&cpuid_kprint)
+	{
+		kprintf("SAME\n");
+	}
+	else
+	{
+		kprintf("N SAME\n");
+	}
 	kprintf("EAX: 0x%x\n", t->eax);
 	kprintf("EBX: 0x%x\n", t->ebx);
 	kprintf("ECX: 0x%x\n", t->ecx);
@@ -55,7 +55,7 @@ void kprint_task_state(struct task *t)
 
 int create_task(struct task *task, void (*entry_point)(void))
 {
-	// Clean Task
+	/* Clean Task*/
 	task->kernel_stack_top = NULL;
 	task->virtual_address_space = NULL;
 	task->next_task = NULL;
@@ -77,14 +77,14 @@ int create_task(struct task *task, void (*entry_point)(void))
 
 	/* Create State */
 
-    uint8_t *stack_block = pmm_alloc_block();
-    uint8_t *stack_top = stack_block + 4095;
+	uint8_t *stack_block = pmm_alloc_block();
+	uint8_t *stack_top = stack_block + 4095;
 
 
 
    	task->eip = (uint32_t)entry_point;
-    task->esp = (uint32_t)stack_top;
-    task->ebp = (uint32_t)stack_top;
+	task->esp = (uint32_t)stack_top;
+	task->ebp = (uint32_t)stack_top;
 
-    return 1;
+	return 1;
 }

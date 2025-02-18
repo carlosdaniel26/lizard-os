@@ -6,10 +6,10 @@
 #define MAX_TASKS 8
 
 enum task_state {
-    TASK_READY = 0,    /* ready to be executed */
-    TASK_RUNNING = 1,  /* currently being executed */
-    TASK_WAITING = 2,  /* waiting for some event to occur */
-    TASK_EXITED = 3    /* finished execution and is exiting */
+	TASK_READY = 0,	/* ready to be executed */
+	TASK_RUNNING = 1,  /* currently being executed */
+	TASK_WAITING = 2,  /* waiting for some event to occur */
+	TASK_EXITED = 3	/* finished execution and is exiting */
 };
 
 
