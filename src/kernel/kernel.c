@@ -56,7 +56,6 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	terminal_clean();
 	kprint_rtc_time();
-	shit_shell_init();
 	start_interrupts();
 	enable_rtc_interrupts();
 
@@ -64,8 +63,10 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	create_task(tasks, &cpuid_kprint);
 
-	terminal_clean();
 	kprint_task_state(tasks);
+	terminal_clean();
+
+	shit_shell_init();
 
 	for(;;) {
 		asm("hlt");
