@@ -61,7 +61,7 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	tasks = pmm_alloc_block();
 
-	create_task(tasks, &cpuid_kprint);
+	create_task(tasks, &cpuid_kprint, "cpuid_kprint");
 
 	kprint_task_state(tasks);
 	//terminal_clean();

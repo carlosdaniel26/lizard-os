@@ -5,6 +5,8 @@
 
 #define MAX_TASKS 8
 
+#define MAX_PROCESS_NAME 64
+
 enum task_state {
 	TASK_READY = 0,	/* ready to be executed */
 	TASK_RUNNING = 1,  /* currently being executed */
@@ -31,11 +33,11 @@ struct task
 	int scheduling_policy;  /* Task's scheduling policy*/
 	int scheduling_priority;/* Task's scheduling priority*/
 	int pid;				/* Process ID the task belongs to*/
-	char name[64];		/* Task name (for debugging/monitoring purposes)*/
+	char name[MAX_PROCESS_NAME];		/* Task name (for debugging/monitoring purposes)*/
 	uint32_t cpu_time_consumed; /* CPU time consumed by the task so far*/
 };
 
-int create_task(struct task *task, void (*entry_point)(void));
+int create_task(struct task *task, void (*entry_point)(void), const char p_name[]);
 void switch_task(struct task *current_task, struct task *next_task);
 struct task *get_current_task();
 void block_task(struct task *task);

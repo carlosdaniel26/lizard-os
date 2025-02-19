@@ -54,7 +54,7 @@ void kprint_task_state(struct task *t)
 	kprintf("CPU Time Consumed: %u\n", t->cpu_time_consumed);
 }
 
-int create_task(struct task *task, void (*entry_point)(void))
+int create_task(struct task *task, void (*entry_point)(void), const char p_name[])
 {
 	/* Clean Task*/
 	task->kernel_stack_top = NULL;
@@ -71,8 +71,8 @@ int create_task(struct task *task, void (*entry_point)(void))
 	task->scheduling_policy = 0;
 	task->scheduling_priority = 0;
 	task->pid = 0;
-	for (int i = 0; i < 64; i++) {
-		task->name[i] = 0;
+	for (int i = 0; i < MAX_PROCESS_NAME; i++) {
+		task->name[i] = p_name[i];
 	}
 	task->cpu_time_consumed = 0;
 
