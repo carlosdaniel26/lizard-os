@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <kernel/multitasking/task.h>
+#include <kernel/multitasking/pic.h>
 #include <kernel/mem/pmm.h>
 
 struct task *tasks;
@@ -76,6 +77,8 @@ int create_task(struct task *task, void (*entry_point)(void))
 	task->cpu_time_consumed = 0;
 
 	/* Create State */
+
+	task->pid = alloc_pid();
 
 	uint8_t *stack_block = pmm_alloc_block();
 	uint8_t *stack_top = stack_block + 4095;
