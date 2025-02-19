@@ -26,8 +26,8 @@ struct mmap_entry_t {
 extern uint8_t kernel_start;
 extern uint8_t kernel_end;
 
-uint64_t mem_ammount_b;
-uint64_t mem_ammount_kb;
+uint32_t mem_ammount_b;
+uint32_t mem_ammount_kb;
 uint8_t *mem_bitmap;
 uint8_t *mem_start;
 uint32_t bitmap_size;
