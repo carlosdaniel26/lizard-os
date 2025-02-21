@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <multiboot2.h>
+#define INITIAL_VM_LENGTH ( ((uint32_t)&kernel_end) + (4096 * 80) )
 
 typedef struct PageDirectory {
 	/* bits 0-11 */

@@ -1,4 +1,6 @@
 #include <stdint.h>
+
+#include <kernel/mem/vmm.h>
 #include <kernel/mem/pmm.h>
 
 #define PRESENT_WRITABLE 0x3
@@ -85,7 +87,7 @@ void enable_paging()
 	kernel_end = (uint32_t)&kernel_end;
 
 	alloc_memory_for_tables();
-	identity_paging(0x00, (kernel_end + (4096 * 80)));
+	identity_paging(0x00, INITIAL_VM_LENGTH);
 
 	enable_paging_registers();
 }
