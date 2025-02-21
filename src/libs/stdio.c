@@ -149,5 +149,5 @@ void dd(const char * restrict format, ...)
 	kprintf(format, args);
 	va_end(args);
 
-	asm("hlt");
+	die();
 }

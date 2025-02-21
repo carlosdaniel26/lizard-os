@@ -11,4 +11,6 @@
 #define start_interrupts()  asm volatile("sti")
 #define stop_interrupts()   asm volatile("cli")
 
+#define die() asm("hlt")
+
 #endif
