@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <kernel/terminal/terminal.h>
+#include <kernel/utils/alias.h>
 
 
 bool kprint(const char* data, size_t length) {
