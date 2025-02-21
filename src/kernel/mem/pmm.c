@@ -49,11 +49,13 @@ uint32_t get_block_number(void *ptr)
 
 void pmm_init()
 {
+
 	/* Align */
 	while(mem_ammount_kb % 4095 != 0)
 	{
 		mem_ammount_kb--;
 	}
+	mem_ammount_b = mem_ammount_kb * 1024;
 
 	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
 	bitmap_size = total_blocks / (8);
