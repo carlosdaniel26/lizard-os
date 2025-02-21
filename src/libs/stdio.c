@@ -141,3 +141,13 @@ int putchar(char character)
 
 	return character;
 }
+
+void dd(const char * restrict format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	kprintf(format, args);
+	va_end(args);
+
+	asm("hlt");
+}
