@@ -3,38 +3,38 @@
 #include <stddef.h>
 
 typedef enum {
-    TYPE_BOOL,
-    TYPE_INT8,
-    TYPE_INT16,
-    TYPE_INT32,
-    TYPE_INT64,
-    TYPE_FLOAT,
-    TYPE_DOUBLE,
-    TYPE_CHAR,
-    TYPE_STRING
+	TYPE_BOOL,
+	TYPE_INT8,
+	TYPE_INT16,
+	TYPE_INT32,
+	TYPE_INT64,
+	TYPE_FLOAT,
+	TYPE_DOUBLE,
+	TYPE_CHAR,
+	TYPE_STRING
 } DataType;
 
 typedef union {
-    bool b;
+	bool b;
 
-    uint8_t i8;
-    uint16_t i16;
-    uint32_t i32;
-    uint64_t i64;
+	uint8_t i8;
+	uint16_t i16;
+	uint32_t i32;
+	uint64_t i64;
 
-    float f;
-    double d;
-    char c;
-    char *s;
+	float f;
+	double d;
+	char c;
+	char *s;
 } Data;
 
 typedef struct QueueElement{
-    Data value;
+	Data value;
 } QueueElement;
 
 typedef struct Queue {
 	struct QueueElement *array;
-    DataType type;
+	DataType type;
 	size_t size;
 
 	size_t front;	/*	First pos of the Queue	*/

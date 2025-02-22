@@ -60,9 +60,9 @@ void map_page(uint32_t p_addr, uint32_t v_addr)
 
 	uint32_t pt_index = (v_addr >> 12) & 0x3FF;
 	uint32_t entry = p_addr | PRESENT_WRITABLE;
-	
+
 	page_table[pt_index] = entry;
-	
+
 }
 
 void map_pages(uint32_t p_addr, uint32_t length, uint32_t v_addr)
