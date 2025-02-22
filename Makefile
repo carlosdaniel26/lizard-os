@@ -90,6 +90,11 @@ debug:
 	@$(MAKE)
 	@$(MAKE) run-debug
 
+# Real Hardawre
+rw:
+	sudo cp $(OUTPUT_BINARY) /boot/
+
+
 # Target to use QEMU
 run-debug:
 	@qemu-system-i386 -s -S $(QEMUFLAGS)
