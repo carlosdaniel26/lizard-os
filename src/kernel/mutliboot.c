@@ -29,7 +29,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 	struct multiboot_tag *tag;
 	for (tag = (struct multiboot_tag *) (addr + 8);
 		 tag->type != MULTIBOOT_TAG_TYPE_END;
-		 tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag + ((tag->size + 7) & ~7)))
+		 tag = (struct multiboot_tag *) ((uint8_t *) tag + ((tag->size + 7) & ~7)))
 	{
 		kprintf("Tag 0x%x, Size 0x%x\n", tag->type, tag->size);
 
@@ -84,6 +84,26 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 				}
 			}
 			break;
+
+
+			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+			{
+				struct multiboot_tag_framebuffer *fb_tag = (struct multiboot_tag_framebuffer *) tag;
+				struct multiboot_tag_framebuffer_common *cfb_tag = (struct multiboot_tag_framebuffer_common *) tag;
+
+				uint32_t width = cfb_tag->width;
+				uint32_t height = cfb_tag->height;
+
+				uint32_t *fb = (uint32_t*) cfb_tag->framebuffer_addr;
+				for (uint32_t y = 0; y < height; y++) {
+					for (uint32_t x = 0; x < width; x++) {
+						fb[y * width + x] = 0xFF0000FF; // BGRA
+					}
+				}
+				while(1){}
+			}
+			break;
+
 			default:
 				/*kprintf("Unknown tag type: 0x%x\n", tag->type);*/
 				break;
