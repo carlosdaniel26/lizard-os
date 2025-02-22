@@ -17,7 +17,7 @@ enum task_state {
 
 struct task
 {
-	void *kernel_stack_top;
+	void *stack_top;
 	void *virtual_address_space;
 
 	struct task *next_task;

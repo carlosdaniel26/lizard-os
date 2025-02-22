@@ -5,7 +5,7 @@ extern pmm_alloc_block
 
 ; struct Task
 
-%define KERNEL_STACK_TOP      0
+%define STACK_TOP      0
 %define VIRTUAL_ADDRESS_SPACE  4
 
 %define NEXT_TASK             8
