@@ -81,8 +81,6 @@ void pmm_init()
 
 void *pmm_alloc_block()
 {
-	uint32_t block_index = 1;
-
 	/* bytes*/
 	for (uint32_t i = 0; i < bitmap_size; i++)
 	{
@@ -95,6 +93,7 @@ void *pmm_alloc_block()
 				/* now in use*/
 				ptr_set_bit(mem_bitmap + i, j);
 
+				uint32_t block_index = (i * 8) + j;
 				void *addr = (void*)  (mem_start + (block_index * BLOCK_SIZE));
 
 				return addr;
@@ -105,7 +104,6 @@ void *pmm_alloc_block()
 				continue;
 			}
 		}
-		block_index ++;
 	}
 
 	return NULL;
