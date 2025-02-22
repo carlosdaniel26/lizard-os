@@ -26,7 +26,7 @@ void kprint_task_state(struct task *t)
 			kprintf("Unknown\n");
 			break;
 	}
-	kprintf("kernel_stack_top 0x%x\n", t->kernel_stack_top);
+	kprintf("stack_top 0x%x\n", t->stack_top);
 	kprintf("virtual_address_space 0x%x\n", t->virtual_address_space);
 	kprintf("next_task 0x%x\n", t->next_task);
 	kprintf("EIP: 0x%x\n", t->eip);
@@ -57,7 +57,7 @@ void kprint_task_state(struct task *t)
 int create_task(struct task *task, void (*entry_point)(void), const char p_name[])
 {
 	/* Clean Task*/
-	task->kernel_stack_top = NULL;
+	task->stack_top = NULL;
 	task->virtual_address_space = NULL;
 	task->next_task = NULL;
 	task->state = 0;
