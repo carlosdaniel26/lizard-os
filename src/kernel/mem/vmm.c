@@ -1,4 +1,8 @@
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <kernel/utils/alias.h>
 
 #include <kernel/mem/vmm.h>
 #include <kernel/mem/pmm.h>
@@ -14,8 +18,6 @@ extern uint32_t kernel_end;
 void enable_paging_registers()
 {
 	/* Link page table in page directory*/
-	uint32_t *page_dir = page_directory;
-	page_dir[0] = (uintptr_t)page_table | PRESENT_WRITABLE;
 
 	/* Load the page directory*/
 	__asm__ volatile (
@@ -40,25 +42,27 @@ void enable_paging_registers()
 void alloc_memory_for_tables()
 {
 	page_directory = pmm_alloc_block();
-	page_table = pmm_alloc_block();
+	memset(page_directory, 0, PAGE_SIZE_BYTES);
 }
+
+uint32_t count = 0;
 
 void map_page(uint32_t p_addr, uint32_t v_addr)
 {
 	uint32_t pd_index = v_addr >> 22; /* Get the page number*/
 
-	if (! (pd_index & 1))
+	if (! (page_directory[pd_index] & PRESENT_WRITABLE))
 	{
-		uint32_t *p_table = pmm_alloc_block();
+		page_table = pmm_alloc_block();
 
-		page_directory[pd_index] = (uintptr_t)p_table | PRESENT_WRITABLE;
+		page_directory[pd_index] = (uintptr_t)page_table | PRESENT_WRITABLE;
 	}
 
 	uint32_t pt_index = (v_addr >> 12) & 0x3FF;
-
 	uint32_t entry = p_addr | PRESENT_WRITABLE;
 	
 	page_table[pt_index] = entry;
+	
 }
 
 void map_pages(uint32_t p_addr, uint32_t length, uint32_t v_addr)
@@ -85,9 +89,11 @@ void map_pages(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 void enable_paging()
 {
 	kernel_end = (uint32_t)&kernel_end;
+	extern uint32_t mem_ammount_b;
 
 	alloc_memory_for_tables();
-	identity_paging(0x00, INITIAL_VM_LENGTH);
+	identity_paging(0x00, mem_ammount_b);
+
 
 	enable_paging_registers();
 }

@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#define INITIAL_VM_LENGTH ( ((uint32_t)&kernel_end) + (4096 * 80) )
-
 typedef struct PageDirectory {
 	/* bits 0-11 */
 	uint8_t present:	  	1;	/* is present in memory*/
