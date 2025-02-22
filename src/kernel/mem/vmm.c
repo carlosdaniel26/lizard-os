@@ -13,8 +13,6 @@
 uint32_t *page_directory;
 uint32_t *page_table;
 
-extern uint32_t kernel_end;
-
 void enable_paging_registers()
 {
 	/* Link page table in page directory*/
@@ -88,7 +86,6 @@ void map_pages(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 
 void enable_paging()
 {
-	kernel_end = (uint32_t)&kernel_end;
 	extern uint32_t mem_ammount_b;
 
 	alloc_memory_for_tables();
