@@ -134,15 +134,15 @@ void draw_pixel(uint64_t x, uint64_t y, uint32_t color)
 
 void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character)
 {
-	uint64_t first_byte_idx = character * 16;
-	for (size_t y = 0; y < 16; y++) {
-		for (size_t x = 0; x < 8; x++) {
-			if ((font[first_byte_idx + y] >> (7 - x)) & 1)
-				draw_pixel(x_index + x, y_index + y, color);
-			else
-				draw_pixel(x_index + x, y_index + y, BG_COLOUR);
-		}
-	}
+    uint64_t first_byte_idx = character * 16;
+    uint32_t bg_color = BG_COLOUR;
+    for (size_t y = 0; y < 16; y++) {
+        uint8_t row_data = font[first_byte_idx + y];
+        for (size_t x = 0; x < 8; x++) {
+            uint32_t pixel_color = (row_data >> (7 - x)) & 1 ? color : bg_color; 
+            draw_pixel(x_index + x, y_index + y, pixel_color);
+        }
+    }
 }
 
 void print_hello(uint64_t start_x, uint64_t start_y)
