@@ -68,7 +68,7 @@ void map_pages(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 	/* Align Lenght to 4096*/
 	while(length % 4096 != 0)
 	{
-		length++;
+		length--;
 	}
 
 	uint32_t page_ammount = length / 4096;
@@ -86,10 +86,8 @@ void map_pages(uint32_t p_addr, uint32_t length, uint32_t v_addr)
 
 void enable_paging()
 {
-	extern uint32_t mem_ammount_b;
-
 	alloc_memory_for_tables();
-	identity_paging(0x00, mem_ammount_b);
+	identity_paging(0x00, 0xFFFFFFFF);
 
 
 	enable_paging_registers();

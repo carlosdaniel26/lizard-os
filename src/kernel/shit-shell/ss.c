@@ -1,8 +1,8 @@
 #include <kernel/terminal/terminal.h>
 #include <kernel/terminal/vga.h>
 
-extern uint8_t input_column_start;
-extern uint8_t input_row_start;
+extern uint32_t input_column_start;
+extern uint32_t input_row_start;
 
 void kprint_prompt()
 {

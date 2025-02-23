@@ -1,8 +1,9 @@
 #include <multiboot2.h>
 #include <kernel/terminal/terminal.h>
+#include <kernel/drivers/framebuffer.h>
 #include <stdio.h>
 
-extern uint64_t mem_ammount_kb;
+extern uint32_t mem_ammount_kb;
 
 void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 {
@@ -58,6 +59,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 						((struct multiboot_tag_basic_meminfo *) tag)->mem_upper;
 
 
+
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
 				kprintf("Boot device 0x%x,%u,%u\n",
@@ -86,22 +88,13 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 			break;
 
 
-			// case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-			// {
-			// 	struct multiboot_tag_framebuffer_common *cfb_tag = (struct multiboot_tag_framebuffer_common *) tag;
+			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+			{
+				struct multiboot_tag_framebuffer_common *cfb_tag = (struct multiboot_tag_framebuffer_common *) tag;
 
-			// 	uint32_t width = cfb_tag->width;
-			// 	uint32_t height = cfb_tag->height;
-
-			// 	uint32_t *fb = (uint32_t*) (uint32_t)cfb_tag->framebuffer_addr;
-			// 	for (uint32_t y = 0; y < height; y++) {
-			// 		for (uint32_t x = 0; x < width; x++) {
-			// 			fb[y * width + x] = 0xFF0000FF; // BGRA
-			// 		}
-			// 	}
-				
-			// }
-			// break;
+				setup_framebuffer(cfb_tag);
+			}
+			break;
 
 			default:
 				/*kprintf("Unknown tag type: 0x%x\n", tag->type);*/

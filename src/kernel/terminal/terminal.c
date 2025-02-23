@@ -3,30 +3,36 @@
 #include <kernel/shit-shell/ss.h>
 #include <kernel/utils/io.h>
 #include <kernel/drivers/keyboard.h>
+#include <kernel/drivers/framebuffer.h>
 
 #include <string.h>
+#include <stdio.h>
 
-#define DEFAULT_TEXT_FRAMEBUFFER 0xB8000
+size_t terminal_width;
+size_t terminal_height;
 
 size_t terminal_row;
 size_t terminal_column;
-uint8_t terminal_color;
-uint8_t terminal_background_color;
+uint32_t terminal_color;
+uint32_t terminal_background_color;
 uint8_t terminal_color_scheme;
 uint16_t* terminal_buffer;
 
-uint8_t input_column_start;
-uint8_t input_row_start;
+uint32_t input_column_start;
+uint32_t input_row_start;
 
 void terminal_initialize(void)
 {
+	extern uint32_t width;
+	extern uint32_t height;
+
+	terminal_width = width;
+	terminal_height = height;
+
 	terminal_row = 0;
 	terminal_column = 0;
 	terminal_set_background_color(VGA_COLOR_BLACK);
 	terminal_setcolor(VGA_COLOR_WHITE);
-
-	terminal_initialize_buffer();
-	terminal_initialize_background();
 }
 
 void terminal_set_column(int index)
@@ -49,60 +55,42 @@ int terminal_get_row()
 	return terminal_row;
 }
 
-void terminal_initialize_background(void)
-{
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color_scheme);
-		}
-	}
-}
-
 void terminal_clean(void)
 {
-	terminal_initialize_background();
 	terminal_set_row(0);
 	terminal_set_column(0);
+	clear_framebuffer();
 
 }
 
-void terminal_initialize_buffer(void)
-{
-	terminal_buffer = (uint16_t*) DEFAULT_TEXT_FRAMEBUFFER;
-}
-
-void terminal_setcolor(uint8_t color)
+void terminal_setcolor(uint32_t color)
 {
 	terminal_color = color;
-	terminal_update_color_scheme();
 }
 
-void terminal_set_background_color(uint8_t background_color)
+void terminal_set_background_color(uint32_t background_color)
 {
 	terminal_background_color = background_color;
-	terminal_update_color_scheme();
 }
 
-void terminal_update_color_scheme(void)
+void terminal_putentryat(char c, uint32_t color, size_t x, size_t y)
 {
-	terminal_color_scheme = vga_entry_color(terminal_color, terminal_background_color);
-}
-
-void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
-{
-	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, color);
+	draw_char(x * 8, y, color, c);
 }
 
 void terminal_putchar(char c)
 {
-	terminal_putentryat(c, terminal_color_scheme, terminal_column, terminal_row);
+	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == VGA_WIDTH) {
 		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
+		terminal_row++;
 	}
+
+	if (terminal_row == VGA_HEIGHT) {
+        terminal_row = VGA_HEIGHT - 1; // Reset to the last row
+    }
+
+
 	terminal_update_cursor();
 }
 
@@ -230,7 +218,14 @@ void terminal_handler_input(char scancode)
 		{
 			key = convertScancode[(unsigned)scancode];
 
-			terminal_putchar(key);
+			terminal_putentryat(key, terminal_color, ++input_column_start, input_row_start);
+
+			if (input_column_start == terminal_width)
+			{
+				input_column_start = 0;
+				input_row_start++;
+				kprintf("OP");
+			}
 		}
 	}
 }

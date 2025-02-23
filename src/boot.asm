@@ -15,12 +15,12 @@ multiboot2_header_start:
 multiboot2_header_end:
 	
 	; framebuffer_tag:
-	; dw 5                    ; Tag Type
-	; dw 0                    ; Flags
-	; dd 20                   ; Struct Size
-	; dd 1024                 ; Width of framebuffer (e.g., 1024)
-	; dd 768                  ; Height of framebuffer (e.g., 768)
-	; dd 32                   ; Depth of framebuffer (e.g., 32 bits per pixel)
+	dw 5                    ; Tag Type
+	dw 0                    ; Flags
+	dd 20                   ; Struct Size
+	dd 1024                 ; Width of framebuffer (e.g., 1024)
+	dd 768                  ; Height of framebuffer (e.g., 768)
+	dd 32                   ; Depth of framebuffer (e.g., 32 bits per pixel)
 
 	; end tag
 	align 8

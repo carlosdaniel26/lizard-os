@@ -18,6 +18,8 @@
 #include <kernel/utils/alias.h>
 #include <kernel/shit-shell/ss.h>
 #include <kernel/multitasking/task.h>
+#include <kernel/drivers/pit.h>
+#include <kernel/drivers/framebuffer.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -37,8 +39,8 @@ extern struct task *tasks;
 void kernel_main(unsigned long magic_number, unsigned long addr)
 {
 	stop_interrupts();
-	terminal_initialize();
 	process_multiboot2_tags(magic_number, addr);
+	terminal_initialize();
 
 	init_gdt();
 	init_idt();
@@ -52,24 +54,28 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	enable_paging();
 	kprintf("initialization finished\n");
 
-	get_rtc_time();
+	//get_rtc_time();
 
 	terminal_clean();
-	kprint_rtc_time();
-	start_interrupts();
+	//kprint_rtc_time();
+	shit_shell_init();
+			
+	asm("sti");
 	//enable_rtc_interrupts();
 
-	tasks = pmm_alloc_block();
+	// tasks = pmm_alloc_block();
 
-	create_task(tasks, &cpuid_kprint, "cpuid_kprint");
+	// create_task(tasks, &cpuid_kprint, "cpuid_kprint");
 
-	kprint_task_state(tasks);
-	terminal_clean();
+	// kprint_task_state(tasks);
+	// terminal_clean();
 
-	shit_shell_init();
+	//uint32_t pit_c = read_pit_count();
 
-	for(;;) {
-		asm("hlt");
- 	}
+	//kprintf("pitc: %u\n", pit_c);
+
+	while(1){
+		
+	}
 
 }
