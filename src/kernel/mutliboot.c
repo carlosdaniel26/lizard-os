@@ -86,28 +86,22 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 			break;
 
 
-			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-			{
-				struct multiboot_tag_framebuffer_common *cfb_tag = (struct multiboot_tag_framebuffer_common *) tag;
+			// case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+			// {
+			// 	struct multiboot_tag_framebuffer_common *cfb_tag = (struct multiboot_tag_framebuffer_common *) tag;
 
-				uint32_t width = cfb_tag->width;
-				uint32_t height = cfb_tag->height;
+			// 	uint32_t width = cfb_tag->width;
+			// 	uint32_t height = cfb_tag->height;
 
-				if (width != 1024)
-				{
-					while(1){}
-				}
-
-				uint32_t *fb = (uint32_t*) (uint32_t)cfb_tag->framebuffer_addr;
-				for (uint32_t y = 0; y < height; y++) {
-					for (uint32_t x = 0; x < width; x++) {
-						fb[y * width + x] = 0xFF0000FF; // BGRA
-					}
-				}
+			// 	uint32_t *fb = (uint32_t*) (uint32_t)cfb_tag->framebuffer_addr;
+			// 	for (uint32_t y = 0; y < height; y++) {
+			// 		for (uint32_t x = 0; x < width; x++) {
+			// 			fb[y * width + x] = 0xFF0000FF; // BGRA
+			// 		}
+			// 	}
 				
-				while(1){}
-			}
-			break;
+			// }
+			// break;
 
 			default:
 				/*kprintf("Unknown tag type: 0x%x\n", tag->type);*/
