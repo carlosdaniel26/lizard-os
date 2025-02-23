@@ -14,8 +14,8 @@
 
 #define IDT_ENTRIES 256
 
-idt_entry_struct idt[IDT_ENTRIES];
-idt_ptr_struct ptr_idt;
+interrupt_descriptor idt[IDT_ENTRIES];
+idt_ptr ptr_idt;
 
 bool vectors[IDT_ENTRIES];
 
@@ -276,9 +276,9 @@ extern void stub_253();
 extern void stub_254();
 extern void stub_255();
 
-idt_entry_struct create_idt_descriptor(void (*isr)(), uint8_t flags)
+interrupt_descriptor create_idt_descriptor(void (*isr)(), uint8_t flags)
 {
-	idt_entry_struct descriptor;
+	interrupt_descriptor descriptor;
 
 	descriptor.base_low  = (uint32_t)isr & 0xFFFF; /* Get just the first 16 bits*/
 	descriptor.selector  = 0x08;
@@ -294,7 +294,7 @@ void init_idt(void)
 	PIC_remap();
 
 	ptr_idt.base  = (uint32_t)&idt[0];
-	ptr_idt.limit = sizeof(idt_entry_struct) * IDT_ENTRIES - 1;
+	ptr_idt.limit = sizeof(interrupt_descriptor) * IDT_ENTRIES - 1;
 
 
 	/* Set IDT descriptors*/

@@ -25,22 +25,22 @@
  * A	 - Accessed bit
  */
 
-typedef struct gdt_entry_struct {
+typedef struct global_descriptor {
 	uint16_t limit_low;
 	uint16_t base_low;
 	uint8_t  base_middle;
 	uint8_t  access;
 	uint8_t  granularity;
 	uint8_t  base_high;
-} __attribute__((packed)) gdt_entry_struct;
+} __attribute__((packed)) global_descriptor;
 
-typedef struct gdt_ptr_struct {
+typedef struct gdt_ptr {
 	uint16_t limit;
 	uint32_t base;
-} __attribute__((packed)) gdt_ptr_struct;
+} __attribute__((packed)) gdt_ptr;
 
 void init_gdt();
-gdt_entry_struct create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
+global_descriptor create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
 void load_gdt();
 
 #endif

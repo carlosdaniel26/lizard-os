@@ -1,13 +1,13 @@
 #include <stdint.h>
 #include <kernel/arch/gdt.h>
 
-gdt_entry_struct gdt_entry[5];
+global_descriptor gdt_entry[5];
 
-gdt_ptr_struct gdt_ptr;
+gdt_ptr gdt_pointer;
 
-gdt_entry_struct create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity)
+global_descriptor create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity)
 {
-	gdt_entry_struct gdt_element;
+	global_descriptor gdt_element;
 
 	/* Set the base address*/
 	gdt_element.base_low	= (base & 0xFFFF);
@@ -25,11 +25,11 @@ gdt_entry_struct create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, 
 
 static inline void gdt_load()
 {
-	gdt_ptr.limit = (sizeof(gdt_entry_struct) * 5) - 1;
-	gdt_ptr.base = (uint32_t)&gdt_entry;
+	gdt_pointer.limit = (sizeof(global_descriptor) * 5) - 1;
+	gdt_pointer	.base = (uint32_t)&gdt_entry;
 
 	/* Load the GDT*/
-	asm volatile("lgdt %0" : : "m"(gdt_ptr));
+	asm volatile("lgdt %0" : : "m"(gdt_pointer));
 	asm volatile("mov $0x10, %%ax; \
 				  mov %%ax, %%ds; \
 				  mov %%ax, %%es; \
