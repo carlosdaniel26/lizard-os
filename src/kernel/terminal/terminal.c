@@ -218,13 +218,33 @@ void terminal_handler_input(char scancode)
 		{
 			key = convertScancode[(unsigned)scancode];
 
-			terminal_putentryat(key, terminal_color, ++input_column_start, input_row_start);
-
-			if (input_column_start == terminal_width)
+			if (key == '\t')
 			{
-				input_column_start = 0;
-				input_row_start++;
-				kprintf("OP");
+				for (uint8_t i = 0; i < 4; i++)
+				{
+					terminal_putentryat(' ', terminal_color, ++input_column_start, input_row_start);
+					terminal_putentryat(' ', terminal_color, ++input_column_start, input_row_start);
+					terminal_putentryat(' ', terminal_color, ++input_column_start, input_row_start);
+					terminal_putentryat(' ', terminal_color, ++input_column_start, input_row_start);
+
+					if (input_column_start == terminal_width)
+					{
+						input_column_start = 0;
+						input_row_start++;
+						kprintf("OP");
+					}
+				}
+			}
+			else
+			{
+				terminal_putentryat(key, terminal_color, ++input_column_start, input_row_start);
+
+				if (input_column_start == terminal_width)
+				{
+					input_column_start = 0;
+					input_row_start++;
+					kprintf("OP");
+				}
 			}
 		}
 	}
