@@ -91,9 +91,12 @@ qemu-debug:
 	@$(MAKE) run-debug
 
 debug:
-	tmux new-session -d -s qemu_session "make qemu-debug"
-	make gdb
-	tmux kill-session -t qemu_session
+	tmux new-session -d -s qemu_session
+	tmux new-window -t qemu_session:1 'make qemu-debug'
+	tmux new-window -t qemu_session:2 'make gdb; tmux kill-session -t qemu_session'
+	tmux kill-window -t qemu_session:0  # Close window 0 explicitly
+	tmux attach-session -t qemu_session
+
 
 # Real Hardawre
 rw:
