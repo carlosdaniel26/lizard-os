@@ -19,6 +19,12 @@ typedef struct idt_ptr {
 void init_idt(void);
 interrupt_descriptor create_idt_descriptor(void (*isr)(), uint8_t flags);
 
+
+
+
+
+
+
 /* stubs */
 extern void stub_0();
 extern void stub_1();
