@@ -57,7 +57,7 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	terminal_clean();
 	kprint_rtc_time();
 	start_interrupts();
-	enable_rtc_interrupts();
+	//enable_rtc_interrupts();
 
 	tasks = pmm_alloc_block();
 
