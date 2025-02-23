@@ -5,18 +5,22 @@ gdt_entry_struct gdt_entry[5];
 
 gdt_ptr_struct gdt_ptr;
 
-void set_gdt_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity)
+gdt_entry_struct create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity)
 {
+	gdt_entry_struct gdt_element;
+
 	/* Set the base address*/
-	gdt_entry[num].base_low	= (base & 0xFFFF);
-	gdt_entry[num].base_middle = (base >> 16) & 0xFF;
-	gdt_entry[num].base_high   = (base >> 24) & 0xFF;
+	gdt_element.base_low	= (base & 0xFFFF);
+	gdt_element.base_middle = (base >> 16) & 0xFF;
+	gdt_element.base_high   = (base >> 24) & 0xFF;
 
 	/* Set the limit*/
-	gdt_entry[num].limit_low   = (limit & 0xFFFF);
-	gdt_entry[num].granularity = ((limit >> 16) & 0x0F);
-	gdt_entry[num].granularity |= (granularity & 0xF0);
-	gdt_entry[num].access	  = access;
+	gdt_element.limit_low   = (limit & 0xFFFF);
+	gdt_element.granularity = ((limit >> 16) & 0x0F);
+	gdt_element.granularity |= (granularity & 0xF0);
+	gdt_element.access	  = access;
+
+	return gdt_element;
 }
 
 static inline void gdt_load()
@@ -37,13 +41,11 @@ static inline void gdt_load()
 
 void init_gdt()
 {
-	set_gdt_gate(0, 0, 0, 0, 0);
-
-	set_gdt_gate(0, 0, 0, 0, 0);				/* Null segment*/
-	set_gdt_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); /* Kernel code segment*/
-	set_gdt_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); /* Kernel data segment*/
-	set_gdt_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); /* User code segment*/
-	set_gdt_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); /* User data segment*/
+	gdt_entry[0] = create_gdt_gate(0, 0, 0, 0);				/* Null segment*/
+	gdt_entry[1] = create_gdt_gate(0, 0xFFFFFFFF, 0x9A, 0xCF); /* Kernel code segment*/
+	gdt_entry[2] = create_gdt_gate(0, 0xFFFFFFFF, 0x92, 0xCF); /* Kernel data segment*/
+	gdt_entry[3] = create_gdt_gate(0, 0xFFFFFFFF, 0xFA, 0xCF); /* User code segment*/
+	gdt_entry[4] = create_gdt_gate(0, 0xFFFFFFFF, 0xF2, 0xCF); /* User data segment*/
 
 	gdt_load();
 }

@@ -40,7 +40,7 @@ typedef struct gdt_ptr_struct {
 } __attribute__((packed)) gdt_ptr_struct;
 
 void init_gdt();
-void set_gdt_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
+gdt_entry_struct create_gdt_gate(uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
 void load_gdt();
 
 #endif

@@ -276,15 +276,17 @@ extern void stub_253();
 extern void stub_254();
 extern void stub_255();
 
-void set_idt_descriptor(uint8_t vector, void (*isr)(), uint8_t flags)
+idt_entry_struct create_idt_descriptor(void (*isr)(), uint8_t flags)
 {
-	idt_entry_struct* descriptor = &idt[vector];
+	idt_entry_struct descriptor;
 
-	descriptor->base_low  = (uint32_t)isr & 0xFFFF; /* Get just the first 16 bits*/
-	descriptor->selector  = 0x08;
-	descriptor->flags	 = flags;
-	descriptor->base_high = ((uint32_t)isr >> 16) & 0xFFFF;
-	descriptor->always0   = 0;
+	descriptor.base_low  = (uint32_t)isr & 0xFFFF; /* Get just the first 16 bits*/
+	descriptor.selector  = 0x08;
+	descriptor.flags	 = flags;
+	descriptor.base_high = ((uint32_t)isr >> 16) & 0xFFFF;
+	descriptor.always0   = 0;
+
+	return descriptor;
 }
 
 void init_idt(void)
@@ -296,11 +298,11 @@ void init_idt(void)
 
 
 	/* Set IDT descriptors*/
-	set_idt_descriptor(0,  stub_0,  0x8E);
-	set_idt_descriptor(6,  stub_6,  0x8E);
-	set_idt_descriptor(14, stub_14, 0x8E);
-	set_idt_descriptor(33, stub_33, 0x8E);  /* keyboard*/
-	set_idt_descriptor(40, stub_40, 0x8E);  /* timer*/
+	idt[0] = create_idt_descriptor(stub_0,  0x8E);
+	idt[6] = create_idt_descriptor(stub_6,  0x8E);
+	idt[14] = create_idt_descriptor(stub_14, 0x8E);
+	idt[33] = create_idt_descriptor(stub_33, 0x8E);  /* keyboard*/
+	idt[40] = create_idt_descriptor(stub_40, 0x8E);  /* timer*/
 
 
 
