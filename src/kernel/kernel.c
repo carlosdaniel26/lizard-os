@@ -18,7 +18,6 @@
 #include <kernel/utils/alias.h>
 #include <kernel/shit-shell/ss.h>
 #include <kernel/multitasking/task.h>
-#include <kernel/drivers/pit.h>
 #include <kernel/drivers/framebuffer.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
