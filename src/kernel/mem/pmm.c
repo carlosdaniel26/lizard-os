@@ -35,7 +35,7 @@ uint32_t total_blocks;
 
 void kprint_ammount_mem_mb()
 {
-	//kprintf("mem ammount: %uKB\n", mem_ammount_kb);
+	/*kprintf("mem ammount: %uKB\n", mem_ammount_kb);*/
 	kprintf("mem ammount: %uGB\n", mem_ammount_kb / 1024);
 	kprintf("blocks: %u\n", total_blocks);
 	kprintf("bitmap_size: %uB\n", bitmap_size);

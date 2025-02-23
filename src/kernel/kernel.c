@@ -54,28 +54,28 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	enable_paging();
 	kprintf("initialization finished\n");
 
-	//get_rtc_time();
+	/*get_rtc_time();*/
 
 	terminal_clean();
-	//kprint_rtc_time();
+	/*kprint_rtc_time();*/
 	shit_shell_init();
-			
+
 	asm("sti");
-	//enable_rtc_interrupts();
+	/*enable_rtc_interrupts();*/
 
-	// tasks = pmm_alloc_block();
+	/* tasks = pmm_alloc_block();*/
 
-	// create_task(tasks, &cpuid_kprint, "cpuid_kprint");
+	/* create_task(tasks, &cpuid_kprint, "cpuid_kprint");*/
 
-	// kprint_task_state(tasks);
-	// terminal_clean();
+	/* kprint_task_state(tasks);*/
+	/* terminal_clean();*/
 
-	//uint32_t pit_c = read_pit_count();
+	/*uint32_t pit_c = read_pit_count();*/
 
-	//kprintf("pitc: %u\n", pit_c);
+	/*kprintf("pitc: %u\n", pit_c);*/
 
 	while(1){
-		
+
 	}
 
 }

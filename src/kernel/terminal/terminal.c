@@ -87,8 +87,8 @@ void terminal_putchar(char c)
 	}
 
 	if (terminal_row == VGA_HEIGHT) {
-        terminal_row = VGA_HEIGHT - 1; // Reset to the last row
-    }
+		terminal_row = VGA_HEIGHT - 1; /* Reset to the last row*/
+	}
 
 
 	terminal_update_cursor();
