@@ -41,11 +41,11 @@ static inline void gdt_load()
 
 void init_gdt()
 {
-	gdt_entry[0] = create_gdt_gate(0, 0, 0, 0);				/* Null segment*/
-	gdt_entry[1] = create_gdt_gate(0, 0xFFFFFFFF, 0x9A, 0xCF); /* Kernel code segment*/
-	gdt_entry[2] = create_gdt_gate(0, 0xFFFFFFFF, 0x92, 0xCF); /* Kernel data segment*/
-	gdt_entry[3] = create_gdt_gate(0, 0xFFFFFFFF, 0xFA, 0xCF); /* User code segment*/
-	gdt_entry[4] = create_gdt_gate(0, 0xFFFFFFFF, 0xF2, 0xCF); /* User data segment*/
+	gdt_entry[0] = create_gdt_gate(0, 0, 0, 0);					/* Null segment*/
+	gdt_entry[1] = create_gdt_gate(0, 0xFFFFFFFF, 0x9A, 0xCF); 	/* Kernel code segment*/
+	gdt_entry[2] = create_gdt_gate(0, 0xFFFFFFFF, 0x92, 0xCF); 	/* Kernel data segment*/
+	gdt_entry[3] = create_gdt_gate(0, 0xFFFFFFFF, 0xFA, 0xCF); 	/* User code segment*/
+	gdt_entry[4] = create_gdt_gate(0, 0xFFFFFFFF, 0xF2, 0xCF); 	/* User data segment*/
 
 	gdt_load();
 }
