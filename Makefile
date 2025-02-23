@@ -85,10 +85,15 @@ dev:
 	@$(MAKE) clean
 	@$(MAKE) CFLAGS="$(CFLAGS) -g" ASFLAGS="$(ASFLAGS) -g"
 	@$(MAKE) run
-debug:
+qemu-debug:
 	@$(MAKE) clean
 	@$(MAKE)
 	@$(MAKE) run-debug
+
+debug:
+	tmux new-session -d -s qemu_session "make qemu-debug"
+	make gdb
+	tmux kill-session -t qemu_session
 
 # Real Hardawre
 rw:
