@@ -94,8 +94,6 @@ static inline void terminal_tab()
 	for (uint8_t i = 0; i < 4; i++)
 	{
 		terminal_putchar(' ');
-		
-
 		if (terminal_column == terminal_width)
 		{
 			terminal_column = 0;
@@ -138,7 +136,7 @@ void terminal_backspace()
 {
 	if (is_cursor_after_input())
 	{
-		terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+		terminal_putchar(' ');
 		terminal_column--;
 	}
 }
