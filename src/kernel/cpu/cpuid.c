@@ -54,11 +54,11 @@ int cpuid_get_feature(uint64_t feature_id)
 
 bool check_apic()
 {
-	uint32_t output;
+	uint32_t output[4];
 
-	cpuid(1, &output);
+	cpuid(1, output);
 
-	return output & CPUID_FEAT_EDX_APIC;
+	return output[3] & CPUID_FEAT_EDX_APIC;
 }
 
 void cpuid_kprint()
