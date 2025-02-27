@@ -1,21 +1,21 @@
 #include <kernel/terminal/terminal.h>
 #include <kernel/terminal/vga.h>
 
-extern uint32_t input_column_start;
-extern uint32_t input_row_start;
+extern size_t cmd_start_column;
+extern size_t cmd_start_row;
+extern size_t terminal_row;
+extern size_t terminal_column;
 
 void kprint_prompt()
 {
 	terminal_setcolor(VGA_COLOR_LIGHT_GREEN);
 	terminal_writestring("root: ");
 	terminal_setcolor(VGA_COLOR_WHITE);
-
-	input_column_start = terminal_get_column();
-	input_row_start = terminal_get_row();
+	cmd_start_column = terminal_column;
+	cmd_start_row = terminal_row;
 }
 
 void shit_shell_init()
 {
 	kprint_prompt();
-	terminal_enable_cursor(input_column_start-1, input_row_start);
 }
