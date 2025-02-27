@@ -138,8 +138,14 @@ void terminal_backspace()
 {
 	if (is_cursor_after_input())
 	{
-		terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+		terminal_putentryat(' ', terminal_color, terminal_column-1, terminal_row);
 		terminal_column--;
+
+		if (terminal_column == 0)
+		{
+			terminal_column = terminal_text_width;
+			terminal_row--; 
+		}
 	}
 }
 
