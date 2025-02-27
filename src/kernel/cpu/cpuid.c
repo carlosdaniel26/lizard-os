@@ -51,6 +51,15 @@ int cpuid_get_feature(uint64_t feature_id)
 	return (feature_id & registers[2] & registers[3]);
 }
 
+bool check_apic()
+{
+	uint32_t output;
+
+	get_cpuid(1, &output);
+
+	return output & CPUID_FEAT_EDX_APIC;
+}
+
 void cpuid_kprint()
 {
 	terminal_writestring("Cpu brand: ");
