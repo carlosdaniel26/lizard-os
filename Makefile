@@ -83,7 +83,7 @@ clean:
 
 dev:
 	@$(MAKE) clean
-	@$(MAKE) CFLAGS="$(CFLAGS) -g" ASFLAGS="$(ASFLAGS) -g"
+	@$(MAKE)
 	@$(MAKE) run
 qemu-debug:
 	@$(MAKE) clean
