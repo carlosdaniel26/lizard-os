@@ -19,7 +19,7 @@ LIBS = -lgcc
 CFLAGS = -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE_DIR) -I$(LIBS_DIR) -D$(ARCH) -g
 ASFLAGS = -felf32 -g
 LDFLAGS = -T $(SRC_DIR)/linker/linker.ld -ffreestanding -O2 -nostdlib -g
-QEMUFLAGS = -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt -m 4G -rtc base=localtime
+QEMUFLAGS = -cdrom $(OUTPUT_ISO) -no-reboot -d int -D qemu_log.txt -m 4G -rtc base=localtime -enable-kvm -cpu host
 
 # Find ALL C, ASM sources
 ALL_C_SOURCES := $(shell find $(SRC_DIR) $(INCLUDE_DIR) -type f -name '*.c')
