@@ -144,21 +144,3 @@ void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char characte
 		}
 	}
 }
-
-void print_hello(uint64_t start_x, uint64_t start_y)
-{
-	/* Cor azul hardcoded*/
-	uint32_t color = 0xFFFFFF;
-
-	/* Desenha cada caractere da palavra "HELLO"*/
-
-	char str[] = "HELLO";
-	for (uint32_t i = 0; i < sizeof(str) - 1; i++)
-	{
-		draw_char(start_x + i * 8, start_y, color, str[i]);
-		draw_char(start_x + i * 8, start_y, color, str[i]);
-		draw_char(start_x + i * 8, start_y, color, str[i]);
-		draw_char(start_x + i * 8, start_y, color, str[i]);
-		draw_char(start_x + i * 8, start_y, color, str[i]);
-	}
-}
