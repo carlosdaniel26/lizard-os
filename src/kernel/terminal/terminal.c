@@ -77,7 +77,7 @@ void terminal_putentryat(char c, uint32_t color, size_t x, size_t y)
 void terminal_putchar(char c)
 {
 	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == terminal_text_width) 
+	if (++terminal_column == terminal_text_width)
 	{
 		terminal_breakline();
 	}
