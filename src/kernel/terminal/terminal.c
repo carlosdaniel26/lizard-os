@@ -19,7 +19,6 @@ size_t terminal_column;
 uint32_t terminal_color;
 uint32_t terminal_background_color;
 uint8_t terminal_color_scheme;
-uint16_t* terminal_buffer;
 
 size_t cmd_start_column;
 size_t cmd_start_row;
