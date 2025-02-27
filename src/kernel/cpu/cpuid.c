@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <kernel/cpu/cpuid.h>
 #include <kernel/terminal/terminal.h>
@@ -10,7 +11,7 @@ typedef struct CPUID {
 
 CPUID cpu;
 
-void get_cpuid(uint32_t code, uint32_t *output)
+void cpuid(uint32_t code, uint32_t *output)
 {
 	__asm__ __volatile__(
 		"cpuid"
@@ -29,7 +30,7 @@ void cpuid_get_brand()
 	uint32_t registers[4];
 	unsigned eax = 0;
 
-	get_cpuid(eax, &registers[0]);
+	cpuid(eax, &registers[0]);
 
 	memcpy(&cpu.brand_name[0], &registers[1], 4);
 	memcpy(&cpu.brand_name[4], &registers[2], 4);
@@ -41,7 +42,7 @@ int cpuid_get_feature(uint64_t feature_id)
 {
 	uint32_t registers[4];
 
-	get_cpuid(0x01, &registers[0]);
+	cpuid(0x01, &registers[0]);
 
 
 	/**
@@ -55,7 +56,7 @@ bool check_apic()
 {
 	uint32_t output;
 
-	get_cpuid(1, &output);
+	cpuid(1, &output);
 
 	return output & CPUID_FEAT_EDX_APIC;
 }
