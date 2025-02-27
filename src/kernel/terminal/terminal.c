@@ -31,8 +31,8 @@ void terminal_initialize()
 	terminal_height = height;
 
 
-	terminal_text_width = width / 8;
-	terminal_text_height = height / 16;
+	terminal_text_width = width / FONT_WIDTH;
+	terminal_text_height = height / FONT_HEIGHT;
 
 	terminal_row = 0;
 	terminal_column = 0;
@@ -71,7 +71,7 @@ void terminal_set_background_color(uint32_t background_color)
 
 void terminal_putentryat(char c, uint32_t color, size_t x, size_t y)
 {
-	draw_char(x * 8, y * 16, color, c);
+	draw_char(x * FONT_WIDTH, y * FONT_HEIGHT, color, c);
 }
 
 void terminal_putchar(char c)
