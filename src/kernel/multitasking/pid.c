@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <kernel/multitasking/pic.h>
+#include <kernel/multitasking/pid.h>
 
 #define NULL_PID 0x00
 #define UNDEFINED_PID 0x00

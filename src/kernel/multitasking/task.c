@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include <kernel/multitasking/task.h>
-#include <kernel/multitasking/pic.h>
+#include <kernel/multitasking/pid.h>
 #include <kernel/mem/pmm.h>
 
 struct task *tasks;
