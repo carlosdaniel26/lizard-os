@@ -47,7 +47,16 @@ void kprint_ammount_mem_mb()
 
 static inline uint32_t pmm_block_number(void *ptr)
 {
-	return ((uintptr_t)ptr - (uintptr_t)mem_start) / BLOCK_SIZE;
+	if ((uintptr_t)ptr % 4096 == 0)
+		return ((uintptr_t)ptr - (uintptr_t)mem_start) / BLOCK_SIZE;
+
+	
+	uintptr_t addr = (uintptr_t)ptr;
+	addr = align_ptr_down(addr, BLOCK_SIZE);
+
+	uint32_t block_number = (addr - (uintptr_t)mem_start) / BLOCK_SIZE;
+
+	return block_number;
 }
 
 static inline uint32_t pmm_block_addr(uint32_t block_number)
