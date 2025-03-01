@@ -36,8 +36,8 @@ void terminal_initialize()
 
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_set_background_color(VGA_COLOR_BLACK);
-	terminal_setcolor(VGA_COLOR_WHITE);
+	terminal_set_background_color(VGA_COLOR_WHITE);
+	terminal_setcolor(VGA_COLOR_BLUE);
 }
 
 static inline bool is_cursor_after_input()

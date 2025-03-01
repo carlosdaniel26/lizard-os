@@ -7,7 +7,7 @@ uint32_t *fb;
 uint32_t height;
 uint32_t width;
 
-#define BG_COLOUR 0x00 /* Black */
+extern uint32_t terminal_background_color;
 
 static unsigned char font[] = {
 	0x00,0x00,0x00,0x3e,0x63,0x5d,0x7d,0x7b,0x77,0x77,0x7f,0x77,0x3e,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7e,0x24,0x24,0x24,0x24,0x24,0x24,0x22,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02,0x7f,0x04,0x08,
@@ -116,7 +116,7 @@ void clear_framebuffer()
 {
 	for (uint64_t i = 0; i < width * height; i++)
 	{
-		fb[i] = BG_COLOUR;
+		fb[i] = terminal_background_color;
 	}
 }
 
@@ -135,7 +135,7 @@ void draw_pixel(uint64_t x, uint64_t y, uint32_t color)
 void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character)
 {
 	uint64_t first_byte_idx = character * FONT_HEIGHT;
-	uint32_t bg_color = BG_COLOUR;
+	uint32_t bg_color = terminal_background_color;
 	for (size_t y = 0; y < FONT_HEIGHT; y++) {
 		uint8_t row_data = font[first_byte_idx + y];
 		for (size_t x = 0; x < FONT_WIDTH; x++) {
