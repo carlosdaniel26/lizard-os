@@ -36,8 +36,8 @@ void terminal_initialize()
 
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_set_background_color(VGA_COLOR_WHITE);
-	terminal_setcolor(VGA_COLOR_BLUE);
+	terminal_background_color = VGA_COLOR_WHITE;
+	terminal_color = VGA_COLOR_BLUE;
 }
 
 static inline bool is_cursor_after_input()
@@ -57,16 +57,6 @@ void terminal_clean()
 	terminal_column = 0;
 	clear_framebuffer();
 
-}
-
-void terminal_setcolor(uint32_t color)
-{
-	terminal_color = color;
-}
-
-void terminal_set_background_color(uint32_t background_color)
-{
-	terminal_background_color = background_color;
 }
 
 void terminal_putentryat(char c, uint32_t color, size_t x, size_t y)

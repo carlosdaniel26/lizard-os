@@ -7,21 +7,23 @@
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/rtc.h>
 
+extern uint32_t terminal_color;
+
 /* ************* ISR ********************/
 void isr_divide_by_zero() {
-	terminal_setcolor(VGA_COLOR_RED);
+	terminal_color = VGA_COLOR_RED;
 	terminal_writestring("EXCEPTION: Divide by zero\n");
 	asm volatile("cli; hlt");
 }
 
 void isr_invalid_opcode() {
-	terminal_setcolor(VGA_COLOR_RED);
+	terminal_color = VGA_COLOR_RED;
 	terminal_writestring("EXCEPTION: Invalid opcode\n");
 	asm volatile("cli; hlt");
 }
 
 void isr_page_fault() {
-	terminal_setcolor(VGA_COLOR_RED);
+	terminal_color = VGA_COLOR_RED;
 	terminal_writestring("EXCEPTION: Page fault\n");
 	asm volatile("cli; hlt");
 }

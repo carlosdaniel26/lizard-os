@@ -8,8 +8,6 @@
 
 void terminal_initialize();
 void terminal_clean();
-void terminal_setcolor(uint32_t color);
-void terminal_set_background_color(uint32_t background_color);
 void terminal_putentryat(char c, uint32_t color, size_t x, size_t y);
 void terminal_putchar(char c);
 void terminal_breakline();
