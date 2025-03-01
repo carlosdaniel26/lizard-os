@@ -51,8 +51,6 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	start_interrupts();
 
-	kprintf("\n");
-
 	while(1){}
 
 }
