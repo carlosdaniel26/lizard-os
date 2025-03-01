@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <kernel/mem/pmm.h>
 #include <multiboot2.h>
@@ -43,9 +44,33 @@ void kprint_ammount_mem_mb()
 	kprintf("mem_start: %uB\n\n", mem_start);
 }
 
-uint32_t get_block_number(void *ptr)
+static inline uint32_t pmm_block_number(void *ptr)
 {
 	return ((uintptr_t)ptr - (uintptr_t)mem_start) / BLOCK_SIZE;
+}
+
+static inline uint32_t pmm_block_addr(uint32_t block_number)
+{
+	return (uintptr_t)mem_start + (block_number * BLOCK_SIZE);
+}
+
+#define AVAILABLE 0
+#define RESERVED 1
+
+static inline bool pmm_check_block(uint32_t block_number)
+{
+	uint32_t byte_index = block_number / 8;
+	uint32_t bit_index  = block_number % 8;
+
+	return ptr_get_bit(mem_bitmap + byte_index, bit_index);
+}
+
+static inline void pmm_reserve_block(uint32_t block_number)
+{
+	uint32_t byte_index = block_number / 8;
+	uint32_t bit_index  = block_number % 8;
+
+	ptr_set_bit(mem_bitmap + byte_index, bit_index);
 }
 
 void pmm_init()
@@ -83,27 +108,21 @@ void pmm_init()
 void *pmm_alloc_block()
 {
 	/* bytes*/
-	for (uint32_t i = 0; i < bitmap_size; i++)
+	for (uint32_t block = 0; block < bitmap_size; block++)
 	{
-		/* bits*/
-		for (uint32_t j = 0; j < 8; j++)
+		/* the block are free*/
+		if (pmm_check_block(block) == AVAILABLE)
 		{
-			/* the block are free*/
-			if (ptr_get_bit(mem_bitmap + i, j) == 0)
-			{
-				/* now in use*/
-				ptr_set_bit(mem_bitmap + i, j);
+			pmm_reserve_block(block);
 
-				uint32_t block_index = (i * 8) + j;
-				void *addr = (void*)  (mem_start + (block_index * BLOCK_SIZE));
+			void *addr = (void*)  pmm_block_addr(block);
 
-				return addr;
-			}
-			/* the block are in use*/
-			else
-			{
-				continue;
-			}
+			return addr;
+		}
+		/* the block are in use*/
+		else
+		{
+			continue;
 		}
 	}
 
@@ -112,7 +131,7 @@ void *pmm_alloc_block()
 
 void pmm_free_block(void *ptr)
 {
-	uint32_t block_number = get_block_number(ptr);
+	uint32_t block_number = pmm_block_number(ptr);
 
 	if ( block_number >= total_blocks)
 		return;
