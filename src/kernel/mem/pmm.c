@@ -7,6 +7,7 @@
 #include <multiboot2.h>
 #include <kernel/terminal/terminal.h>
 #include <kernel/utils/alias.h>
+#include <kernel/utils/helpers.h>
 
 #define BLOCK_SIZE 4096			/* 4 KB pages*/
 #define BLOCK_SIZE_KB 4			/* 4 KB pages*/
@@ -76,11 +77,8 @@ static inline void pmm_reserve_block(uint32_t block_number)
 void pmm_init()
 {
 
-	/* Align */
-	while(mem_ammount_kb % 4095 != 0)
-	{
-		mem_ammount_kb--;
-	}
+	mem_ammount_kb = align_down(mem_ammount_kb, BLOCK_SIZE_KB);
+
 	mem_ammount_b = mem_ammount_kb * 1024;
 
 	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
@@ -92,11 +90,7 @@ void pmm_init()
 
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
 
-	/* Align 4096 */
-	while((uintptr_t)mem_start % 4096 != 0)
-	{
-		mem_start++;
-	}
+	mem_start = align_ptr_up(mem_start, BLOCK_SIZE);
 
 	/**
 	 * [1MB][BITMAP][MEM]
