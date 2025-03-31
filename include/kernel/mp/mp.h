@@ -9,7 +9,7 @@ struct mp {             // floating pointer
   unsigned char reserved[3];
 };
 
-struct mpconf {         // configuration table header
+struct mpconfig {         // configuration table header
   unsigned char signature[4];           // "PCMP"
   unsigned short length;                // total table length
   unsigned char version;                // [14]
