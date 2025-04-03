@@ -41,15 +41,20 @@ void terminal_initialize()
 	terminal_color = VGA_COLOR_BLUE;
 }
 
-static inline bool is_cursor_after_input()
+static inline bool is_pos_after_input(unsigned row, unsigned col)
 {
-	if (terminal_row > cmd_start_row)
+	if (row > cmd_start_row)
 		return true;
 
-	if (terminal_row == cmd_start_row && terminal_column > cmd_start_column)
+	if (row == cmd_start_row && col > cmd_start_column)
 		return true;
 
 	return false;
+}
+
+static inline bool is_cursor_after_input()
+{
+	return is_pos_after_input(terminal_row, terminal_column);
 }
 
 void terminal_clean()
