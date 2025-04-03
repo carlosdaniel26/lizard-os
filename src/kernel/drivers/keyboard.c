@@ -2,7 +2,7 @@
 
 #include <kernel/arch/idt.h>
 #include <kernel/utils/io.h>
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/cpu/pic.h>
 
 #define KEYBOARD_DATA_PORT 0x60

@@ -1,18 +1,16 @@
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 #include <kernel/mp/mp.h>
 
-static unsigned char sum(unsigned char *addr, int len)
+static unsigned int sum(unsigned char *addr, int len)
 {
-	int i, sum;
-
-	sum = 0;
-	for(i=0; i<len; i++)
+	int i, sum = 0;
+	for(i = 0; i < len; i++)
 		sum += addr[i];
 
 	return sum;
 }
-
 
 static struct mp* mp_search1(unsigned a, int len)
 {
@@ -26,7 +24,7 @@ static struct mp* mp_search1(unsigned a, int len)
 			return (struct mp *)ptr;
 	}
 	
-	return 0;
+	return NULL;
 }
 
 static struct mp* mp_search(void)
@@ -35,33 +33,66 @@ static struct mp* mp_search(void)
 	unsigned int ptr;
 	struct mp *mp;
 
-	// Base Data Area
-	bda = 0x400;
+	// Correctly cast the Base Data Area pointer
+	bda = (unsigned char *)0x400;
 
-
-    // First check: Look at the floppy drive information in the BDA
-    // The bytes at offsets 0x0F and 0x0E hold the physical address (multiplied by 16) of the MP floating pointer structure
-    // The offset 0x0F holds the high byte, and 0x0E holds the low byte
-
+	// First check: Look at the floppy drive information in the BDA
 	ptr = ((bda[0x0F] << 8) | bda[0x0E]) << 4;
 
-	if(ptr)
+	if (ptr)
 	{
-		// If a valid address is found (non-zero), search within the first 1 KB of memory starting at that address
-		if((mp = mp_search1(ptr, 1024)))
+		// If a valid address is found, search within the first 1 KB of memory
+		if ((mp = mp_search1(ptr, 1024)))
 			return mp;
 	}
-
-	else 
+	else
 	{
-		// Second check: If no address was found, look for the physical address in memory starting at offset 0x14 and 0x13
-        // These bytes hold the base address of the MP structure, in kilobytes (multiplied by 1024 to get the byte address)
-		
-		ptr = ((bda[0x14] << 8) | bda[0x13])  * 1024;
-		if((mp = mp_search1(ptr-1024, 1024)))
+		// Second check: Look for base address in memory offsets 0x14 and 0x13
+		ptr = ((bda[0x14] << 8) | bda[0x13]) * 1024;
+		if ((mp = mp_search1(ptr - 1024, 1024)))
 			return mp;
+	
 	}
-
 	// Fallback: Search in the BIOS ROM area (0xF0000 to 0xFFFFF)
 	return mp_search1(0xF0000, 0x10000);
+}
+
+static struct mpconfig *mpconfig(struct mp **mp_ptr)
+{
+	struct mpconfig *config;
+	struct mp *mp;
+
+	if ((mp = mp_search()) == NULL || mp->physaddr == 0)
+	{
+		kprintf("MP not found\n");
+		return NULL;
+	}
+
+	config = (struct mpconfig *)(mp->physaddr);
+
+	// Validate MP configuration
+	if (memcmp(config, "PCMP", 4) != 0)
+		return NULL;
+	if (config->version != 1 && config->version != 4)
+		return NULL;
+	if (sum((unsigned char*)config, config->length) != 0)
+		return NULL;
+
+	// Store found MP pointer only if `mp_ptr` is not NULL
+	if (mp_ptr)
+		*mp_ptr = mp;
+
+	return config;
+}
+
+void mp_init(void)
+{
+	struct mp *mp;
+	struct mpconfig *config;
+
+	if ((config = mpconfig(&mp)) == NULL)
+	{
+		kprintf("MP config not found\n");
+		return;
+	}
 }

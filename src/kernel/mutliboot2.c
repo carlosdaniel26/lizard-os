@@ -1,5 +1,5 @@
 #include <multiboot2.h>
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/drivers/framebuffer.h>
 #include <stdio.h>
 

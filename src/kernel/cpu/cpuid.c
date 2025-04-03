@@ -2,7 +2,7 @@
 #include <stdbool.h>
 
 #include <kernel/cpu/cpuid.h>
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <string.h>
 
 typedef struct CPUID {

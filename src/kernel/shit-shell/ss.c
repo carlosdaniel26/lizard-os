@@ -1,4 +1,4 @@
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/terminal/vga.h>
 
 extern size_t cmd_start_column;

@@ -5,7 +5,7 @@
 
 #include <kernel/utils/alias.h>
 #include <kernel/arch/idt.h>
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/terminal/vga.h>
 #include <kernel/drivers/keyboard.h>
 #include <kernel/utils/io.h>

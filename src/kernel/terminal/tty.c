@@ -1,4 +1,4 @@
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/terminal/vga.h>
 #include <kernel/shit-shell/ss.h>
 #include <kernel/utils/io.h>
@@ -6,6 +6,7 @@
 #include <kernel/drivers/framebuffer.h>
 
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 size_t terminal_width;

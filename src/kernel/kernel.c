@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include <multiboot2.h>
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/arch/gdt.h>
 #include <kernel/arch/idt.h>
 #include <kernel/cpu/cpuid.h>
@@ -19,6 +19,7 @@
 #include <kernel/shit-shell/ss.h>
 #include <kernel/multitasking/task.h>
 #include <kernel/drivers/framebuffer.h>
+#include <kernel/mp/mp.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -50,6 +51,7 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	shit_shell_init();
 
 	start_interrupts();
+	//mp_init();
 
 	while(1){}
 

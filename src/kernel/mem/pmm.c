@@ -5,7 +5,7 @@
 
 #include <kernel/mem/pmm.h>
 #include <multiboot2.h>
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/utils/alias.h>
 #include <kernel/utils/helpers.h>
 

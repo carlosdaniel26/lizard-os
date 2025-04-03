@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <kernel/terminal/terminal.h>
+#include <kernel/terminal/tty.h>
 #include <kernel/terminal/vga.h>
 #include <kernel/cpu/pic.h>
 
