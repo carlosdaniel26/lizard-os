@@ -155,8 +155,7 @@ void terminal_handler_input(char scancode)
 
 	else if (scancode == KEY_ENTER)
 	{
-		int row = terminal_row;
-		terminal_row = row + 1;
+		terminal_row += 1;
 		terminal_column = 0;
 		kprint_prompt();
 	}
