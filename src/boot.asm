@@ -37,6 +37,7 @@ _start:
 	push eax
 	extern kernel_main
 	call kernel_main
-
-	cli
+	
+	loop:
 	hlt
+	jmp loop

@@ -52,7 +52,4 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	start_interrupts();
 	//mp_init();
-
-	while(1){}
-
 }
