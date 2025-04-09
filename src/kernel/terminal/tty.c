@@ -23,7 +23,7 @@ uint32_t terminal_background_color;
 size_t cmd_start_column;
 size_t cmd_start_row;
 
-void terminal_initialize()
+void tty_initialize()
 {
 	extern uint32_t width;
 	extern uint32_t height;
@@ -57,7 +57,7 @@ static inline bool is_cursor_after_input()
 	return is_pos_after_input(terminal_row, terminal_column);
 }
 
-void terminal_clean()
+void tty_clean()
 {
 	terminal_row = 0;
 	terminal_column = 0;
@@ -65,31 +65,31 @@ void terminal_clean()
 
 }
 
-void terminal_putentryat(char c, uint32_t color, size_t x, size_t y)
+void tty_putentryat(char c, uint32_t color, size_t x, size_t y)
 {
 	draw_char(x * FONT_WIDTH, y * FONT_HEIGHT, color, c);
 }
 
-void terminal_putchar(char c)
+void tty_putchar(char c)
 {
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
+	tty_putentryat(c, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == terminal_text_width)
 	{
-		terminal_breakline();
+		tty_breakline();
 	}
 }
 
-void terminal_breakline()
+void tty_breakline()
 {
 	terminal_row++;
 	terminal_column = 0;
 }
 
-static inline void terminal_tab()
+static inline void tty_tab()
 {
 	for (uint8_t i = 0; i < 4; i++)
 	{
-		terminal_putchar(' ');
+		tty_putchar(' ');
 		
 
 		if (terminal_column == terminal_width)
@@ -108,33 +108,33 @@ static inline bool is_ascii_character(char c)
 	return false;
 }
 
-void terminal_write(const char* data, size_t size)
+void tty_write(const char* data, size_t size)
 {
 	for (size_t i = 0; i < size; i++)
 	{
 		if (data[i] == '\n')
 		{
-			terminal_breakline();
+			tty_breakline();
 			i+=1;
 		}
 
 		else
 		{
-			terminal_putchar(data[i]);
+			tty_putchar(data[i]);
 		}
 	}
 }
 
-void terminal_writestring(const char* data)
+void tty_writestring(const char* data)
 {
-	terminal_write(data, strlen(data));
+	tty_write(data, strlen(data));
 }
 
-void terminal_backspace()
+void tty_backspace()
 {
 	if (is_cursor_after_input())
 	{
-		terminal_putentryat(' ', terminal_color, terminal_column-1, terminal_row);
+		tty_putentryat(' ', terminal_color, terminal_column-1, terminal_row);
 		terminal_column--;
 
 		if (terminal_column == 0)
@@ -145,12 +145,12 @@ void terminal_backspace()
 	}
 }
 
-void terminal_handler_input(char scancode)
+void tty_handler_input(char scancode)
 {
 
 	if (scancode == KEY_BACKSAPCE)
 	{
-		terminal_backspace();
+		tty_backspace();
 	}
 
 	else if (scancode == KEY_ENTER)
@@ -165,15 +165,15 @@ void terminal_handler_input(char scancode)
 
 		if (c == '\t')
 		{
-			terminal_tab();
+			tty_tab();
 		}
 		else if (is_ascii_character(c))
 		{
-			terminal_putchar(c);
+			tty_putchar(c);
 
 			if (terminal_column == terminal_text_width)
 			{
-				terminal_breakline();
+				tty_breakline();
 			}
 		}
 	}

@@ -138,7 +138,7 @@ int kprintf(const char* restrict format, ...) {
 
 int putchar(char character)
 {
-	terminal_write(&character, sizeof(character));
+	tty_write(&character, sizeof(character));
 
 	return character;
 }

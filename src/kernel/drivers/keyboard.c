@@ -11,5 +11,5 @@ void isr_keyboard()
 {
 	uint8_t scancode = inb(KEYBOARD_DATA_PORT);
 
-	terminal_handler_input(scancode);
+	tty_handler_input(scancode);
 }

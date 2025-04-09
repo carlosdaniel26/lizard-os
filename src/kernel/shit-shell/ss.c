@@ -13,7 +13,7 @@ void kprint_prompt()
 {
 	terminal_background_color = VGA_COLOR_WHITE;
 	terminal_color = VGA_COLOR_BLUE;
-	terminal_writestring("root: ");
+	tty_writestring("root: ");
 	terminal_color = VGA_COLOR_BLACK;
 	cmd_start_column = terminal_column;
 	cmd_start_row = terminal_row;

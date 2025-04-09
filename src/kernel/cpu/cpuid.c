@@ -63,7 +63,7 @@ bool check_apic()
 
 void cpuid_kprint()
 {
-	terminal_writestring("Cpu brand: ");
-	terminal_writestring(cpu.brand_name);
-	terminal_writestring("\n");
+	tty_writestring("Cpu brand: ");
+	tty_writestring(cpu.brand_name);
+	tty_writestring("\n");
 }

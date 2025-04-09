@@ -113,7 +113,7 @@ void pmm_init()
 	/**
 	 * [1MB][BITMAP][MEM]
 	 */
-	terminal_clean();
+	tty_clean();
 	kprint_ammount_mem_mb();
 }
 

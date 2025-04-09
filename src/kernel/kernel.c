@@ -40,14 +40,14 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 {
 	stop_interrupts();
 	process_multiboot2_tags(magic_number, addr);
-	terminal_initialize();
+	tty_initialize();
 
 	init_gdt();
 	init_idt();
 	pmm_init();
 	enable_paging();
 	kmalloc_init();
-	terminal_clean();
+	tty_clean();
 	shit_shell_init();
 
 	start_interrupts();

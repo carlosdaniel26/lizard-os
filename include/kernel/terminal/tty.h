@@ -6,15 +6,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void terminal_initialize();
-void terminal_clean();
-void terminal_putentryat(char c, uint32_t color, size_t x, size_t y);
-void terminal_putchar(char c);
-void terminal_breakline();
-void terminal_write(const char* data, size_t size);
-void terminal_writestring(const char* data);
-void terminal_handler_input(char scancode);
-void terminal_backspace();
+void tty_initialize();
+void tty_clean();
+void tty_putentryat(char c, uint32_t color, size_t x, size_t y);
+void tty_putchar(char c);
+void tty_breakline();
+void tty_write(const char* data, size_t size);
+void tty_writestring(const char* data);
+void tty_handler_input(char scancode);
+void tty_backspace();
 
 /* KBDUS means US Keyboard Layout. This is a scancode table
 *  used to layout a standard US keyboard. I have left some
