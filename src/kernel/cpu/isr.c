@@ -62,10 +62,6 @@ void interrupt_handler(uint32_t interrupt_id)
 			isr_stub_page_fault();
 			break;
 
-		case 40:
-			isr_timer();
-			break;
-
 		case 33:
 			isr_keyboard();
 			break;

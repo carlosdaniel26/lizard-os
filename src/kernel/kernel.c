@@ -20,6 +20,7 @@
 #include <kernel/multitasking/task.h>
 #include <kernel/drivers/framebuffer.h>
 #include <kernel/mp/mp.h>
+#include <kernel/drivers/pit.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -51,5 +52,5 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	shit_shell_init();
 
 	start_interrupts();
-	//mp_init();
+	pit_init();
 }

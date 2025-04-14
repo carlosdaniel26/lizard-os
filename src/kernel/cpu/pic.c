@@ -45,7 +45,7 @@ void PIC_remap()
 	outb(PIC2_DATA, PIC_MODE_CONFIG);
 
 	/* Unmask interrupts on the PIC */
-	outb(PIC1_DATA, 0xF9);
+	outb(PIC1_DATA, 0xF8);
 	outb(PIC2_DATA, 0xFC);
 }
 
