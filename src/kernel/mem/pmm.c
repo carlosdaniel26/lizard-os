@@ -35,15 +35,6 @@ uint8_t *mem_start;
 uint32_t bitmap_size;
 uint32_t total_blocks;
 
-typedef struct free_node {
-	uintptr_t addr;
-	size_t lenght;
-
-	struct free_node *next;
-} free_node;
-
-free_node *free_list = NULL;
-
 void kprint_ammount_mem_mb()
 {
 	/*kprintf("mem ammount: %uKB\n", mem_ammount_kb);*/
@@ -152,49 +143,4 @@ void pmm_free_block(void *ptr)
 	uint32_t bit_index  = block_number % 8;
 
 	ptr_unset_bit(&mem_bitmap[byte_index], bit_index);
-}
-
-void kmalloc_init()
-{
-    free_list = pmm_alloc_block();
-
-    free_list->next = 0;
-    free_list->addr = (uintptr_t)free_list + sizeof(free_node);
-    free_list->lenght = mem_ammount_b - (uintptr_t)free_list->next - sizeof(free_node);
-
-
-    kprintf("free_list: %u\n", (uintptr_t)free_list);
-    kprintf("free_list->addr: %u\n", free_list->addr);
-    kprintf("free_list->lenght: %u\n", free_list->lenght);
-    kprintf("mem_ammount_b:     %u\n", mem_ammount_b);
-}
-
-void *kmalloc(size_t size)
-{
-	struct free_node *current = free_list;
-
-	while(current->addr != 0)
-	{
-		/* Can Alloc on this Area */
-		if (current->lenght > size)
-		{
-			current->addr += size;
-			current->lenght -= size;
-
-			uint32_t block = pmm_block_number((void*)current->addr);
-			pmm_reserve_block(block);
-
-			return (void*)current->addr;
-		}
-		
-		/* current->next->next->next... */
-		if (current->next == NULL)
-		{
-			break;
-		}
-
-		current = current->next;
-	}
-
-	return NULL;
 }
