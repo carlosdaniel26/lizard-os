@@ -75,7 +75,7 @@ static inline bool pmm_check_block(uint32_t block_number)
 	return ptr_get_bit(mem_bitmap + byte_index, bit_index);
 }
 
-static inline void pmm_reserve_block(uint32_t block_number)
+void pmm_reserve_block(uint32_t block_number)
 {
 	uint32_t byte_index = block_number / 8;
 	uint32_t bit_index  = block_number % 8;
@@ -109,6 +109,30 @@ void pmm_init()
 }
 
 void *pmm_alloc_block()
+{
+	/* bytes*/
+	for (uint32_t block = 0; block < bitmap_size; block++)
+	{
+		/* the block are free*/
+		if (pmm_check_block(block) == AVAILABLE)
+		{
+			pmm_reserve_block(block);
+
+			void *addr = (void*)  pmm_block_addr(block);
+
+			return addr;
+		}
+		/* the block are in use*/
+		else
+		{
+			continue;
+		}
+	}
+
+	return NULL;
+}
+
+void *pmm_alloc_blocks()
 {
 	/* bytes*/
 	for (uint32_t block = 0; block < bitmap_size; block++)
