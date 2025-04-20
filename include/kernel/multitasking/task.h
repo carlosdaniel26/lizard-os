@@ -20,6 +20,7 @@ struct task
 	void *stack_top;
 	void *virtual_address_space;
 
+	struct task *prev_task;
 	struct task *next_task;
 	enum task_state state;
 
