@@ -50,7 +50,7 @@ static inline uint32_t pmm_block_number(void *ptr)
 	if ((uintptr_t)ptr % 4096 == 0)
 		return ((uintptr_t)ptr - (uintptr_t)mem_start) / BLOCK_SIZE;
 
-	
+
 	uintptr_t addr = (uintptr_t)ptr;
 	addr = (uintptr_t)align_ptr_down(addr, BLOCK_SIZE);
 

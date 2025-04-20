@@ -90,7 +90,7 @@ static inline void tty_tab()
 	for (uint8_t i = 0; i < 4; i++)
 	{
 		tty_putchar(' ');
-		
+
 
 		if (terminal_column == terminal_width)
 		{
@@ -140,7 +140,7 @@ void tty_backspace()
 		if (terminal_column == 0)
 		{
 			terminal_column = terminal_text_width;
-			terminal_row--; 
+			terminal_row--;
 		}
 	}
 }
