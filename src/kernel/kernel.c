@@ -52,4 +52,5 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 
 	start_interrupts();
 	pit_init();
+	init_tasks();
 }

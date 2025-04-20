@@ -3,8 +3,11 @@
 #include <kernel/multitasking/task.h>
 #include <kernel/multitasking/pid.h>
 #include <kernel/mem/pmm.h>
+#include <kernel/mem/kmalloc.h>
 
-struct task *tasks;
+struct task *task_ll_root = NULL;
+
+struct task *current_task = NULL;
 
 extern void cpuid_kprint();
 
@@ -59,6 +62,7 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 	/* Clean Task*/
 	task->stack_top = NULL;
 	task->virtual_address_space = NULL;
+	task->prev_task = NULL;
 	task->next_task = NULL;
 	task->state = 0;
 	task->eax = 0;
@@ -90,4 +94,30 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 	task->ebp = (uint32_t)stack_top;
 
 	return 1;
+}
+
+void pid1()
+{
+	kprintf("PID 1\n");
+	while (1) {}
+}
+
+void init_tasks()
+{
+	/* Create PID 1 */
+	struct task *task1 = (struct task *)kmalloc(sizeof(struct task));
+	if (task1 == NULL) {
+		kprintf("Error allocating PID1\n");
+		return;
+	}
+	create_task(task1, (void *)pid1, "task1");
+	task1->state = TASK_READY;
+	task1->pid = 1;
+	task_ll_root->next_task = task1;
+	task1->prev_task = task_ll_root;
+	task1->next_task = NULL;
+
+	kprintf("task ptr: %u\n", task1);
+	kprintf("task entry point ptr: %u\n", &task1->eip);
+	jump_to_task(task1);
 }
