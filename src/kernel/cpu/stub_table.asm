@@ -8,13 +8,20 @@
 %macro STUB_ENTRY 1
 	global stub_%1
 stub_%1:
+	; Save registers
+	pusha
+	pushf
 
+	; Go to interrupt handler
 	push %1						; push the interrupt id
 	extern interrupt_handler
 	call interrupt_handler		; call the real handler
 
 	add esp, 4					; correct stack
 
+	; Restore registers
+	popf
+	popa
 
 	iret						; Retorna da interrupção
 %endmacro
