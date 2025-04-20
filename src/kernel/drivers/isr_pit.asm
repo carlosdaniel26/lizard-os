@@ -1,7 +1,6 @@
 global isr_pit
 isr_pit:
-    push [esp] ; Get the interrupt number
-    
-    
-
+    ; EOI
+    mov al, 0x20
+    out 0x20, al
     iret
