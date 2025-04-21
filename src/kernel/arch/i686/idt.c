@@ -46,7 +46,7 @@ void init_idt(void)
 	idt[6] = create_idt_descriptor(stub_6,  0x8E);
 	idt[14] = create_idt_descriptor(stub_14, 0x8E);
 	idt[33] = create_idt_descriptor(stub_33, 0x8E);		/* Keyboard */
-	idt[32] = create_idt_descriptor(isr_pit, 0x8E);		/* Timer */
+	idt[32] = create_idt_descriptor(stub_32, 0x8E);		/* Timer */
 
 
 

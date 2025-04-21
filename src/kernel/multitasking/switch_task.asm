@@ -35,8 +35,8 @@ extern pmm_alloc_block
     jmp_address: dd 0
 
 
-
 .text
+
 global jump_to_task
 ; void jump_to_task(task* task)
 jump_to_task:
@@ -53,4 +53,12 @@ jump_to_task:
     mov esp, [esi + r_ESP]
 
     mov esi, [esi + r_ESI]
+
+    popf
+	popa
+
+    mov al, 0x20
+    out 0x20, al
+
+    sti
     jmp [jmp_address]

@@ -4,8 +4,9 @@
 #include <kernel/multitasking/pid.h>
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/kmalloc.h>
+#include <kernel/arch/i686/ptrace.h>
 
-struct task *task_ll_root = NULL;
+struct task *task1 = NULL;
 
 struct task *current_task = NULL;
 
@@ -96,28 +97,81 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 	return 1;
 }
 
+void pid2()
+{
+	kprintf("PID 2\n");
+
+	while (1) {
+		
+	}
+}
+
 void pid1()
 {
 	kprintf("PID 1\n");
-	while (1) {}
+
+	/* Create PID 1 */
+	struct task *task2 = (struct task *)kmalloc(sizeof(struct task));
+	if (task2 == NULL) {
+		kprintf("Error allocating PID1\n");
+		return;
+	}
+	create_task(task2, (void *)pid2, "task2");
+
+	task1->next_task = task2;
+	task2->prev_task = task1;
+
+	while (1) {
+		
+	}
 }
 
 void init_tasks()
 {
 	/* Create PID 1 */
-	struct task *task1 = (struct task *)kmalloc(sizeof(struct task));
+	task1 = (struct task *)kmalloc(sizeof(struct task));
 	if (task1 == NULL) {
 		kprintf("Error allocating PID1\n");
 		return;
 	}
 	create_task(task1, (void *)pid1, "task1");
-	task1->state = TASK_READY;
-	task1->pid = 1;
-	task_ll_root->next_task = task1;
-	task1->prev_task = task_ll_root;
-	task1->next_task = NULL;
+	current_task = task1;
 
 	kprintf("task ptr: %u\n", task1);
 	kprintf("task entry point ptr: %u\n", &task1->eip);
 	jump_to_task(task1);
+}
+
+extern struct pt_regs ptrace;
+
+
+void save_task_context()
+{
+    current_task->ebx = ptrace.ebx;
+    current_task->ecx = ptrace.ecx;
+    current_task->edx = ptrace.edx;
+    current_task->esi = ptrace.esi;
+    current_task->edi = ptrace.edi;
+    current_task->ebp = ptrace.ebp;
+    current_task->esp = ptrace.esp;
+    current_task->eip = ptrace.eip;
+    current_task->eflags = ptrace.eflags;
+    current_task->eax = ptrace.eax;
+}
+
+void schedule()
+{
+	save_task_context();
+
+	struct task *next_task = current_task->next_task;
+	if (next_task == NULL) {
+		next_task = task1;
+	}
+
+	if (next_task == current_task) {
+		return;
+	}
+
+	current_task = next_task;
+	jump_to_task(next_task);
 }

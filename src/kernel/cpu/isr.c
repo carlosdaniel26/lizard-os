@@ -5,7 +5,7 @@
 #include <kernel/cpu/pic.h>
 
 #include <kernel/drivers/keyboard.h>
-#include <kernel/drivers/rtc.h>
+#include <kernel/drivers/pit.h>
 
 extern uint32_t terminal_color;
 
@@ -64,6 +64,10 @@ void interrupt_handler(uint32_t interrupt_id)
 
 		case 33:
 			isr_keyboard();
+			break;
+
+		case 32:
+			isr_pit();
 			break;
 
 		default:
