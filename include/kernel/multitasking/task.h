@@ -26,9 +26,15 @@ struct task
 
 	uint32_t eax, ebx, ecx, edx;
 	uint32_t esi, edi, ebp;
-	uint32_t esp;			   /* Stack pointer*/
-	uint32_t eip;			   /* Instruction pointer*/
+	uint32_t esp;				/* Stack pointer*/
+	uint32_t eip;			  	/* Instruction pointer*/
 	uint32_t eflags;			/* Flags register*/
+
+	uint32_t ss;     			/* Stack Segment */
+	uint32_t ds;     			/* Data Segment */
+	uint32_t es;     			/* Extra Segment */
+	uint32_t fs;     			/* Extra Segment */
+	uint32_t gs;     			/* Extra Segment */
 
 	/* Optional fields*/
 	int scheduling_policy;  /* Task's scheduling policy*/
@@ -40,7 +46,7 @@ struct task
 
 int create_task(struct task *task, void (*entry_point)(void), const char p_name[]);
 void save_task_context();
-void jump_to_task(struct task* task);
+void jump_to_task();
 void switch_task(struct task *current_task, struct task *next_task);
 struct task *get_current_task();
 void block_task(struct task *task);
