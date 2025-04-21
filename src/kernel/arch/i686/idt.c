@@ -20,7 +20,7 @@ idt_ptr ptr_idt;
 
 bool vectors[IDT_ENTRIES];
 
-interrupt_descriptor create_idt_descriptor(void (*isr)(), uint8_t flags)
+void create_idt_descriptor(unsigned int_id, void (*isr)(), uint8_t flags)
 {
 	interrupt_descriptor descriptor;
 
@@ -30,7 +30,7 @@ interrupt_descriptor create_idt_descriptor(void (*isr)(), uint8_t flags)
 	descriptor.base_high = ((uint32_t)isr >> 16) & 0xFFFF;
 	descriptor.always0   = 0;
 
-	return descriptor;
+	idt[int_id] = descriptor;
 }
 
 void init_idt(void)
@@ -42,11 +42,10 @@ void init_idt(void)
 
 
 	/* Set IDT descriptors*/
-	idt[0] = create_idt_descriptor(stub_0,  0x8E);
-	idt[6] = create_idt_descriptor(stub_6,  0x8E);
-	idt[14] = create_idt_descriptor(stub_14, 0x8E);
-	idt[33] = create_idt_descriptor(stub_33, 0x8E);		/* Keyboard */
-	idt[32] = create_idt_descriptor(stub_32, 0x8E);		/* Timer */
+	create_idt_descriptor(0, stub_0,  0x8E);
+	create_idt_descriptor(16, stub_6,  0x8E);
+	create_idt_descriptor(14, stub_14, 0x8E);
+	create_idt_descriptor(33, stub_33, 0x8E);		/* Keyboard */
 
 
 

@@ -2,6 +2,7 @@
 #include <kernel/utils/alias.h>
 #include <kernel/arch/ptrace.h>
 #include <kernel/multitasking/task.h>
+#include <kernel/arch/i686/idt.h>
 #include <stdio.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
@@ -18,6 +19,8 @@ void pit_init()
 
 	outb(PIT_CHANNEL0, PIT_DESIRED_FREQUENCY_HZ & 0xFF);	/* Low Byte */
 	outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8));	/* High Byte */
+
+	create_idt_descriptor(32, stub_32, 0x8E);	/* PIT */
 }
 
 extern struct pt_regs ptrace;
