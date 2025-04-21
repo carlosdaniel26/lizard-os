@@ -19,14 +19,14 @@
 
 %define STUB_TABLE_ENTRIES 256
 
-.data
+section .data
 
 global ptrace
 ptrace:
 	dd 52 + 4
 
 
-.text
+section .text
 
 ; Stubs 1 ... 256
 ; The pipeline will be:

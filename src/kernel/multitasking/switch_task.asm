@@ -1,10 +1,3 @@
-extern pmm_alloc_block
-
-%define MAX_TASKS 8
-%define STACK_END (DEFAULT_STACK_SIZE - 1)
-
-; struct Task layout
-
 %define STACK_TOP                0
 %define VIRTUAL_ADDRESS_SPACE    4
 
@@ -34,16 +27,16 @@ extern pmm_alloc_block
 section .data
     jmp_address: dd 0
 
-
 section .text
 
 global jump_to_task
 ; void jump_to_task(task* task)
 jump_to_task:
-    mov esi, [esp + 4] ; task pointer
-    mov eax, [esi + r_EIP] ; EIP
-    mov [jmp_address], eax ; save EIP on stack overwriting task pointer
+    mov esi, [esp + 4]             ; task pointer
+    mov eax, [esi + r_EIP]         ; EIP
+    mov [jmp_address], eax         ; save EIP in jmp_address
 
+    ; Load register values from task struct
     mov eax, [esi + r_EAX]
     mov ebx, [esi + r_EBX]
     mov ecx, [esi + r_ECX]
@@ -51,14 +44,13 @@ jump_to_task:
     mov edi, [esi + r_EDI]
     mov ebp, [esi + r_EBP]
     mov esp, [esi + r_ESP]
-
     mov esi, [esi + r_ESI]
 
-    popf
-	popa
+    popf                            ; Restore flags
+    popa                            ; Pop all registers
 
-    mov al, 0x20
-    out 0x20, al
+    mov al, 0x20                    ; End of interrupt signal
+    out 0x20, al                    ; Send the EOI to PIC
 
-    sti
-    jmp [jmp_address]
+    sti                             ; Enable interrupts
+    jmp [jmp_address]               ; Jump to saved EIP (task's entry point)
