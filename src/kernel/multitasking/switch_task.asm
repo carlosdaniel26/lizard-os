@@ -31,11 +31,11 @@ extern pmm_alloc_block
 
 %define TASK_SIZE (CPU_TIME_CONSUMED + 4)   ; = 140 bytes
 
-.data
+section .data
     jmp_address: dd 0
 
 
-.text
+section .text
 
 global jump_to_task
 ; void jump_to_task(task* task)
