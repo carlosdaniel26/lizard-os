@@ -35,6 +35,7 @@ static inline void gdt_load()
 				  mov %%ax, %%es; \
 				  mov %%ax, %%fs; \
 				  mov %%ax, %%gs; \
+				  mov %%ax, %%ss; \
 				  ljmp $0x08, $next; \
 				  next:": : : "eax");
 }
