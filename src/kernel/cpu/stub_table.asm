@@ -72,7 +72,7 @@ stub_%1:
 	popf
 	popa
 
-	iret						; Retorna da interrupção
+	iret						; Interrupt return
 %endmacro
 
 %macro GENERATE_STUBS 1
