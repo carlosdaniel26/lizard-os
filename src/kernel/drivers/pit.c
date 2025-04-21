@@ -1,6 +1,7 @@
 #include <kernel/utils/io.h>
 #include <kernel/utils/alias.h>
 #include <kernel/arch/ptrace.h>
+#include <kernel/multitasking/task.h>
 #include <stdio.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
@@ -22,5 +23,5 @@ extern struct pt_regs ptrace;
 
 void isr_pit()
 {	
-	schedule();
+	scheduler();
 }

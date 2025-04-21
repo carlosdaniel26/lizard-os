@@ -40,6 +40,7 @@ struct task
 
 int create_task(struct task *task, void (*entry_point)(void), const char p_name[]);
 void save_task_context();
+void jump_to_task(struct task* task);
 void switch_task(struct task *current_task, struct task *next_task);
 struct task *get_current_task();
 void block_task(struct task *task);

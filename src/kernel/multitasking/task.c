@@ -159,7 +159,7 @@ void save_task_context()
     current_task->eax = ptrace.eax;
 }
 
-void schedule()
+void scheduler()
 {
 	save_task_context();
 
