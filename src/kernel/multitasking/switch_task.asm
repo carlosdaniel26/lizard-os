@@ -46,9 +46,6 @@ jump_to_task:
     mov esp, [esi + r_ESP]
     mov esi, [esi + r_ESI]
 
-    popf                            ; Restore flags
-    popa                            ; Pop all registers
-
     mov al, 0x20                    ; End of interrupt signal
     out 0x20, al                    ; Send the EOI to PIC
 
