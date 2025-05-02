@@ -21,6 +21,13 @@ void pit_init()
 	outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8));	/* High Byte */
 
 	create_idt_descriptor(32, stub_32, 0x8E);	/* PIT */
+
+	/* Mask PIT */
+	#define PIC1_DATA 0x21
+
+	uint8_t mask = inb(PIC1_DATA);
+	mask |= (1 << 0);
+	outb(PIC1_DATA, mask);
 }
 
 extern struct pt_regs ptrace;
