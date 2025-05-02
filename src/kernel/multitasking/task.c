@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <kernel/utils/helpers.h>
 #include <kernel/multitasking/task.h>
 #include <kernel/multitasking/pid.h>
 #include <kernel/mem/pmm.h>
@@ -85,14 +86,13 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 
 	task->pid = alloc_pid();
 
-	uint8_t *stack_block = pmm_alloc_block();
-	uint8_t *stack_top = stack_block + 4095;
+	uint32_t *stack = pmm_alloc_block();
+	stack = align_ptr_down(stack, 16);
 
-
+	task->esp = (uint32_t)stack;
+	task->ebp = task->esp;
 
    	task->eip = (uint32_t)entry_point;
-	task->esp = (uint32_t)stack_top;
-	task->ebp = (uint32_t)stack_top;
 
 	return 1;
 }
@@ -120,7 +120,7 @@ void pid1()
 
 	task1->next_task = task2;
 	task2->prev_task = task1;
-
+	scheduler();
 	while (1) {
 		
 	}
