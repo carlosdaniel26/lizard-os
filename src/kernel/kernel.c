@@ -50,7 +50,7 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	tty_clean();
 	shit_shell_init();
 
-	//pit_init();
+	pit_init();
 	init_tasks();
 	start_interrupts();
 }
