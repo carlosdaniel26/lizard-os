@@ -50,16 +50,13 @@ stub_%1:
 	mov [ptrace + r_ES], es
 	mov [ptrace + r_FS], fs
 	mov [ptrace + r_GS], gs
+	mov [ptrace + r_EFLAGS], eax
 
 	; Save the EIP return addr using eax as temp value
 	push eax
 	mov eax, [esp + 4]
 	mov [ptrace + r_EIP], eax
 	pop eax
-
-	; Save registers on stack
-	pusha
-	pushf
 
 	; Go to interrupt handler
 	push %1						; push the interrupt id
@@ -68,9 +65,21 @@ stub_%1:
 
 	add esp, 4					; correct stack
 
-	; Restore registers
-	popf
-	popa
+	; Restore registers from ptrace
+	mov     ebx, [ptrace + r_EBX]
+	mov     ecx, [ptrace + r_ECX]
+	mov     edx, [ptrace + r_EDX]
+	mov     esi, [ptrace + r_ESI]
+	mov     edi, [ptrace + r_EDI]
+	mov     ebp, [ptrace + r_EBP]
+	mov     esp, [ptrace + r_ESP]
+	mov     eax, [ptrace + r_EAX]
+	mov     ds,  [ptrace + r_DS]
+	mov     es,  [ptrace + r_ES]
+	mov     fs,  [ptrace + r_FS]
+	mov     gs,  [ptrace + r_GS]
+
+	mov     eax, [ptrace + r_EFLAGS]
 
 	iret						; Interrupt return
 %endmacro
