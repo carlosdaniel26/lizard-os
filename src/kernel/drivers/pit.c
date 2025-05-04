@@ -10,7 +10,7 @@
 #define PIT_COMMAND 0x43
 #define PIT_CHANNEL0 0x40
 #define PIT_FREQUENCY_HZ 1193182
-#define PIT_DESIRED_FREQUENCY_HZ PIT_FREQUENCY_HZ / 1000
+#define PIT_DESIRED_FREQUENCY_HZ PIT_FREQUENCY_HZ / 65535
 
 
 void pit_init()
@@ -22,12 +22,14 @@ void pit_init()
 
 	create_idt_descriptor(32, stub_32, 0x8E);	/* PIT */
 
-	/* Mask PIT */
-	#define PIC1_DATA 0x21
+	// /* Mask PIT */
+	// #define PIC1_DATA 0x21
 
-	uint8_t mask = inb(PIC1_DATA);
-	mask |= (1 << 0);
-	outb(PIC1_DATA, mask);
+	// uint8_t mask = inb(PIC1_DATA);
+	// mask |= (1 << 0);
+	// outb(PIC1_DATA, mask);
+
+	kprintf("Pit with %u delay\n", PIT_DESIRED_FREQUENCY_HZ);
 }
 
 extern struct pt_regs ptrace;

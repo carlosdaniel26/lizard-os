@@ -32,6 +32,7 @@ section .text
 global jump_to_task
 ; void jump_to_task(task* task)
 jump_to_task:
+    cli
     mov esi, [esp + 4]             ; task pointer
     mov eax, [esi + r_EIP]         ; EIP
     mov [jmp_address], eax         ; save EIP in jmp_address

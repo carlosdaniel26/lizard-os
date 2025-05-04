@@ -15,7 +15,7 @@ extern void cpuid_kprint();
 
 void kprint_task_state(struct task *t)
 {
-	kprintf("Task Name: %s\n", t->name);
+	kprintf("==== Task Name: %s\n ====", t->name);
 	kprintf("State: ");
 	switch (t->state) {
 		case 0:
@@ -35,15 +35,6 @@ void kprint_task_state(struct task *t)
 	kprintf("virtual_address_space 0x%x\n", t->virtual_address_space);
 	kprintf("next_task 0x%x\n", t->next_task);
 	kprintf("EIP: 0x%x\n", t->eip);
-	kprintf("cpuid_kprint: 0x%x\n", &cpuid_kprint);
-	if (t->eip == (uint32_t)&cpuid_kprint)
-	{
-		kprintf("SAME\n");
-	}
-	else
-	{
-		kprintf("N SAME\n");
-	}
 	kprintf("EAX: 0x%x\n", t->eax);
 	kprintf("EBX: 0x%x\n", t->ebx);
 	kprintf("ECX: 0x%x\n", t->ecx);
@@ -100,7 +91,6 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 void pid2()
 {
 	kprintf("PID 2\n");
-
 	while (1) {
 		
 	}
@@ -110,7 +100,7 @@ void pid1()
 {
 	kprintf("PID 1\n");
 
-	/* Create PID 1 */
+	/* Create PID 2 */
 	struct task *task2 = (struct task *)kmalloc(sizeof(struct task));
 	if (task2 == NULL) {
 		kprintf("Error allocating PID1\n");
@@ -120,7 +110,7 @@ void pid1()
 
 	task1->next_task = task2;
 	task2->prev_task = task1;
-	scheduler();
+
 	while (1) {
 		
 	}
