@@ -28,8 +28,6 @@ void pit_init()
 	// uint8_t mask = inb(PIC1_DATA);
 	// mask |= (1 << 0);
 	// outb(PIC1_DATA, mask);
-
-	kprintf("Pit with %u delay\n", PIT_DESIRED_FREQUENCY_HZ);
 }
 
 extern struct pt_regs ptrace;

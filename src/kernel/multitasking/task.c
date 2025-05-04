@@ -6,6 +6,8 @@
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/kmalloc.h>
 #include <kernel/arch/i686/ptrace.h>
+#include <kernel/shit-shell/ss.h>
+#include <kernel/utils/alias.h>
 
 struct task *task1 = NULL;
 
@@ -88,28 +90,11 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 	return 1;
 }
 
-void pid2()
-{
-	kprintf("PID 2\n");
-	while (1) {
-		
-	}
-}
-
 void pid1()
 {
-	kprintf("PID 1\n");
-
-	/* Create PID 2 */
-	struct task *task2 = (struct task *)kmalloc(sizeof(struct task));
-	if (task2 == NULL) {
-		kprintf("Error allocating PID1\n");
-		return;
-	}
-	create_task(task2, (void *)pid2, "task2");
-
-	task1->next_task = task2;
-	task2->prev_task = task1;
+	debug_printf("PID1 on control\n");
+	start_interrupts();
+	shit_shell_init();
 
 	while (1) {
 		
@@ -126,9 +111,6 @@ void init_tasks()
 	}
 	create_task(task1, (void *)pid1, "task1");
 	current_task = task1;
-
-	kprintf("task ptr: %u\n", task1);
-	kprintf("task entry point ptr: %u\n", &task1->eip);
 	jump_to_task(task1);
 }
 

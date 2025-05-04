@@ -48,9 +48,6 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	pmm_init();
 	enable_paging();
 	tty_clean();
-	shit_shell_init();
-
 	pit_init();
 	init_tasks();
-	start_interrupts();
 }
