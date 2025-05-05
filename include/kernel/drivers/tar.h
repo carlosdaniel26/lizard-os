@@ -1,9 +1,9 @@
-#ifndef USTAR_H
-#define USTAR_H
+#ifndef TAR_H
+#define TAR_H
 
 #include <stdint.h>
 
-typedef struct USTARFileMetadata
+typedef struct TAR
 {
     char file_name[100];            /**   0: 	File name (100 bytes) */
     uint64_t file_mode;             /** 100: 	File mode (8 bytes) */
@@ -21,6 +21,6 @@ typedef struct USTARFileMetadata
     uint64_t device_major_number;   /** 329: 	Device major number (8 bytes) */
     uint64_t device_minor_number;   /** 337: 	Device minor number (8 bytes) */
     char filename_prefix[155];      /** 345:	Filename prefix (155 bytes) */
-} USTARFileMetadata;
+} TAR;
 
 #endif
