@@ -10,3 +10,5 @@
 
 #define align_down(num, align) (num - (num % align))
 #define align_up(num, align) (num + (align - (num % align)))
+
+int oct2bin(unsigned char *str, int size);
