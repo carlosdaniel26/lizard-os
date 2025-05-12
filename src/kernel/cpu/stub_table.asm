@@ -53,10 +53,8 @@ stub_%1:
 	mov [ptrace + r_EFLAGS], eax
 
 	; Save the EIP return addr using eax as temp value
-	push eax
 	mov eax, [esp + 4]
 	mov [ptrace + r_EIP], eax
-	pop eax
 
 	; Go to interrupt handler
 	push %1						; push the interrupt id
