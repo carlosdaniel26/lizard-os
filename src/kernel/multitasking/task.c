@@ -8,6 +8,7 @@
 #include <kernel/arch/i686/ptrace.h>
 #include <kernel/shit-shell/ss.h>
 #include <kernel/utils/alias.h>
+#include <kernel/init.h>
 
 struct task *task1 = NULL;
 
@@ -90,17 +91,6 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 	return 1;
 }
 
-void pid1()
-{
-	debug_printf("PID1 on control\n");
-	start_interrupts();
-	shit_shell_init();
-
-	while (1) {
-		
-	}
-}
-
 void init_tasks()
 {
 	/* Create PID 1 */
@@ -109,7 +99,7 @@ void init_tasks()
 		kprintf("Error allocating PID1\n");
 		return;
 	}
-	create_task(task1, (void *)pid1, "task1");
+	create_task(task1, (void *)init, "init");
 	current_task = task1;
 	jump_to_task(task1);
 }
