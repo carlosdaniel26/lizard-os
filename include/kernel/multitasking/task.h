@@ -42,7 +42,7 @@ struct task
 	int pid;				/* Process ID the task belongs to*/
 	char name[MAX_PROCESS_NAME];		/* Task name (for debugging/monitoring purposes)*/
 	uint32_t cpu_time_consumed; /* CPU time consumed by the task so far*/
-};
+}__attribute__((packed));
 
 int create_task(struct task *task, void (*entry_point)(void), const char p_name[]);
 void save_task_context();
