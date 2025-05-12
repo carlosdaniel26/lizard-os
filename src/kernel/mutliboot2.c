@@ -5,6 +5,9 @@
 
 extern uint32_t mem_ammount_kb;
 
+struct multiboot_tag *tag;
+struct multiboot_tag_mmap *mmap_tag;
+
 void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 {
 	kprintf("Processing multiboot...\n");
@@ -26,8 +29,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 	kprintf("MBI size: %u\n", size);
 
 	tty_clean();
-
-	struct multiboot_tag *tag;
+	
 	for (tag = (struct multiboot_tag *) (addr + 8);
 		 tag->type != MULTIBOOT_TAG_TYPE_END;
 		 tag = (struct multiboot_tag *) ((uint8_t *) tag + ((tag->size + 7) & ~7)))
@@ -69,7 +71,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
 			{
-				struct multiboot_tag_mmap *mmap_tag = (struct multiboot_tag_mmap *) tag;
+				mmap_tag = (struct multiboot_tag_mmap *) tag;
 				struct multiboot_mmap_entry *mmap;
 				kprintf("mmap\n");
 				for (mmap = mmap_tag->entries;

@@ -8,6 +8,7 @@
 #include <kernel/terminal/tty.h>
 #include <kernel/utils/alias.h>
 #include <kernel/utils/helpers.h>
+#include <multiboot2.h>
 
 #define BLOCK_SIZE 4096			/* 4 KB pages*/
 #define BLOCK_SIZE_KB 4			/* 4 KB pages*/
@@ -35,16 +36,6 @@ uint8_t *mem_start;
 uint32_t bitmap_size;
 uint32_t total_blocks;
 
-void kprint_ammount_mem_mb()
-{
-	/*kprintf("mem ammount: %uKB\n", mem_ammount_kb);*/
-	kprintf("mem ammount: %uGB\n", mem_ammount_kb / 1024);
-	kprintf("blocks: %u\n", total_blocks);
-	kprintf("bitmap_size: %uB\n", bitmap_size);
-	kprintf("mem_bitmap: %uB\n", mem_bitmap);
-	kprintf("mem_start: %uB\n\n", mem_start);
-}
-
 static inline uint32_t pmm_block_number(void *ptr)
 {
 	if ((uintptr_t)ptr % 4096 == 0)
@@ -62,6 +53,48 @@ static inline uint32_t pmm_block_number(void *ptr)
 static inline uint32_t pmm_block_addr(uint32_t block_number)
 {
 	return (uintptr_t)mem_start + (block_number * BLOCK_SIZE);
+}
+
+static inline void handle_mmap()
+{
+	extern struct multiboot_tag_mmap *mmap_tag;
+	extern struct multiboot_tag *tag;
+
+	struct multiboot_mmap_entry *mmap;
+
+	if (! mmap_tag)
+		return;
+	if (! tag)
+		return;
+	
+	for (mmap = mmap_tag->entries;
+			(unsigned char*) mmap < (unsigned char*) mmap_tag + mmap_tag->size;
+			mmap = (struct multiboot_mmap_entry *) ((unsigned long) mmap + mmap_tag->entry_size))
+	{
+		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE)
+			continue;
+
+		uintptr_t base = mmap->addr;
+		uintptr_t length = mmap->len;
+
+		/* Reserve the blocks*/
+		for (uintptr_t addr = base; addr < base + length; addr += 0x1000)
+		{
+			uint32_t id = pmm_block_number((void*)addr);
+
+			pmm_reserve_block(id);
+		}
+	}
+}
+
+void kprint_ammount_mem_mb()
+{
+	/*kprintf("mem ammount: %uKB\n", mem_ammount_kb);*/
+	kprintf("mem ammount: %uGB\n", mem_ammount_kb / 1024);
+	kprintf("blocks: %u\n", total_blocks);
+	kprintf("bitmap_size: %uB\n", bitmap_size);
+	kprintf("mem_bitmap: %uB\n", mem_bitmap);
+	kprintf("mem_start: %uB\n\n", mem_start);
 }
 
 #define AVAILABLE 0
@@ -100,6 +133,8 @@ void pmm_init()
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
 
 	mem_start = align_ptr_up(mem_start, BLOCK_SIZE);
+
+	handle_mmap();
 
 	/**
 	 * [1MB][BITMAP][MEM]
