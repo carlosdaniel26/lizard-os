@@ -83,11 +83,9 @@ clean:
 	@rm -rf $(ISO_DIR)/boot/myos.bin
 
 dev:
-	@$(MAKE) clean
 	@$(MAKE)
 	@$(MAKE) run
 qemu-debug:
-	@$(MAKE) clean
 	@$(MAKE)
 	@$(MAKE) run-debug
 
