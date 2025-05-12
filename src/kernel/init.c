@@ -8,7 +8,5 @@ void init()
 	start_interrupts();
 	shit_shell_init();
 
-	while (1) {
-		
-	}
+	infinite_loop();
 }
