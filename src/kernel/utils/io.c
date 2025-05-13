@@ -37,6 +37,17 @@ void outb(uint16_t port, uint8_t value)
 	);
 }
 
+void outw(uint16_t port, uint16_t value)
+{
+	__asm__ volatile (
+		"outw %w0, %w1"  /* Write a byte to the specified I/O port*/
+						:				  /* No output operands*/
+						: "a"(value),		/* Input operand: 'val' is loaded into the 'eax' register*/
+						  "Nd"(port)	   /* Input operand: 'port' is an I/O port number that can be used as an integer*/
+						: "memory"		 /* Informs the compiler that this instruction may modify memory, preventing certain optimizations*/
+	);
+}
+
 void io_wait(void)
 {
 	outb(0x80, 0);
