@@ -69,8 +69,7 @@ uint16_t ata_identify(uint8_t drive_id)
 
 	uint8_t status;
 
-	do
-	{
+	do {
 		status = inb(base[drive_id] + ATA_REG_STATUS);
 	} while (status & 0x80);
 
@@ -90,13 +89,26 @@ uint16_t ata_identify(uint8_t drive_id)
 		identify_data[i] = inw(base[drive_id]);
 	}
 
+	uint16_t cylinders = identify_data[1];
+	uint16_t heads	 = identify_data[3];
+	uint16_t sectors   = identify_data[6];
+
+	uint32_t total_sectors = (uint32_t)cylinders * heads * sectors;
+	uint64_t total_bytes = (uint64_t)total_sectors * 512;
+
+
+	debug_printf("Cylinders: %u\n", cylinders);
+	debug_printf("Head: %u\n", heads);
+	debug_printf("Sectors: %u\n", sectors);
+
+	debug_printf("Storage Capacity: %umMB\n", total_bytes / (1024 * 1024));
 	for (int i = 0; i < 20; i++)
 	{
 		model[i * 2] = identify_data[27 + i] >> 8;
 		model[i*2 + 1] = identify_data[27 + i] & 0xFF;
 	}
-
 	model[40] = '\0';
+
 	debug_printf("Drive model: %s\n", model);
 
 
