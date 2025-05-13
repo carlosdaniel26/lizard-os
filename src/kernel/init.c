@@ -4,6 +4,8 @@
 #include <kernel/shit-shell/ss.h>
 #include <kernel/terminal/tty.h>
 
+#include <kernel/drivers/ata.h>
+
 void init()
 {
 	tty_initialize();
