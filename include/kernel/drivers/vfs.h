@@ -5,9 +5,9 @@
 
 typedef struct VFSFile
 {
-    char *name;
-    uint32_t size;
-    uint8_t *data;
+	char *name;
+	uint32_t size;
+	uint8_t *data;
 } VFSFile;
 
 VFSFile *vfs_open(const char *name, const char *mode);

@@ -30,11 +30,11 @@ struct task
 	uint32_t eip;			  	/* Instruction pointer*/
 	uint32_t eflags;			/* Flags register*/
 
-	uint32_t ss;     			/* Stack Segment */
-	uint32_t ds;     			/* Data Segment */
-	uint32_t es;     			/* Extra Segment */
-	uint32_t fs;     			/* Extra Segment */
-	uint32_t gs;     			/* Extra Segment */
+	uint32_t ss;	 			/* Stack Segment */
+	uint32_t ds;	 			/* Data Segment */
+	uint32_t es;	 			/* Extra Segment */
+	uint32_t fs;	 			/* Extra Segment */
+	uint32_t gs;	 			/* Extra Segment */
 
 	/* Optional fields*/
 	int scheduling_policy;  /* Task's scheduling policy*/

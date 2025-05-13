@@ -23,7 +23,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 	}
 
 	tty_clean();
-	
+
 	for (tag = (struct multiboot_tag *) (addr + 8);
 		 tag->type != MULTIBOOT_TAG_TYPE_END;
 		 tag = (struct multiboot_tag *) ((uint8_t *) tag + ((tag->size + 7) & ~7)))

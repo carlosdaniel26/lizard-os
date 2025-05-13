@@ -66,7 +66,7 @@ static inline void handle_mmap()
 		return;
 	if (! tag)
 		return;
-	
+
 	for (mmap = mmap_tag->entries;
 			(unsigned char*) mmap < (unsigned char*) mmap_tag + mmap_tag->size;
 			mmap = (struct multiboot_mmap_entry *) ((unsigned long) mmap + mmap_tag->entry_size))

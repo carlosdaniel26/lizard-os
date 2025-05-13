@@ -109,16 +109,16 @@ extern struct pt_regs ptrace;
 
 void save_task_context()
 {
-    current_task->ebx = ptrace.ebx;
-    current_task->ecx = ptrace.ecx;
-    current_task->edx = ptrace.edx;
-    current_task->esi = ptrace.esi;
-    current_task->edi = ptrace.edi;
-    current_task->ebp = ptrace.ebp;
-    current_task->esp = ptrace.esp;
-    current_task->eip = ptrace.eip;
-    current_task->eflags = ptrace.eflags;
-    current_task->eax = ptrace.eax;
+	current_task->ebx = ptrace.ebx;
+	current_task->ecx = ptrace.ecx;
+	current_task->edx = ptrace.edx;
+	current_task->esi = ptrace.esi;
+	current_task->edi = ptrace.edi;
+	current_task->ebp = ptrace.ebp;
+	current_task->esp = ptrace.esp;
+	current_task->eip = ptrace.eip;
+	current_task->eflags = ptrace.eflags;
+	current_task->eax = ptrace.eax;
 }
 
 void scheduler()

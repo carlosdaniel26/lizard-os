@@ -36,69 +36,69 @@ static inline void ata_select(uint8_t drive_id)
 
 	outb(base[drive_id] + ATA_REG_DRIVE, 0xA0);
 
-    switch(drive_id)
-    {
-        case PRIMARY:
-            model = primary_model;
-            break;
+	switch(drive_id)
+	{
+		case PRIMARY:
+			model = primary_model;
+			break;
 
-        case SECONDARY:
-            model = secondary_model;
-            break;
-    }
+		case SECONDARY:
+			model = secondary_model;
+			break;
+	}
 
-    io_wait();
+	io_wait();
 
 }
 
 uint16_t ata_identify(uint8_t drive_id)
 {
-    if (drive_id < 1 || drive_id > 2) {
-        debug_printf("invalid drive_id: %u\n", drive_id);
-        return 0;
-    }
+	if (drive_id < 1 || drive_id > 2) {
+		debug_printf("invalid drive_id: %u\n", drive_id);
+		return 0;
+	}
 
-    ata_select(drive_id);
+	ata_select(drive_id);
 
-    inb(ctrl[drive_id]);
-    inb(ctrl[drive_id]);
-    inb(ctrl[drive_id]);
-    inb(ctrl[drive_id]);
+	inb(ctrl[drive_id]);
+	inb(ctrl[drive_id]);
+	inb(ctrl[drive_id]);
+	inb(ctrl[drive_id]);
 
-    outb(base[drive_id] + ATA_REG_COMMAND, CMD_IDENTIFY);
+	outb(base[drive_id] + ATA_REG_COMMAND, CMD_IDENTIFY);
 
-    uint8_t status;
-    
-    do
-    {
-        status = inb(base[drive_id] + ATA_REG_STATUS);
-    } while (status & 0x80);
+	uint8_t status;
 
-    if (status & 0x01) {
-        debug_printf("ATA Error on drive %u\n", drive_id);
-        return 0;
-    }
+	do
+	{
+		status = inb(base[drive_id] + ATA_REG_STATUS);
+	} while (status & 0x80);
 
-    if (!(status & 0x08)) {
-        debug_printf("DRQ not set; device not ready\n");
-        return 0;
-    }
+	if (status & 0x01) {
+		debug_printf("ATA Error on drive %u\n", drive_id);
+		return 0;
+	}
 
-    uint16_t identify_data[256];
-    for (int i = 0; i < 256; ++i) 
-    {
-        identify_data[i] = inw(base[drive_id]);
-    }
+	if (!(status & 0x08)) {
+		debug_printf("DRQ not set; device not ready\n");
+		return 0;
+	}
 
-    for (int i = 0; i < 20; i++) 
-    {
-        model[i * 2] = identify_data[27 + i] >> 8;
-        model[i*2 + 1] = identify_data[27 + i] & 0xFF;
-    }
+	uint16_t identify_data[256];
+	for (int i = 0; i < 256; ++i)
+	{
+		identify_data[i] = inw(base[drive_id]);
+	}
 
-    model[40] = '\0';
-    debug_printf("Drive model: %s\n", model);
+	for (int i = 0; i < 20; i++)
+	{
+		model[i * 2] = identify_data[27 + i] >> 8;
+		model[i*2 + 1] = identify_data[27 + i] & 0xFF;
+	}
+
+	model[40] = '\0';
+	debug_printf("Drive model: %s\n", model);
 
 
-    return status;
+	return status;
 }

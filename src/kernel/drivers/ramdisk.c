@@ -16,7 +16,7 @@ void ramdisk_init(uint32_t sector_ammount)
 }
 
 uint8_t *ramdisk_read_sector(uint32_t sector)
-{	
+{
 	sector++;
 	uint8_t *sector_addr = &ram_disk[sector * SECTOR_SIZE];
 
@@ -28,7 +28,7 @@ uint8_t *ramdisk_read_sector(uint32_t sector)
 }
 
 void ramdisk_write_sector(uint8_t *sector_data, uint32_t sector)
-{	
+{
 	sector++;
 	uint8_t *sector_addr = &ram_disk[sector * SECTOR_SIZE];
 
