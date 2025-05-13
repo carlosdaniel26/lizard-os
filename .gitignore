@@ -2,3 +2,4 @@ build/
 .vscode/
 qemu_log.txt
 iso/boot/lizard-os.bin
+hdd.img

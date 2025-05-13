@@ -19,7 +19,9 @@ LIBS = -lgcc
 CFLAGS = -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE_DIR) -I$(LIBS_DIR) -D$(ARCH) -g
 ASFLAGS = -felf32 -g
 LDFLAGS = -T $(SRC_DIR)/linker/linker.ld -ffreestanding -O2 -nostdlib -g
-QEMUFLAGS = -no-reboot -d int,cpu_reset -D qemu_log.txt -cdrom $(OUTPUT_ISO) -m 4G -M smm=off -rtc base=localtime
+
+QEMUHDDFLAGS =  -drive file=hdd.img,format=raw,if=ide
+QEMUFLAGS = -no-reboot -d int,cpu_reset -D qemu_log.txt -cdrom $(OUTPUT_ISO) $(QEMUHDDFLAGS) -m 4G -M smm=off -rtc base=localtime
 KVMFLAGS = -enable-kvm -cpu host 
 
 # Find ALL C, ASM sources
@@ -76,6 +78,9 @@ build:
 	@mkdir -p $(ISO_DIR)/boot/grub
 	@for dir in $(ALL_C_DIRS); do mkdir -p $(BUILD_DIR)/$$dir; done
 	@for dir in $(ALL_ASM_DIRS); do mkdir -p $(BUILD_DIR)/$$dir; done
+
+hdd:
+	qemu-img create -f raw hdd.img 64M
 
 # Clean build dir
 clean:
