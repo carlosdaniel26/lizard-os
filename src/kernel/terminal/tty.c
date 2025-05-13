@@ -37,8 +37,8 @@ void tty_initialize()
 
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_background_color = VGA_COLOR_WHITE;
-	terminal_color = VGA_COLOR_BLUE;
+	terminal_background_color = VGA_COLOR_BLACK;
+	terminal_color = VGA_COLOR_WHITE;
 }
 
 static inline bool is_pos_after_input(unsigned row, unsigned col)
