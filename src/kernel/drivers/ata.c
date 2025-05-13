@@ -53,8 +53,9 @@ static inline void ata_select(uint8_t drive_id)
 
 uint16_t ata_identify(uint8_t drive_id)
 {
+    debug_printf("Checking HDD...");
 	if (drive_id < 1 || drive_id > 2) {
-		debug_printf("invalid drive_id: %u\n", drive_id);
+		debug_printf("invalid drive_id: %u", drive_id);
 		return 0;
 	}
 
@@ -74,12 +75,12 @@ uint16_t ata_identify(uint8_t drive_id)
 	} while (status & 0x80);
 
 	if (status & 0x01) {
-		debug_printf("ATA Error on drive %u\n", drive_id);
+		debug_printf("ATA Error on drive %u", drive_id);
 		return 0;
 	}
 
 	if (!(status & 0x08)) {
-		debug_printf("DRQ not set; device not ready\n");
+		debug_printf("DRQ not set; device not ready");
 		return 0;
 	}
 
@@ -97,11 +98,11 @@ uint16_t ata_identify(uint8_t drive_id)
 	uint64_t total_bytes = (uint64_t)total_sectors * 512;
 
 
-	debug_printf("Cylinders: %u\n", cylinders);
-	debug_printf("Head: %u\n", heads);
-	debug_printf("Sectors: %u\n", sectors);
+	debug_printf("Cylinders: %u", cylinders);
+	debug_printf("Head: %u", heads);
+	debug_printf("Sectors: %u", sectors);
 
-	debug_printf("Storage Capacity: %umMB\n", total_bytes / (1024 * 1024));
+	debug_printf("Storage Capacity: %uMB", total_bytes / (1024 * 1024));
 	for (int i = 0; i < 20; i++)
 	{
 		model[i * 2] = identify_data[27 + i] >> 8;

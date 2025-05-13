@@ -9,7 +9,7 @@
 void init()
 {
 	tty_initialize();
-	debug_printf("PID1 on control\n");
+	debug_printf("PID1 on control");
 	ata_identify(1);
 
 	start_interrupts();
