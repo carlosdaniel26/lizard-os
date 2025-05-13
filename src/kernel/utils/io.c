@@ -13,6 +13,19 @@ uint8_t inb(uint16_t port)
 	return return_value;
 }
 
+uint16_t inw(uint16_t port)
+{
+	uint16_t return_value;
+
+	__asm__ volatile (
+	"inw %w1, %w0"  /* Read a byte from the specified I/O port*/
+				   : "=a"(return_value)	/* "=a" indicates that the returned value will be stored in the 'eax' register*/
+				   : "Nd"(port)			/* "Nd" indicates that 'port' is an I/O port number that can be read as an integer*/
+				   : "memory");			/* Informs the compiler that this instruction may access memory, preventing optimizations that could overlook this interaction*/
+
+	return return_value;
+}
+
 void outb(uint16_t port, uint8_t value)
 {
 	__asm__ volatile (
