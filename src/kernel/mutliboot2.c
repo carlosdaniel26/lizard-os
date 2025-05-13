@@ -22,8 +22,6 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 		return;
 	}
 
-	unsigned size = *(unsigned *) addr;
-
 	tty_clean();
 	
 	for (tag = (struct multiboot_tag *) (addr + 8);
