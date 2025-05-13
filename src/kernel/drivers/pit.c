@@ -22,7 +22,7 @@ void pit_init()
 
 	create_idt_descriptor(32, stub_32, 0x8E);	/* PIT */
 
-	/* /* Mask PIT */*/
+	/* Mask PIT */
 	/* #define PIC1_DATA 0x21*/
 
 	/* uint8_t mask = inb(PIC1_DATA);*/
