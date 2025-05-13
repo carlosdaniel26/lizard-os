@@ -23,7 +23,6 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 	}
 
 	unsigned size = *(unsigned *) addr;
-	kprintf("MBI size: %u\n", size);
 
 	tty_clean();
 	
@@ -35,10 +34,6 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 		switch (tag->type)
 		{
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-				kprintf("mem_lower = %uKB, mem_upper = %uKB\n",
-					   ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
-					   ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
-
 					mem_ammount_kb =
 						((struct multiboot_tag_basic_meminfo *) tag)->mem_lower
 						+
