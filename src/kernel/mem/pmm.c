@@ -87,16 +87,6 @@ static inline void handle_mmap()
 	}
 }
 
-void kprint_ammount_mem_mb()
-{
-	/*kprintf("mem ammount: %uKB\n", mem_ammount_kb);*/
-	kprintf("mem ammount: %uGB\n", mem_ammount_kb / 1024);
-	kprintf("blocks: %u\n", total_blocks);
-	kprintf("bitmap_size: %uB\n", bitmap_size);
-	kprintf("mem_bitmap: %uB\n", mem_bitmap);
-	kprintf("mem_start: %uB\n\n", mem_start);
-}
-
 #define AVAILABLE 0
 #define RESERVED 1
 
@@ -140,7 +130,6 @@ void pmm_init()
 	 * [1MB][BITMAP][MEM]
 	 */
 	tty_clean();
-	kprint_ammount_mem_mb();
 }
 
 void *pmm_alloc_block()

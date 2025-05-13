@@ -47,7 +47,6 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	init_idt();
 	pmm_init();
 	enable_paging();
-	tty_clean();
 	pit_init();
 	init_tasks();
 }

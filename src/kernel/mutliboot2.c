@@ -10,6 +10,7 @@ struct multiboot_tag_mmap *mmap_tag;
 
 void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 {
+
 	if (magic_number != MULTIBOOT2_MAGIC)
 	{
 		asm("hlt");
@@ -22,6 +23,9 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 	}
 
 	unsigned size = *(unsigned *) addr;
+	kprintf("MBI size: %u\n", size);
+
+	tty_clean();
 	
 	for (tag = (struct multiboot_tag *) (addr + 8);
 		 tag->type != MULTIBOOT_TAG_TYPE_END;
@@ -30,9 +34,22 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 
 		switch (tag->type)
 		{
-			case MULTIBOOT_TAG_TYPE_MMAP:
-				mmap_tag = (struct multiboot_tag_mmap *) tag;
+			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
+				kprintf("mem_lower = %uKB, mem_upper = %uKB\n",
+					   ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
+					   ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
+
+					mem_ammount_kb =
+						((struct multiboot_tag_basic_meminfo *) tag)->mem_lower
+						+
+						((struct multiboot_tag_basic_meminfo *) tag)->mem_upper;
 				break;
+
+			case MULTIBOOT_TAG_TYPE_MMAP:
+			{
+				mmap_tag = (struct multiboot_tag_mmap *) tag;
+			}
+			break;
 
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -44,6 +61,7 @@ void process_multiboot2_tags(unsigned long magic_number, unsigned long addr)
 			break;
 
 			default:
+				/*kprintf("Unknown tag type: 0x%x\n", tag->type);*/
 				break;
 		}
 	}
