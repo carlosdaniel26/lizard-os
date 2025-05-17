@@ -2,69 +2,107 @@
 #include <kernel/mem/pmm.h>
 #include <kernel/utils/helpers.h>
 
-#define BLOCK_SIZE 4096			/* 4 KB pages*/
+#define BLOCK_SIZE 4096
+#define HEAP_SIZE_MB 16
+#define HEAP_TOTAL_SIZE (HEAP_SIZE_MB * 1024 * 1024)
+#define HEAP_BLOCKS (HEAP_TOTAL_SIZE / BLOCK_SIZE)
 
 extern uint32_t mem_ammount_b;
 
-static KMemoryHeader* ptr_free= NULL;
+static KMemoryHeader* ptr_free = NULL;
+static KMemoryHeader* ptr_heap_end = NULL; /* points to the last heap block allocated*/
 
 static inline void kmalloc_init()
 {
-	ptr_free = pmm_alloc_block();
+	void* heap_base = pmm_alloc_block();
+	if (!heap_base) return;
 
-	KMemoryHeader* header = (KMemoryHeader*)ptr_free;
-	header->next = NULL;
-	header->prev = NULL;
-	header->size =  mem_ammount_b - sizeof(KMemoryHeader);
-	header->is_free = true;
+	/* Allocate initial 16 MB (HEAP_BLOCKS blocks) */
+	for (size_t i = 1; i < HEAP_BLOCKS; i++) {
+		pmm_alloc_block();
+	}
+
+	ptr_free = (KMemoryHeader*)heap_base;
+	ptr_free->size = HEAP_TOTAL_SIZE - sizeof(KMemoryHeader);
+	ptr_free->next = NULL;
+	ptr_free->prev = NULL;
+	ptr_free->is_free = true;
+
+	ptr_heap_end = (KMemoryHeader*)((char*)heap_base + HEAP_TOTAL_SIZE - sizeof(KMemoryHeader));
+}
+
+static bool kmalloc_extend_heap()
+{
+	void* new_block_addr = pmm_alloc_block();
+	if (!new_block_addr)
+		return false;
+
+	KMemoryHeader* new_block = (KMemoryHeader*)new_block_addr;
+	new_block->size = BLOCK_SIZE - sizeof(KMemoryHeader);
+	new_block->is_free = true;
+	new_block->next = NULL;
+	new_block->prev = NULL;
+
+	/* Insert new block at the end of free list */
+	KMemoryHeader* last = ptr_free;
+	if (!last) {
+		ptr_free = new_block;
+		ptr_heap_end = new_block;
+		return true;
+	}
+	while (last->next)
+		last = last->next;
+
+	last->next = new_block;
+	new_block->prev = last;
+	ptr_heap_end = new_block;
+
+	return true;
 }
 
 void* kmalloc(size_t n_bytes)
 {
-	if (ptr_free == NULL)
+	if (!ptr_free)
 		kmalloc_init();
 
-	KMemoryHeader* ptr_current = ptr_free;
-	while (ptr_current)
+	while (true)
 	{
-		/* Large enough? */
-		if (! ptr_current->is_free
-			|| ptr_current->size < n_bytes + sizeof(KMemoryHeader) + sizeof(size_t))
+		KMemoryHeader* current = ptr_free;
+
+		while (current)
 		{
-			ptr_current = ptr_current->next;
-			continue;
+			if (!current->is_free || current->size < n_bytes) {
+				current = current->next;
+				continue;
+			}
+
+			size_t total_needed = n_bytes + sizeof(KMemoryHeader);
+
+			if (current->size >= total_needed + sizeof(KMemoryHeader) + 16)
+			{
+				KMemoryHeader* new_block = (KMemoryHeader*)((char*)current + sizeof(KMemoryHeader) + n_bytes);
+				new_block->size = current->size - n_bytes - sizeof(KMemoryHeader);
+				new_block->is_free = true;
+				new_block->next = current->next;
+				new_block->prev = current;
+
+				if (new_block->next)
+					new_block->next->prev = new_block;
+
+				current->next = new_block;
+				current->size = n_bytes;
+			}
+
+			current->is_free = false;
+			return (void*)((char*)current + sizeof(KMemoryHeader));
 		}
 
-		/* Yes, Block is large enough */
-
-		KMemoryHeader* new_block = (KMemoryHeader*)((char*)ptr_current + sizeof(KMemoryHeader) + n_bytes);
-		new_block->size = ptr_current->size - n_bytes - sizeof(KMemoryHeader);
-		new_block->is_free = true;  /* New block is free */
-
-		ptr_current->size = n_bytes;
-		ptr_current->is_free = false;
-
-		/* new_block node is beetwen current and next block*/
-		new_block->next = ptr_current->next;
-		ptr_current->next = new_block;
-
-		new_block->prev = ptr_current;
-		if (new_block->next)
-			new_block->next->prev = new_block;
-
-		/* on 4K block allocator, reserve the used blocks (yes O(n) by now) */
-		for (size_t i = 0; i < n_bytes; i++)
-		{
-			void *base_ptr = (void*)ptr_current + sizeof(KMemoryHeader) + i;
-			base_ptr = align_ptr_down(base_ptr, BLOCK_SIZE);
-			pmm_reserve_block((uint32_t)base_ptr / BLOCK_SIZE);
+		/* No suitable block found, try to extend heap*/
+		if (!kmalloc_extend_heap()) {
+			/* Out of memory: can't extend heap further*/
+			return NULL;
 		}
-
-		/* Return pointer to the allocated memory (just after the header) */
-		return (void*)((char*)ptr_current + sizeof(KMemoryHeader));
 	}
-
-	return NULL;
 }
 
 void kfree(void* ptr)
