@@ -78,6 +78,12 @@ void* kmalloc(size_t n_bytes)
 
 			size_t total_needed = n_bytes + sizeof(KMemoryHeader);
 
+			/* 
+			 * Only split if leftover block after allocation
+			 * is big enough for header + 16 bytes of data.
+			 * Otherwise allocate entire block.
+			 */
+
 			if (current->size >= total_needed + sizeof(KMemoryHeader) + 16)
 			{
 				KMemoryHeader* new_block = (KMemoryHeader*)((char*)current + sizeof(KMemoryHeader) + n_bytes);
