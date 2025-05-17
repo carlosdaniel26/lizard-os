@@ -15,7 +15,7 @@ static KMemoryHeader* ptr_heap_end = NULL; /* points to the last heap block allo
 static inline void kmalloc_init()
 {
 	void* heap_base = pmm_alloc_block();
-	if (!heap_base) return;
+	if (! heap_base) return;
 
 	/* Allocate initial 16 MB (HEAP_BLOCKS blocks) */
 	for (size_t i = 1; i < HEAP_BLOCKS; i++) {
@@ -34,7 +34,7 @@ static inline void kmalloc_init()
 static bool kmalloc_extend_heap()
 {
 	void* new_block_addr = pmm_alloc_block();
-	if (!new_block_addr)
+	if (! new_block_addr)
 		return false;
 
 	KMemoryHeader* new_block = (KMemoryHeader*)new_block_addr;
@@ -62,7 +62,7 @@ static bool kmalloc_extend_heap()
 
 void* kmalloc(size_t n_bytes)
 {
-	if (!ptr_free)
+	if (! ptr_free)
 		kmalloc_init();
 
 	while (true)
@@ -71,7 +71,7 @@ void* kmalloc(size_t n_bytes)
 
 		while (current)
 		{
-			if (!current->is_free || current->size < n_bytes) {
+			if (! current->is_free || current->size < n_bytes) {
 				current = current->next;
 				continue;
 			}
@@ -104,7 +104,7 @@ void* kmalloc(size_t n_bytes)
 		}
 
 		/* No suitable block found, try to extend heap*/
-		if (!kmalloc_extend_heap()) {
+		if (! kmalloc_extend_heap()) {
 			/* Out of memory: can't extend heap further*/
 			return NULL;
 		}
