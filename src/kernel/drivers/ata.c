@@ -146,15 +146,15 @@ uint16_t ata_identify(uint8_t drive_id)
 
 	debug_printf("Drive model: %s", model);
 
-	/* Test writing to the disk*/
-	char str[512];
-	str[0] = 'K';
-	str[1] = 'J';
-	ata_write_sector(1, 0, str);
+	// /* Test writing to the disk*/
+	// char str[512];
+	// str[0] = 'K';
+	// str[1] = 'J';
+	// ata_write_sector(1, 0, str);
 
-	char out[512];
-	ata_read_sector(1, 0, out);
-	debug_printf("out: ", out);
+	// char out[512];
+	// ata_read_sector(1, 0, out);
+	// debug_printf("out: ", out);
 
 	return status;
 }
