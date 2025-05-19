@@ -51,6 +51,21 @@ char primary_model[MODEL_NAME_SIZE];
 char secondary_model[MODEL_NAME_SIZE];
 char *model;
 
+static int ata_wait(uint16_t io_base, uint8_t mask, int set) 
+{
+	for (int i = 0; i < 100000; ++i) {
+		uint8_t status = inb(io_base + ATA_REG_STATUS);
+		if (set) {
+			if ((status & mask) == mask)
+				return 0;
+		} else {
+			if ((status & mask) == 0)
+				return 0;
+		}
+	}
+	return -1;
+}
+
 int ata_wait_drq(uint16_t ata)
 {
 	uint8_t status;
