@@ -28,6 +28,7 @@
 #define ATA_REG_STATUS			0x07	/* Status register (R) */
 
 #define ATA_CMD_WRITE_SECT		0x30	/* Write sector */
+#define ATA_CMD_READ_SECT		0x30	/* Read sector */
 #define CMD_IDENTIFY			0xEC	/* Identify Device */
 
 /* Status: */
