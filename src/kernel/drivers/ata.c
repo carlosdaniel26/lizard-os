@@ -19,16 +19,16 @@
 
 #define ATA_REG_DATA			0x00	/* Data register (R/W) */
 #define ATA_REG_ERROR			0x02	/* Error register (R) */
-#define ATA_REG_SECCOUNT0		0x03	/* Sector count (R/W) */
-#define ATA_REG_LBA0			0x04	/* LBA low byte (R/W) */
-#define ATA_REG_LBA1			0x05	/* LBA mid byte (R/W) */
-#define ATA_REG_LBA2			0x06	/* LBA high byte (R/W) */
+#define ATA_REG_SECCOUNT0		0x02	/* Sector count (R/W) */
+#define ATA_REG_LBA0			0x03	/* LBA low byte (R/W) */
+#define ATA_REG_LBA1			0x04	/* LBA mid byte (R/W) */
+#define ATA_REG_LBA2			0x05	/* LBA high byte (R/W) */
 #define ATA_REG_DRIVE			0x06	/* Drive/head register (R/W) */
 #define ATA_REG_COMMAND			0x07	/* Command register (W) */
 #define ATA_REG_STATUS			0x07	/* Status register (R) */
 
 #define ATA_CMD_WRITE_SECT		0x30	/* Write sector */
-#define ATA_CMD_READ_SECT		0x30	/* Read sector */
+#define ATA_CMD_READ_SECT		0x20	/* Read sector */
 #define CMD_IDENTIFY			0xEC	/* Identify Device */
 
 /* Status: */
@@ -64,20 +64,6 @@ static int ata_wait(uint16_t io_base, uint8_t mask, int set)
 		}
 	}
 	return -1;
-}
-
-int ata_wait_drq(uint16_t ata)
-{
-	uint8_t status;
-	/* Wait until DRQ is set or an error occurs*/
-	while (((status = inb(ata + ATA_REG_STATUS)) & ATA_SR_DRQ) == 0) {
-		if (status & ATA_SR_ERR) {
-			/* Error Occurred*/
-			return -1;
-		}
-	}
-
-	return 0;
 }
 
 static inline void ata_select(uint8_t drive_id)
@@ -116,6 +102,9 @@ uint16_t ata_identify(uint8_t drive_id)
 	inb(ctrl[drive_id]);
 	inb(ctrl[drive_id]);
 	inb(ctrl[drive_id]);
+
+	if (ata_wait(base[drive_id], ATA_SR_BSY, 0) != 0)
+		return 0;
 
 	outb(base[drive_id] + ATA_REG_COMMAND, CMD_IDENTIFY);
 
@@ -194,7 +183,7 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 	/* Send the WRITE SECTOR command*/
 	outb(ata + ATA_REG_COMMAND, ATA_CMD_WRITE_SECT);
 
-	if (ata_wait_drq(ata) != 0)
+	if (ata_wait(ata, ATA_SR_DRQ, 1) != 0)
 		return -1;
 
 	/* Write 512 bytes as a word(u16) */
@@ -204,7 +193,8 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 	}
 
 	/* Wait for the BSY bit to clear (operation complete)*/
-	while (inb(ata + ATA_REG_STATUS) & ATA_SR_BSY);
+	if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
+		return -1;
 
 	debug_printf("Wrote sector %u\n", lba);
 
