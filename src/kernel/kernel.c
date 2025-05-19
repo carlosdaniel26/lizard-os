@@ -41,7 +41,6 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 {
 	stop_interrupts();
 	process_multiboot2_tags(magic_number, addr);
-	tty_initialize();
 
 	init_gdt();
 	init_idt();

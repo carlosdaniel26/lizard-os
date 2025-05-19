@@ -20,7 +20,7 @@ CFLAGS = -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE_DIR) -I$(LIBS_DIR) 
 ASFLAGS = -felf32 -g
 LDFLAGS = -T $(SRC_DIR)/linker/linker.ld -ffreestanding -O2 -nostdlib -g
 
-QEMUHDDFLAGS =  -drive file=hdd.img,format=raw,if=virtio
+QEMUHDDFLAGS =  -drive file=hdd.img,format=raw,if=ide
 QEMUFLAGS = -no-reboot -d int,cpu_reset -D qemu_log.txt -cdrom $(OUTPUT_ISO) $(QEMUHDDFLAGS) -m 4G -M smm=off -rtc base=localtime
 KVMFLAGS = -enable-kvm -cpu host 
 
