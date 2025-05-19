@@ -200,3 +200,30 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 
 	return 0;
 }
+
+int ata_read_sector(uint8_t drive_id, uint32_t lba, char *buffer) {
+	if (drive_id != PRIMARY && drive_id != SECONDARY)
+		return -1;
+
+	uint16_t io = base[drive_id];
+	uint8_t lba_high = (lba >> 24) & 0x0F;
+
+	outb(io + ATA_REG_DRIVE, 0xE0 | lba_high);
+	outb(io + ATA_REG_SECCOUNT0, 1);
+	outb(io + ATA_REG_LBA0, lba & 0xFF);
+	outb(io + ATA_REG_LBA1, (lba >> 8) & 0xFF);
+	outb(io + ATA_REG_LBA2, (lba >> 16) & 0xFF);
+
+	outb(io + ATA_REG_COMMAND, ATA_CMD_READ_SECT);
+
+	if (ata_wait(io, ATA_SR_BSY, 0) != 0)
+		return -1;
+
+	if (ata_wait(io, ATA_SR_DRQ, 1) != 0)
+		return -1;
+
+	for (int i = 0; i < 256; ++i)
+		((uint16_t*)buffer)[i] = inw(io + ATA_REG_DATA);
+
+	return 0;
+}
