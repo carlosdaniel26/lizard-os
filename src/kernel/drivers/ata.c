@@ -68,14 +68,16 @@ static int ata_wait(uint16_t io_base, uint8_t mask, int set)
 
 static inline void ata_select(uint8_t drive_id)
 {
-	if (drive_id != PRIMARY && drive_id != SECONDARY) {
+	if (drive_id != PRIMARY && drive_id != SECONDARY) 
+	{
 		debug_printf("Invalid drive_id: %u", drive_id);
 		return;
 	}
 
 	outb(base[drive_id] + ATA_REG_DRIVE, 0xA0);
 
-	switch (drive_id) {
+	switch (drive_id) 
+	{
 		case PRIMARY:
 			model = primary_model;
 			break;
@@ -113,17 +115,12 @@ uint16_t ata_identify(uint8_t drive_id)
 		identify_data[i] = inw(base[drive_id]);
 	}
 
-	uint16_t cylinders = identify_data[1];
-	uint16_t heads = identify_data[3];
-	uint16_t sectors = identify_data[6];
+	// uint16_t cylinders = identify_data[1];
+	// uint16_t heads = identify_data[3];
+	// uint16_t sectors = identify_data[6];
 
-	uint32_t total_sectors = (uint32_t)cylinders * heads * sectors;
-	uint64_t total_bytes = (uint64_t)total_sectors * 512;
-
-	debug_printf("Cylinders: %u", cylinders);
-	debug_printf("Heads: %u", heads);
-	debug_printf("Sectors: %u", sectors);
-	debug_printf("Storage Capacity: %uMB", total_bytes / (1024 * 1024));
+	// uint32_t total_sectors = (uint32_t)cylinders * heads * sectors;
+	// uint64_t total_bytes = (uint64_t)total_sectors * 512;
 
 	for (int i = 0; i < 20; i++) {
 		model[i * 2] = identify_data[27 + i] >> 8;
@@ -133,16 +130,6 @@ uint16_t ata_identify(uint8_t drive_id)
 	model[40] = '\0';
 
 	debug_printf("Drive model: %s", model);
-
-	// /* Test writing to the disk*/
-	// char str[512];
-	// str[0] = 'K';
-	// str[1] = 'J';
-	// ata_write_sector(1, 0, str);
-
-	// char out[512];
-	// ata_read_sector(1, 0, out);
-	// debug_printf("out: ", out);
 
 	return 0;
 }
@@ -171,9 +158,7 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 
 	/* Write 512 bytes as a word(u16) */
 	for (int i = 0; i < 256; ++i)
-	{
 		outw(ata + ATA_REG_DATA, ((const uint16_t *)buffer)[i]);
-	}
 
 	/* Wait for the BSY bit to clear (operation complete)*/
 	if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
@@ -184,29 +169,38 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 	return 0;
 }
 
-int ata_read_sector(uint8_t drive_id, uint32_t lba, char *buffer) {
+int ata_read_sector(uint8_t drive_id, uint32_t lba, char *buffer) 
+{
+	uint16_t ata = base[drive_id];
+
 	if (drive_id != PRIMARY && drive_id != SECONDARY)
 		return -1;
 
-	uint16_t io = base[drive_id];
-	uint8_t lba_high = (lba >> 24) & 0x0F;
+	uint8_t lba_high = (lba >> 24) & 0x0F; /* First 4 bits */
 
-	outb(io + ATA_REG_DRIVE, 0xE0 | lba_high);
-	outb(io + ATA_REG_SECCOUNT0, 1);
-	outb(io + ATA_REG_LBA0, lba & 0xFF);
-	outb(io + ATA_REG_LBA1, (lba >> 8) & 0xFF);
-	outb(io + ATA_REG_LBA2, (lba >> 16) & 0xFF);
+	/* Select the drive and set the LBA mode*/
+	outb(ata + ATA_REG_DRIVE, 0xE0 | lba_high);
 
-	outb(io + ATA_REG_COMMAND, ATA_CMD_READ_SECT);
+	/* Set the sector count (1 sector)*/
+	outb(ata + ATA_REG_SECCOUNT0, 1);
 
-	if (ata_wait(io, ATA_SR_BSY, 0) != 0)
+	/* Send the LBA address (24 bits)*/
+	outb(ata + ATA_REG_LBA0, lba & 0xFF);
+	outb(ata + ATA_REG_LBA1, (lba >> 8) & 0xFF);
+	outb(ata + ATA_REG_LBA2, (lba >> 16) & 0xFF);
+
+	/* Send the WRITE SECTOR command*/
+	outb(ata + ATA_REG_COMMAND, ATA_CMD_READ_SECT);
+
+	if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
 		return -1;
 
-	if (ata_wait(io, ATA_SR_DRQ, 1) != 0)
+	if (ata_wait(ata, ATA_SR_DRQ, 1) != 0)
 		return -1;
 
+	/* Read 512 bytes as a word(u16) */
 	for (int i = 0; i < 256; ++i)
-		((uint16_t*)buffer)[i] = inw(io + ATA_REG_DATA);
+		((uint16_t*)buffer)[i] = inw(ata + ATA_REG_DATA);
 
 	return 0;
 }
