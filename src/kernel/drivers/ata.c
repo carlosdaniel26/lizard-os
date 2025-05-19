@@ -77,6 +77,9 @@ int ata_identify(ATADevice *dev)
 	if (ata_wait(dev->io_base, ATA_SR_BSY, 0) != 0)
 		return -1;
 
+	if (ata_wait(dev->io_base, ATA_SR_DRQ, 1) != 0)
+		return -1;
+
 	uint16_t identify_data[256];
 	for (int i = 0; i < 256; ++i) {
 		identify_data[i] = inw(dev->io_base);
