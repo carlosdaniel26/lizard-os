@@ -1,58 +1,14 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 
 #include <kernel/drivers/ata.h>
 #include <kernel/utils/io.h>
 
-#define PRIMARY 1
-#define SECONDARY 2
+uint16_t base[] = {ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
+uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 
-/* Ports */
-#define ATA_PRIMARY_BASE		0x1F0	/* ATA bus */
-#define ATA_PRIMARY_CTRL		0x3F6	/* Control */
-#define ATA_PRIMARY_MASTER		0xA0	/* Channel */
-#define ATA_PRIMARY_SLAVE		0xB0	/* Channel */
-
-#define ATA_SECONDARY_BASE		0x170	/* ATA bus */
-#define ATA_SECONDARY_CTRL		0x376	/* Control */
-#define ATA_SECONDARY_MASTER	0xE0	/* Secondary channel */
-#define ATA_SECONDARY_SLAVE		0xF0	/* Secondary channel */
-
-/* Registers Offsets */
-#define ATA_REG_DATA			0x00	/* Data register (R/W) */
-#define ATA_REG_ERROR			0x02	/* Error register (R) */
-#define ATA_REG_SECCOUNT0		0x02	/* Sector count (R/W) */
-#define ATA_REG_LBA0			0x03	/* LBA low byte (R/W) */
-#define ATA_REG_LBA1			0x04	/* LBA mid byte (R/W) */
-#define ATA_REG_LBA2			0x05	/* LBA high byte (R/W) */
-#define ATA_REG_DRIVE			0x06	/* Drive/head register (R/W) */
-#define ATA_REG_COMMAND			0x07	/* Command register (W) */
-#define ATA_REG_STATUS			0x07	/* Status register (R) */
-
-/* Commands */
-#define ATA_CMD_WRITE_SECT		0x30	/* Write sector */
-#define ATA_CMD_READ_SECT		0x20	/* Read sector */
-#define ATA_CMD_IDENTIFY		0xEC	/* Identify Device */
-
-/* Status: */
-#define ATA_SR_BSY				0x80	/* Busy */
-#define ATA_SR_DRQ				0x08	/* Data Request Ready */
-#define ATA_SR_ERR				0x01	/* Error */
-
-/* Drive/head register bits */
-#define ATA_DRIVE_MASTER_BASE	0xA0	/* Base value for master drive select (bit 7:1) */
-#define ATA_DRIVE_SLAVE_BIT		0x10	/* Bit 4 set = slave drive */
-#define ATA_LBA_BIT				0x40	/* Bit 6 set = LBA mode enabled */
-
-/* General Values */
-#define MODEL_NAME_SIZE			41
-
-uint16_t base[] = {0, ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
-uint16_t ctrl[] = {0, ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
-
-char primary_model[MODEL_NAME_SIZE];
-char secondary_model[MODEL_NAME_SIZE];
-char *model;
+ATADevice ata_devices[2];
 
 static int ata_wait(uint16_t io_base, uint8_t mask, int set) 
 {
@@ -69,53 +25,73 @@ static int ata_wait(uint16_t io_base, uint8_t mask, int set)
 	return -1;
 }
 
-static inline void ata_select(uint8_t drive_id)
+static inline void ata_select(ATADevice *dev)
 {
-	if (drive_id != PRIMARY && drive_id != SECONDARY) 
-	{
-		debug_printf("Invalid drive_id: %u", drive_id);
-		return;
-	}
-
-	outb(base[drive_id] + ATA_REG_DRIVE, 0xA0);
-
-	switch (drive_id) 
-	{
-		case PRIMARY:
-			model = primary_model;
-			break;
-		case SECONDARY:
-			model = secondary_model;
-			break;
-	}
+	outb(dev->io_base + ATA_REG_DRIVE, 0xA0);
 
 	io_wait();
 }
 
-uint16_t ata_identify(uint8_t drive_id)
+void ata_print_devices() 
 {
-	debug_printf("Checking HDD...");
-	if (drive_id < 1 || drive_id > 2) {
-		debug_printf("Invalid drive_id: %u", drive_id);
-		return 0;
+	for (int i = 0; i < 2; i++) {
+		if (ata_devices[i].present)
+			debug_printf("Drive %d: %s\n", i, ata_devices[i].model);
+		else
+			debug_printf("Drive %d: absent\n", i);
+	}
+}
+
+void ata_detect_devices()
+{
+
+	for (uint8_t i = PRIMARY; i <= SECONDARY; i++)
+	{
+		ata_devices[i].id = i;
+		ata_devices[i].io_base = base[i];
+		ata_devices[i].ctrl_base = ctrl[i];
+		
+		debug_printf("Detecting device %s\n", (i == PRIMARY) ? "PRIMARY" : "SECONDARY");
+		if (ata_identify(&ata_devices[i]) == 0)
+		{
+			ata_devices[i].present = 1;
+		}
+		else
+		{
+			debug_printf("Drive %u dont exist or has an error\n", i);
+			ata_devices[i].present = 0;
+		}
 	}
 
-	ata_select(drive_id);
+	char write_buf[512] = "HELLO ATA";
+	ata_write_sector(&ata_devices[0], 0, write_buf);
+
+	char read_buf[512] = {0};
+	ata_read_sector(&ata_devices[0], 0, read_buf);
+
+	debug_printf("Read from sector 0: %s", read_buf);
+
+}
+
+int ata_identify(ATADevice *dev)
+{
+	ata_select(dev);
 
 	/* Send some dummy I/O to the control register*/
-	inb(ctrl[drive_id]);
-	inb(ctrl[drive_id]);
-	inb(ctrl[drive_id]);
-	inb(ctrl[drive_id]);
+	inb(dev->io_base);
+	inb(dev->io_base);
+	inb(dev->io_base);
+	inb(dev->io_base);
 
-	outb(base[drive_id] + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
+	outb(dev->io_base + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
+	debug_printf("io_base: %x", dev->io_base);
 
-	if (ata_wait(base[drive_id], ATA_SR_BSY, 0) != 0)
-		return 0;
+	if (ata_wait(dev->io_base, ATA_SR_BSY, 0) != 0)
+		return -1;
 
 	uint16_t identify_data[256];
 	for (int i = 0; i < 256; ++i) {
-		identify_data[i] = inw(base[drive_id]);
+		identify_data[i] = inw(dev->io_base);
 	}
 
 	// uint16_t cylinders = identify_data[1];
@@ -126,20 +102,21 @@ uint16_t ata_identify(uint8_t drive_id)
 	// uint64_t total_bytes = (uint64_t)total_sectors * 512;
 
 	for (int i = 0; i < 20; i++) {
-		model[i * 2] = identify_data[27 + i] >> 8;
-		model[i * 2 + 1] = identify_data[27 + i] & 0xFF;
+		dev->model[i * 2] = identify_data[27 + i] >> 8;
+		dev->model[i * 2 + 1] = identify_data[27 + i] & 0xFF;
 	}
 
-	model[40] = '\0';
+	dev->model[40] = '\0';
 
-	debug_printf("Drive model: %s", model);
+	debug_printf("Drive model: %s", dev->model);
 
 	return 0;
 }
 
-int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
+int ata_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 {
-	uint16_t ata = base[drive_id];
+	debug_printf("WRITING ON DISK %u", dev->id);
+	uint16_t ata = dev->io_base;
 	uint8_t lba_mode = ((lba >> 24) & 0x0F); /* First 4 bits */
 
 	/* Select the drive and set the LBA mode*/
@@ -172,12 +149,10 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 	return 0;
 }
 
-int ata_read_sector(uint8_t drive_id, uint32_t lba, char *buffer) 
+int ata_read_sector(ATADevice *dev, uint32_t lba, char *buffer) 
 {
-	uint16_t ata = base[drive_id];
-
-	if (drive_id != PRIMARY && drive_id != SECONDARY)
-		return -1;
+	debug_printf("READING ON DISK %u", dev->id);
+	uint16_t ata = dev->io_base;
 
 	uint8_t lba_high = (lba >> 24) & 0x0F; /* First 4 bits */
 

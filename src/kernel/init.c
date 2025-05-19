@@ -12,16 +12,8 @@ void init()
 	debug_printf("PID1 on control");
 
 	start_interrupts();
-	ata_identify(1);
-
-	char write_buf[512] = "HELLO ATA";
-	ata_write_sector(1, 0, write_buf);
-
-	char read_buf[512] = {0};
-	ata_read_sector(1, 0, read_buf);
-
-	debug_printf("Read from sector 0: %s", read_buf);
-
+	ata_detect_devices();
+	
 	shit_shell_init();
 
 	infinite_loop();
