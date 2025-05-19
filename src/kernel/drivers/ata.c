@@ -36,9 +36,9 @@ void ata_print_devices()
 {
 	for (int i = 0; i < 2; i++) {
 		if (ata_devices[i].present)
-			debug_printf("Drive %d: %s\n", i, ata_devices[i].model);
+			debug_printf("Drive %u: %s\n", i, ata_devices[i].model);
 		else
-			debug_printf("Drive %d: absent\n", i);
+			debug_printf("Drive %u: absent\n", i);
 	}
 }
 
