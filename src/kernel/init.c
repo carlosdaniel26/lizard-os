@@ -9,7 +9,6 @@
 void init()
 {
 	tty_initialize();
-	debug_printf("PID1 on control");
 
 	start_interrupts();
 	ata_detect_devices();

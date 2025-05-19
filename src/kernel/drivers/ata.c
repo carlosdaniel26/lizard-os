@@ -51,25 +51,15 @@ void ata_detect_devices()
 		ata_devices[i].io_base = base[i];
 		ata_devices[i].ctrl_base = ctrl[i];
 		
-		debug_printf("Detecting device %s\n", (i == PRIMARY) ? "PRIMARY" : "SECONDARY");
 		if (ata_identify(&ata_devices[i]) == 0)
 		{
 			ata_devices[i].present = 1;
 		}
 		else
 		{
-			debug_printf("Drive %u dont exist or has an error\n", i);
 			ata_devices[i].present = 0;
 		}
 	}
-
-	char write_buf[512] = "HELLO ATA";
-	ata_write_sector(&ata_devices[0], 0, write_buf);
-
-	char read_buf[512] = {0};
-	ata_read_sector(&ata_devices[0], 0, read_buf);
-
-	debug_printf("Read from sector 0: %s", read_buf);
 
 }
 
@@ -84,7 +74,6 @@ int ata_identify(ATADevice *dev)
 	inb(dev->io_base);
 
 	outb(dev->io_base + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
-	debug_printf("io_base: %x", dev->io_base);
 
 	if (ata_wait(dev->io_base, ATA_SR_BSY, 0) != 0)
 		return -1;
@@ -107,8 +96,6 @@ int ata_identify(ATADevice *dev)
 	}
 
 	dev->model[40] = '\0';
-
-	debug_printf("Drive model: %s", dev->model);
 
 	return 0;
 }
@@ -143,8 +130,6 @@ int ata_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 	/* Wait for the BSY bit to clear (operation complete)*/
 	if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
 		return -1;
-
-	debug_printf("Wrote sector %u\n", lba);
 
 	return 0;
 }
