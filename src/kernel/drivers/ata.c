@@ -44,7 +44,6 @@ void ata_print_devices()
 
 void ata_detect_devices()
 {
-
 	for (uint8_t i = PRIMARY; i <= SECONDARY; i++)
 	{
 		ata_devices[i].id = i;
@@ -100,7 +99,7 @@ int ata_identify(ATADevice *dev)
 	return 0;
 }
 
-int ata_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
+int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 {
 	debug_printf("WRITING ON DISK %u", dev->id);
 	uint16_t ata = dev->io_base;
@@ -134,7 +133,7 @@ int ata_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 	return 0;
 }
 
-int ata_read_sector(ATADevice *dev, uint32_t lba, char *buffer) 
+int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer) 
 {
 	debug_printf("READING ON DISK %u", dev->id);
 	uint16_t ata = dev->io_base;
