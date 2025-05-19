@@ -53,8 +53,7 @@ char *model;
 
 static int ata_wait(uint16_t io_base, uint8_t mask, int set) 
 {
-	for (int i = 0; i < 100000; ++i) 
-	{
+	for (int i = 0; i < 100000; ++i) {
 		uint8_t status = inb(io_base + ATA_REG_STATUS);
 		if (set) {
 			if ((status & mask) == mask)
@@ -69,16 +68,14 @@ static int ata_wait(uint16_t io_base, uint8_t mask, int set)
 
 static inline void ata_select(uint8_t drive_id)
 {
-	if (drive_id != PRIMARY && drive_id != SECONDARY) 
-	{
+	if (drive_id != PRIMARY && drive_id != SECONDARY) {
 		debug_printf("Invalid drive_id: %u", drive_id);
 		return;
 	}
 
 	outb(base[drive_id] + ATA_REG_DRIVE, 0xA0);
 
-	switch (drive_id) 
-	{
+	switch (drive_id) {
 		case PRIMARY:
 			model = primary_model;
 			break;
@@ -93,8 +90,7 @@ static inline void ata_select(uint8_t drive_id)
 uint16_t ata_identify(uint8_t drive_id)
 {
 	debug_printf("Checking HDD...");
-	if (drive_id < 1 || drive_id > 2) 
-	{
+	if (drive_id < 1 || drive_id > 2) {
 		debug_printf("Invalid drive_id: %u", drive_id);
 		return 0;
 	}
@@ -112,26 +108,41 @@ uint16_t ata_identify(uint8_t drive_id)
 	if (ata_wait(base[drive_id], ATA_SR_BSY, 0) != 0)
 		return 0;
 
-	// uint16_t identify_data[256];
-	// for (int i = 0; i < 256; ++i) 
-	// {
-	// 	identify_data[i] = inw(base[drive_id]);
-	// }
+	uint16_t identify_data[256];
+	for (int i = 0; i < 256; ++i) {
+		identify_data[i] = inw(base[drive_id]);
+	}
 
-	// uint16_t cylinders = identify_data[1];
-	// uint16_t heads = identify_data[3];
-	// uint16_t sectors = identify_data[6];
+	uint16_t cylinders = identify_data[1];
+	uint16_t heads = identify_data[3];
+	uint16_t sectors = identify_data[6];
 
-	// uint32_t total_sectors = (uint32_t)cylinders * heads * sectors;
-	// uint64_t total_bytes = (uint64_t)total_sectors * 512;
+	uint32_t total_sectors = (uint32_t)cylinders * heads * sectors;
+	uint64_t total_bytes = (uint64_t)total_sectors * 512;
 
-	for (int i = 0; i < 20; i++) 
-	{
+	debug_printf("Cylinders: %u", cylinders);
+	debug_printf("Heads: %u", heads);
+	debug_printf("Sectors: %u", sectors);
+	debug_printf("Storage Capacity: %uMB", total_bytes / (1024 * 1024));
+
+	for (int i = 0; i < 20; i++) {
 		model[i * 2] = identify_data[27 + i] >> 8;
 		model[i * 2 + 1] = identify_data[27 + i] & 0xFF;
 	}
 
 	model[40] = '\0';
+
+	debug_printf("Drive model: %s", model);
+
+	// /* Test writing to the disk*/
+	// char str[512];
+	// str[0] = 'K';
+	// str[1] = 'J';
+	// ata_write_sector(1, 0, str);
+
+	// char out[512];
+	// ata_read_sector(1, 0, out);
+	// debug_printf("out: ", out);
 
 	return 0;
 }
@@ -173,8 +184,7 @@ int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
 	return 0;
 }
 
-int ata_read_sector(uint8_t drive_id, uint32_t lba, char *buffer) 
-{
+int ata_read_sector(uint8_t drive_id, uint32_t lba, char *buffer) {
 	if (drive_id != PRIMARY && drive_id != SECONDARY)
 		return -1;
 
