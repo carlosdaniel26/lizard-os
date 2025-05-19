@@ -103,27 +103,10 @@ uint16_t ata_identify(uint8_t drive_id)
 	inb(ctrl[drive_id]);
 	inb(ctrl[drive_id]);
 
-	if (ata_wait(base[drive_id], ATA_SR_BSY, 0) != 0)
-		return 0;
-
 	outb(base[drive_id] + ATA_REG_COMMAND, CMD_IDENTIFY);
 
-	uint8_t status;
-
-	/* Wait for the status to clear BSY*/
-	do {
-		status = inb(base[drive_id] + ATA_REG_STATUS);
-	} while (status & ATA_SR_BSY);
-
-	if (status & ATA_SR_ERR) {
-		debug_printf("ATA Error on drive %u", drive_id);
+	if (ata_wait(base[drive_id], ATA_SR_BSY, 0) != 0)
 		return 0;
-	}
-
-	if (!(status & ATA_SR_DRQ)) {
-		debug_printf("DRQ not set; device not ready");
-		return 0;
-	}
 
 	uint16_t identify_data[256];
 	for (int i = 0; i < 256; ++i) {
@@ -161,7 +144,7 @@ uint16_t ata_identify(uint8_t drive_id)
 	// ata_read_sector(1, 0, out);
 	// debug_printf("out: ", out);
 
-	return status;
+	return 0;
 }
 
 int ata_write_sector(uint8_t drive_id, uint32_t lba, const char *buffer)
