@@ -15,6 +15,14 @@ int oct2bin(unsigned char *str, int size)
 	return n;
 }
 
+char toupper(char c)
+{
+    if(c >= 'a' && c <= 'z')
+        return c - 32;
+
+    return c;
+}
+
 extern struct RTC_timer RTC_clock;
 struct RTC_timer boot_time;
 
