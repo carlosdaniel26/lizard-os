@@ -89,18 +89,19 @@ static inline void lzfetch()
 
 
 /* Main */
+#define CMD_IS(cmd, name) (memcmp(cmd, name, strlen(name)) == 1)
 
-void shell(const char *command)
+void runcmd(const char *command)
 {
-	if(memcmp(command, "lsblk", strlen("lsblk")) == 1)
+	if (CMD_IS(command, "lsblk"))
 	{
 		lsblk();
 	}
-	else if (memcmp(command, "clear", strlen("clear")) == 1)
+	else if (CMD_IS(command, "clear"))
 	{
 		clear();
 	}
-	else if (memcmp(command, "lzfetch", strlen("lzfetch")) == 1)
+	else if (CMD_IS(command, "lzfetch"))
 	{
 		lzfetch();
 	}

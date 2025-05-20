@@ -3,6 +3,6 @@
 
 void kprint_prompt();
 void shit_shell_init();
-void shell(const char *command);
+void runcmd(const char *command);
 
 #endif
