@@ -6,6 +6,7 @@
 
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/pit.h>
+#include <kernel/drivers/ata.h>
 
 extern uint32_t terminal_color;
 
@@ -68,6 +69,10 @@ void interrupt_handler(uint32_t interrupt_id)
 
 		case 32:
 			isr_pit();
+			break;
+
+		case 46:
+			isr_ata_primary();
 			break;
 
 		default:

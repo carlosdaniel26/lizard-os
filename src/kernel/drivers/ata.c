@@ -4,11 +4,24 @@
 
 #include <kernel/drivers/ata.h>
 #include <kernel/utils/io.h>
+#include <kernel/arch/idt.h>
 
 uint16_t base[] = {ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
 uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 
 ATADevice ata_devices[2];
+
+#define PIC1_DATA 0x21
+#define PIC2_DATA 0xA1
+
+void unmask_ata_primary_irq() 
+{
+    uint8_t mask = inb(PIC2_DATA);
+
+    mask &= ~(1 << 6);
+
+    outb(PIC2_DATA, mask);
+}
 
 static int ata_wait(uint16_t io_base, uint8_t mask, int set) 
 {
@@ -60,6 +73,13 @@ void ata_detect_devices()
 		}
 	}
 
+	outb(ata_devices[0].io_base + ATA_REG_COMMAND, 0x00);
+	outb(ata_devices[1].io_base + ATA_REG_COMMAND, 0x00);
+
+	create_idt_descriptor(46, stub_46, 0x8E);
+	create_idt_descriptor(47, stub_47, 0x8E);
+
+	unmask_ata_primary_irq();
 }
 
 int ata_identify(ATADevice *dev)
@@ -168,4 +188,19 @@ int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer)
 		((uint16_t*)buffer)[i] = inw(ata + ATA_REG_DATA);
 
 	return 0;
+}
+
+static inline void ata_general_isr(ATADevice *dev)
+{
+
+}
+
+void isr_ata_primary()
+{
+	ata_general_isr(&ata_devices[PRIMARY]);
+}
+
+void isr_ata_secondary()
+{
+	ata_general_isr(&ata_devices[SECONDARY]);
 }
