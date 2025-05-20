@@ -1,3 +1,6 @@
+#ifndef ATA_H
+#define ATA_H
+
 #include <stdint.h>
 
 #define PRIMARY 0
@@ -66,3 +69,5 @@ int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer);
 ATADevice *ata_get(uint8_t drive_id);
 void isr_ata_primary();
 void isr_ata_secondary();
+
+#endif
