@@ -11,6 +11,7 @@ void* memcpy(void* __restrict, const void* __restrict, size_t size);
 void* memmove(void*, const void*, size_t size);
 void* memset(void*, int value, size_t size);
 size_t strlen(const char*);
+char *strchr(const char *str, int ch);
 bool strsIsEqual(const char *str1, const char *str2, size_t size);
 void unsigned_to_string(uint64_t value, char *str);
 unsigned get_unsigned2string_final_size(uint64_t value);

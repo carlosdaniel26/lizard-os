@@ -70,6 +70,16 @@ size_t strlen(const char* str)
 	return len;
 }
 
+char *strchr(const char *str, int ch)
+{
+    do {
+        if (*str == (char)ch)
+            return (char *)str;
+    } while (*str++);
+    
+    return NULL;
+}
+
 bool strsIsEqual(const char *str1, const char *str2, size_t size)
 {
 	for (size_t i = 0; i < size; i++)
