@@ -22,6 +22,7 @@ enum vga_color {
 	VGA_COLOR_LIGHT_RED = 0xFFB6C1,	/* Light Red: RGB(255, 182, 193)*/
 	VGA_COLOR_LIGHT_MAGENTA = 0xFF77FF,/* Light Magenta: RGB(255, 119, 255)*/
 	VGA_COLOR_LIGHT_BROWN = 0xF4A460,  /* Light Brown: RGB(244, 164, 96)*/
+	VGA_COLOR_YELLOW = 0xFFFF00,		/* Yellow: RGB(255, 255, 0) */
 	VGA_COLOR_WHITE = 0xFFFFFF		 /* White: RGB(255, 255, 255)*/
 };
 
