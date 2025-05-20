@@ -222,6 +222,7 @@ void tty_handler_input(char scancode)
 		cmd_buffer[j] = '\0';
 
 		tty_breakline();
+		shell(cmd_buffer);
 		
 		kprint_prompt();
 	}
