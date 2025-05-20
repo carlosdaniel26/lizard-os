@@ -190,6 +190,16 @@ int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer)
 	return 0;
 }
 
+ATADevice *ata_get(uint8_t drive_id)
+{
+	if (drive_id <= 2)
+	{
+		return ata_devices[drive_id];
+	}
+
+	return NULL;
+}
+
 static inline void ata_general_isr(ATADevice *dev)
 {
 
