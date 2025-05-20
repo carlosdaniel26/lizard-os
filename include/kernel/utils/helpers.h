@@ -11,4 +11,15 @@
 #define align_down(num, align) (num - (num % align))
 #define align_up(num, align) (num + (align - (num % align)))
 
+struct Uptime {
+    uint8_t years;
+    uint8_t months;
+    uint8_t days;
+    uint8_t hours;
+    uint8_t minutes;
+    uint8_t seconds;
+};
+
 int oct2bin(unsigned char *str, int size);
+void save_boot_time();
+struct Uptime calculate_uptime();
