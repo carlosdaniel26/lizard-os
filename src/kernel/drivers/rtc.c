@@ -79,8 +79,6 @@ static uint8_t rtc_read_b(uint8_t reg)
 
 void get_rtc_time()
 {
-	kprintf("\nReading RTC Time:\n");
-
 	uint8_t *RTC_array = (uint8_t *) &RTC_clock;
 
 	for (uint8_t reg = 0; reg <= 0xD; reg++)
@@ -89,15 +87,5 @@ void get_rtc_time()
 
 		RTC_array[reg] = rtc_read_b(reg);
 
-		kprintf("Register 0x%X: %u\n", reg, RTC_array[reg]);
 	}
-}
-
-void kprint_rtc_time()
-{
-	kprintf("Current RTC Time:\n");
-	kprintf("Year: 20%u\n", RTC_clock.year);
-	kprintf("Month: %s\n", months_strings[RTC_clock.month]);
-	kprintf("Day: %u\n", RTC_clock.date_of_month);
-	kprintf("Time: %u:%u:%u\n", RTC_clock.hours, RTC_clock.minutes, RTC_clock.seconds);
 }
