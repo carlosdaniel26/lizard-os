@@ -7,18 +7,19 @@ int memcmp(const void* aptr, const void* bptr, size_t size)
 	unsigned char* a = (unsigned char*) aptr;
 	unsigned char* b = (unsigned char*) bptr;
 
+	int diff = 0;
+
 	for (size_t i = 0; i < size; i++)
 	{
 		if (a[i] != b[i])
-			return 0;
-
+			diff++;
 	}
-	return 1;
+	return diff;
 }
 
 int strcmp(const void* aptr, const void* bptr)
 {
-	return memcmp(aptr, bptr, strlen(aptr));
+	return memcmp(aptr, bptr, strlen(bptr));
 }
 
 void* memcpy(void* dstptr, const void* srcptr, size_t size)

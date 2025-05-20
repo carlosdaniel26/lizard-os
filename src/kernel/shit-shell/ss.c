@@ -89,7 +89,7 @@ static inline void lzfetch()
 
 
 /* Main */
-#define CMD_IS(cmd, name) (strcmp(cmd, name) == 1)
+#define CMD_IS(cmd, name) (strcmp(cmd, name) == 0)
 
 void runcmd(const char *command)
 {
