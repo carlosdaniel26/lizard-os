@@ -19,6 +19,8 @@ void init()
 	start_interrupts();
 	ata_detect_devices();
 	
+	cpuid_get_brand();
+
 	shit_shell_init();
 
 	infinite_loop();
