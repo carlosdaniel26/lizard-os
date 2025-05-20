@@ -4,6 +4,7 @@
 #include <kernel/utils/io.h>
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/framebuffer.h>
+#include <kernel/mem/kmalloc.h>
 
 #include <string.h>
 #include <stdbool.h>
@@ -23,6 +24,8 @@ uint32_t terminal_background_color;
 size_t cmd_start_column;
 size_t cmd_start_row;
 
+char *text_buffer;
+
 extern uint32_t *fb;
 
 void tty_initialize()
@@ -33,9 +36,10 @@ void tty_initialize()
 	terminal_width = width;
 	terminal_height = height;
 
-
 	terminal_text_width = width / FONT_WIDTH;
 	terminal_text_height = height / FONT_HEIGHT;
+
+	text_buffer = kmalloc(terminal_text_width * terminal_text_height);
 
 	terminal_row = 0;
 	terminal_column = 0;
@@ -109,6 +113,7 @@ void tty_clean()
 void tty_putentryat(char c, uint32_t color, size_t x, size_t y)
 {
 	draw_char(x * FONT_WIDTH, y * FONT_HEIGHT, color, c);
+	text_buffer[(y * terminal_text_width) +  x] = c;
 }
 
 void tty_putchar(char c)
@@ -201,7 +206,23 @@ void tty_handler_input(char scancode)
 
 	else if (scancode == KEY_ENTER)
 	{
+		char cmd_buffer[512];
+
+		size_t i = 0;
+		size_t j = 0;
+
+		for (i = (cmd_start_row * terminal_text_width) + cmd_start_column; 
+			i < (terminal_row * terminal_text_width) + terminal_column;
+			i++)
+		{
+
+			cmd_buffer[++j] = text_buffer[i];
+		}
+
+		cmd_buffer[j] = '\0';
+
 		tty_breakline();
+		
 		kprint_prompt();
 	}
 	else if ((unsigned)scancode < 0x80) /* dont handle break codes (scancode >= 0x80)*/
