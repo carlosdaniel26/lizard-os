@@ -124,7 +124,6 @@ int ata_identify(ATADevice *dev)
 
 int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 {
-	debug_printf("WRITING ON DISK %u", dev->id);
 	uint16_t ata = dev->io_base;
 	uint8_t lba_mode = ((lba >> 24) & 0x0F); /* First 4 bits */
 
@@ -158,7 +157,6 @@ int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 
 int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer) 
 {
-	debug_printf("READING ON DISK %u", dev->id);
 	uint16_t ata = dev->io_base;
 
 	uint8_t lba_high = (lba >> 24) & 0x0F; /* First 4 bits */
