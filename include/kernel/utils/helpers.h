@@ -13,6 +13,9 @@
 #define align_down(num, align) (num - (num % align))
 #define align_up(num, align) (num + (align - (num % align)))
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 char toupper(char c);
 
 struct Uptime {
