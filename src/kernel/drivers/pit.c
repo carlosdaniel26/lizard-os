@@ -12,6 +12,22 @@
 #define PIT_FREQUENCY_HZ 1193182
 #define PIT_DESIRED_FREQUENCY_HZ PIT_FREQUENCY_HZ / 65535
 
+static inline void pit_mask()
+{
+	#define PIC1_DATA 0x21
+	uint8_t mask = inb(PIC1_DATA);
+	mask |= 0x01;
+	outb(PIC1_DATA, mask);
+}
+
+static inline void pit_unmask()
+{
+	#define PIC1_DATA 0x21
+	uint8_t mask = inb(PIC1_DATA);
+	mask |= 0x01;
+	mask ^= 0x01;
+	outb(PIC1_DATA, mask);
+}
 
 void pit_init()
 {
@@ -21,13 +37,7 @@ void pit_init()
 	outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8));	/* High Byte */
 
 	create_idt_descriptor(32, stub_32, 0x8E);	/* PIT */
-
-	/* Mask PIT */
-	/* #define PIC1_DATA 0x21*/
-
-	/* uint8_t mask = inb(PIC1_DATA);*/
-	/* mask |= (1 << 0);*/
-	/* outb(PIC1_DATA, mask);*/
+	pit_unmask();
 }
 
 extern struct pt_regs ptrace;
