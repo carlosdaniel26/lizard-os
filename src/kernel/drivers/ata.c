@@ -194,7 +194,7 @@ ATADevice *ata_get(uint8_t drive_id)
 {
 	if (drive_id <= 2)
 	{
-		return ata_devices[drive_id];
+		return &ata_devices[drive_id];
 	}
 
 	return NULL;
