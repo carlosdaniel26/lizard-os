@@ -99,6 +99,10 @@ enum {
 	CPUID_FEAT_EDX_PBE		  = 1 << 31
 };
 
+typedef struct CPUID {
+	char brand_name[49];
+} CPUID;
+
 void init_cpuid();
 void cpuid(uint32_t code, uint32_t* output);
 void cpuid_get_brand();
