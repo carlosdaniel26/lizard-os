@@ -47,8 +47,15 @@ typedef struct ATADevice {
 	uint8_t id;
 	uint16_t io_base;
 	uint16_t ctrl_base;
-	char model[MODEL_NAME_SIZE];
 	uint8_t present;
+
+	char model[MODEL_NAME_SIZE];
+	uint16_t cylinders;
+	uint16_t heads;
+	uint16_t sectors;
+
+	uint32_t total_sectors;
+	uint64_t total_bytes;
 } ATADevice;
 
 void ata_detect_devices();

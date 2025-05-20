@@ -105,12 +105,12 @@ int ata_identify(ATADevice *dev)
 		identify_data[i] = inw(dev->io_base);
 	}
 
-	// uint16_t cylinders = identify_data[1];
-	// uint16_t heads = identify_data[3];
-	// uint16_t sectors = identify_data[6];
+	dev->cylinders = identify_data[1];
+	dev->heads = identify_data[3];
+	dev->sectors = identify_data[6];
 
-	// uint32_t total_sectors = (uint32_t)cylinders * heads * sectors;
-	// uint64_t total_bytes = (uint64_t)total_sectors * 512;
+	dev->total_sectors = (uint32_t)dev->cylinders * dev->heads * dev->sectors;
+	dev->total_bytes = (uint64_t)dev->total_sectors * 512;
 
 	for (int i = 0; i < 20; i++) {
 		dev->model[i * 2] = identify_data[27 + i] >> 8;
