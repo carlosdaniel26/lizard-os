@@ -16,12 +16,11 @@ void init()
 	save_boot_time();
 	tty_initialize();
 
-	start_interrupts();
 	ata_detect_devices();
 	
 	cpuid_get_brand();
-
 	shit_shell_init();
+	start_interrupts();
 
 	infinite_loop();
 }
