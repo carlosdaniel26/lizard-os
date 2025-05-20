@@ -16,6 +16,11 @@ int memcmp(const void* aptr, const void* bptr, size_t size)
 	return 1;
 }
 
+int strcmp(const void* aptr, const void* bptr)
+{
+	return memcmp(aptr, bptr, strlen(aptr));
+}
+
 void* memcpy(void* dstptr, const void* srcptr, size_t size)
 {
 	unsigned char* d = (unsigned char*) dstptr;
