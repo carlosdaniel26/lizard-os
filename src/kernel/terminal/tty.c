@@ -216,7 +216,7 @@ void tty_handler_input(char scancode)
 			i++)
 		{
 
-			cmd_buffer[++j] = text_buffer[i];
+			cmd_buffer[j++] = text_buffer[i];
 		}
 
 		cmd_buffer[j] = '\0';
