@@ -10,5 +10,6 @@ void clear_framebuffer();
 void setup_framebuffer(struct multiboot_tag_framebuffer_common *cfb_tag);
 void draw_pixel(uint64_t x, uint64_t y, uint32_t color);
 void draw_char(uint64_t x, uint64_t y, uint32_t color, char character);
+void scroll_framebuffer(uint32_t pixels);
 
 #endif

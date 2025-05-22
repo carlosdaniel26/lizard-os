@@ -49,39 +49,7 @@ void tty_initialize()
 
 void tty_scroll()
 {
-    size_t char_rows = terminal_text_height;
-    size_t char_cols = terminal_text_width;
-
-    for (size_t row = 1; row < char_rows; row++)
-    {
-        for (size_t col = 0; col < char_cols; col++)
-        {
-            // Copia caractere da linha de baixo pra cima
-            // A função draw_char precisa saber (em pixels): col * FONT_WIDTH, row * FONT_HEIGHT
-            // Então isso só funciona se você armazenar os caracteres em um buffer
-            // MAS como você tá desenhando diretamente, vamos copiar do framebuffer mesmo
-
-            // Calcula a posição em pixels da origem
-            uint32_t* src = (uint32_t*)fb + ((row * FONT_HEIGHT) * terminal_width);
-            uint32_t* dst = (uint32_t*)fb + (((row - 1) * FONT_HEIGHT) * terminal_width);
-
-            // Copia uma "linha de caractere" inteira (em pixels)
-            for (size_t y = 0; y < FONT_HEIGHT; y++) {
-                memcpy(dst + y * terminal_width, src + y * terminal_width, terminal_width * 4);
-            }
-        }
-    }
-
-    // Limpa a última linha
-    for (size_t y = (char_rows - 1) * FONT_HEIGHT; y < char_rows * FONT_HEIGHT; y++)
-    {
-        uint32_t* line = (uint32_t*)fb + y * terminal_width;
-        for (size_t x = 0; x < terminal_width; x++)
-        {
-            line[x] = terminal_background_color;
-        }
-    }
-
+    scroll_framebuffer(FONT_HEIGHT);
     terminal_row--;
 }
 
@@ -130,7 +98,7 @@ void tty_breakline()
 {
 	terminal_row++;
 	terminal_column = 0;
-	if (terminal_row >= terminal_text_height)
+	if (terminal_row == terminal_text_height)
 	{
 		tty_scroll();
 	}

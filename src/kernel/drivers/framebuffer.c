@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <string.h>
 #include <stddef.h>
 #include <multiboot2.h>
 #include <kernel/drivers/framebuffer.h>
@@ -143,4 +144,21 @@ void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char characte
 			draw_pixel(x_index + x, y_index + y, pixel_color);
 		}
 	}
+}
+
+void scroll_framebuffer(uint32_t pixels)
+{
+    if (pixels == 0 || pixels >= height)
+        return;
+
+    uint32_t* fb_ptr = (uint32_t*)fb;
+    uint32_t scroll_offset = pixels * width;
+    uint32_t move_pixels = (height - pixels) * width;
+
+    memmove(fb_ptr, fb_ptr + scroll_offset, move_pixels * sizeof(uint32_t));
+
+    uint32_t* clear_start = fb_ptr + move_pixels;
+    for (uint32_t i = 0; i < scroll_offset; i++) {
+        clear_start[i] = terminal_background_color;
+    }
 }
