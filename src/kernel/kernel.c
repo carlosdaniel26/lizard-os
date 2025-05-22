@@ -21,6 +21,7 @@
 #include <kernel/drivers/framebuffer.h>
 #include <kernel/mp/mp.h>
 #include <kernel/drivers/pit.h>
+#include <kernel/init.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
