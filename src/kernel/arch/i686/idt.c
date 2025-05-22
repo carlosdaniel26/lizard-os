@@ -1,3 +1,4 @@
+#ifdef TARGET_I686
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -51,3 +52,4 @@ void init_idt(void)
 
 	__asm__("lidt %0" : : "m"(ptr_idt));
 }
+#endif

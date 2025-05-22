@@ -1,3 +1,4 @@
+#ifdef TARGET_I686
 #include <stdint.h>
 #include <kernel/arch/gdt.h>
 
@@ -50,3 +51,4 @@ void init_gdt()
 
 	gdt_load();
 }
+#endif
