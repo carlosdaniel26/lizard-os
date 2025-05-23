@@ -211,3 +211,16 @@ void pmm_free_block(void *ptr)
 
 	ptr_unset_bit(&mem_bitmap[byte_index], bit_index);
 }
+
+uint32_t pmm_free_block_count()
+{
+	uint32_t free_ammount = 0;
+
+	for (uint32_t block = 0; block < total_blocks; block++)
+	{
+		if (pmm_check_block(block) == AVAILABLE)
+			free_ammount++;
+	}
+
+	return free_ammount;
+}
