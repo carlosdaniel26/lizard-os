@@ -3,7 +3,7 @@
 #include <kernel/utils/helpers.h>
 
 #define BLOCK_SIZE 4096
-#define HEAP_SIZE_MB 16
+#define HEAP_SIZE_MB 1
 #define HEAP_TOTAL_SIZE (HEAP_SIZE_MB * 1024 * 1024)
 #define HEAP_BLOCKS (HEAP_TOTAL_SIZE / BLOCK_SIZE)
 
