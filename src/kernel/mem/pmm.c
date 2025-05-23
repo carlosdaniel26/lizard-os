@@ -13,8 +13,8 @@
 #define BLOCK_SIZE 4096			/* 4 KB pages*/
 #define BLOCK_SIZE_KB 4			/* 4 KB pages*/
 
-#define MEMORY_AVAILABLE 1
-#define MEMORY_RESERVED 0
+#define MEMORY_AVAILABLE 0
+#define MEMORY_RESERVED 1
 
 #define get_absolute_bid(addr) ((uintptr_t)addr / 4096)
 
