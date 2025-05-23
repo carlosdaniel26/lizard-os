@@ -86,7 +86,19 @@ void tty_putentryat(char c, uint32_t color, size_t x, size_t y)
 
 void tty_putchar(char c)
 {
-	tty_putentryat(c, terminal_color, terminal_column, terminal_row);
+	if (c == '\n')
+	{
+		tty_breakline();
+	}
+	else if (c == '\t')
+	{
+		tty_tab();
+	}
+	else
+	{
+		tty_putentryat(c, terminal_color, terminal_column, terminal_row);
+	}
+
 	if (++terminal_column == terminal_text_width)
 	{
 		tty_breakline();
@@ -104,9 +116,11 @@ void tty_breakline()
 	}
 }
 
-static inline void tty_tab()
+#define TAB_SIZE 4
+
+void tty_tab()
 {
-	for (uint8_t i = 0; i < 4; i++)
+	for (uint8_t i = terminal_column; i % 4 == TAB_SIZE; i++)
 	{
 		tty_putchar(' ');
 
@@ -131,16 +145,7 @@ void tty_write(const char* data, size_t size)
 {
 	for (size_t i = 0; i < size; i++)
 	{
-		if (data[i] == '\n')
-		{
-			tty_breakline();
-			i+=1;
-		}
-
-		else
-		{
-			tty_putchar(data[i]);
-		}
+		tty_putchar(data[i]);
 	}
 }
 
@@ -198,11 +203,7 @@ void tty_handler_input(char scancode)
 	{
 		char c = convertScancode[(unsigned)scancode];
 
-		if (c == '\t')
-		{
-			tty_tab();
-		}
-		else if (is_ascii_character(c))
+		if (is_ascii_character(c))
 		{
 			tty_putchar(c);
 
