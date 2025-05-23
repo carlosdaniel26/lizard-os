@@ -132,23 +132,42 @@ void pmm_init()
 	tty_clean();
 }
 
-void *pmm_alloc_block()
+void *pmm_alloc_block(uint32_t ammount)
 {
-	/* bytes*/
+	if (ammount == 0)
+		return NULL;
+
+	uint32_t free_blocks_in_row = 0;
+	uint32_t start_block = 0;
+
+	/* Block Seek */
 	for (uint32_t block = 0; block < bitmap_size; block++)
 	{
 		/* the block are free*/
 		if (pmm_check_block(block) == AVAILABLE)
 		{
-			pmm_reserve_block(block);
+			if (free_blocks_in_row == 0)
+				start_block = block;
 
-			void *addr = (void*)  pmm_block_addr(block);
+			free_blocks_in_row++;
 
-			return addr;
+			if (free_blocks_in_row == ammount)
+			{
+				/* Reserved set of blocks */
+				for (uint32_t b = start_block; b <= block; b++)
+				{
+					pmm_reserve_block(b);
+				}
+
+				void *addr = (void*)  pmm_block_addr(start_block);
+
+				return addr;
+			}
 		}
 		/* the block are in use*/
 		else
 		{
+			free_blocks_in_row = 0;
 			continue;
 		}
 	}

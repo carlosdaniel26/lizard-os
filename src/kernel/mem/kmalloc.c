@@ -14,12 +14,12 @@ static KMemoryHeader* ptr_heap_end = NULL; /* points to the last heap block allo
 
 static inline void kmalloc_init()
 {
-	void* heap_base = pmm_alloc_block();
+	void* heap_base = pmm_alloc_block(1);
 	if (! heap_base) return;
 
 	/* Allocate initial 16 MB (HEAP_BLOCKS blocks) */
 	for (size_t i = 1; i < HEAP_BLOCKS; i++) {
-		pmm_alloc_block();
+		pmm_alloc_block(1);
 	}
 
 	ptr_free = (KMemoryHeader*)heap_base;
@@ -33,7 +33,7 @@ static inline void kmalloc_init()
 
 static bool kmalloc_extend_heap()
 {
-	void* new_block_addr = pmm_alloc_block();
+	void* new_block_addr = pmm_alloc_block(1);
 	if (! new_block_addr)
 		return false;
 

@@ -9,7 +9,7 @@
 
 Queue* create_Queue(size_t size, DataType type)
 {
-	Queue *q = pmm_alloc_block();
+	Queue *q = pmm_alloc_block(1);
 	q->array = (QueueElement*)pmm_alloc_block(sizeof(QueueElement) * size);
 
 	q->size = size;

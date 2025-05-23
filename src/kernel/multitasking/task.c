@@ -80,7 +80,7 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 
 	task->pid = alloc_pid();
 
-	uint32_t *stack = pmm_alloc_block();
+	uint32_t *stack = pmm_alloc_block(1);
 	stack = align_ptr_down(stack, 16);
 
 	task->esp = (uint32_t)stack;

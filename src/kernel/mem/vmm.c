@@ -39,7 +39,7 @@ void enable_paging_registers()
 
 void alloc_memory_for_tables()
 {
-	page_directory = pmm_alloc_block();
+	page_directory = pmm_alloc_block(1);
 	memset(page_directory, 0, PAGE_SIZE_BYTES);
 }
 
@@ -51,7 +51,7 @@ void map_page(uint32_t p_addr, uint32_t v_addr)
 
 	if (! (page_directory[pd_index] & PRESENT_WRITABLE))
 	{
-		page_table = pmm_alloc_block();
+		page_table = pmm_alloc_block(1);
 
 		page_directory[pd_index] = (uintptr_t)page_table | PRESENT_WRITABLE;
 	}
