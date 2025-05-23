@@ -8,6 +8,7 @@
 #include <kernel/cpu/cpuid.h>
 #include <kernel/init.h>
 #include <kernel/utils/helpers.h>
+#include <kernel/mem/pmm.h>
 
 extern size_t cmd_start_column;
 extern size_t cmd_start_row;
@@ -20,6 +21,7 @@ extern uint32_t width;
 extern uint32_t terminal_color;
 extern uint32_t terminal_background_color;
 extern uint32_t mem_ammount_kb;
+extern uint32_t total_blocks;
 
 extern CPUID cpu;
 
@@ -87,6 +89,40 @@ static inline void lzfetch()
     terminal_background_color = VGA_COLOR_BLACK;
 }
 
+void free()
+{
+	#define BLOCK_SIZE_KB 4096
+
+    uint32_t free_blocks = pmm_free_block_count();
+    uint32_t used_blocks = total_blocks - free_blocks;
+
+    uint32_t free_kb = free_blocks * BLOCK_SIZE_KB;
+    uint32_t used_kb = used_blocks * BLOCK_SIZE_KB;
+    uint32_t total_kb = total_blocks * BLOCK_SIZE_KB;
+
+    uint32_t free_mb = (free_kb + 512) / 1024;
+    uint32_t used_mb = (used_kb + 512) / 1024;
+    uint32_t total_mb = (total_kb + 512) / 1024;
+
+    #define print_mem(value_kb, value_mb) ((value_mb > 0) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
+
+    kprintf("Memory Available: ");
+    print_mem(free_kb, free_mb);
+    kprintf(" (%u blocos)\n", free_blocks);
+
+    kprintf("Used Memory: ");
+    print_mem(used_kb, used_mb);
+    kprintf(" (%u blocos)\n", used_blocks);
+
+    kprintf("Total Memory: ");
+    print_mem(total_kb, total_mb);
+    kprintf(" (%u blocos)\n", total_blocks);
+
+
+    #undef print_mem
+}
+
+
 
 /* Main */
 #define CMD_IS(cmd, name) (strcmp(cmd, name) == 0)
@@ -104,5 +140,9 @@ void runcmd(const char *command)
 	else if (CMD_IS(command, "lzfetch"))
 	{
 		lzfetch();
+	}
+	else if (CMD_IS(command, "free"))
+	{
+		free();
 	}
 }
