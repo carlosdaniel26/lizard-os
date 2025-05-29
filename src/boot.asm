@@ -19,7 +19,7 @@ multiboot2_header_end:
 	dw 0                    ; Flags
 	dd 20                   ; Struct Size
 	dd 800                 ; Width of framebuffer (e.g., 1024)
-	dd 600                 ; Height of framebuffer (e.g., 768)
+	dd 600                ; Height of framebuffer (e.g., 768)
 	dd 32                   ; Depth of framebuffer (e.g., 32 bits per pixel)
 
 	; end tag
