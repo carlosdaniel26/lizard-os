@@ -20,7 +20,7 @@ extern uint32_t width;
 
 extern uint32_t terminal_color;
 extern uint32_t terminal_background_color;
-extern uint32_t mem_ammount_kb;
+extern uint64_t mem_ammount_kb;
 extern uint32_t total_blocks;
 
 extern CPUID cpu;
