@@ -48,6 +48,5 @@ void kernel_main(unsigned long magic_number, unsigned long addr)
 	pmm_init();
 	enable_paging();
 	//pit_init();
-	//init_tasks();
-	init();
+	init_tasks();
 }
