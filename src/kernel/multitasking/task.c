@@ -98,6 +98,13 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 	return 1;
 }
 
+void task_exit()
+{
+	pmm_free_block((void*)current_task->esp);
+	kfree(current_task);
+	scheduler();
+}
+
 void init_tasks()
 {
 	/* Create PID 1 */

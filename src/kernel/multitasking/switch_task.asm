@@ -47,6 +47,10 @@ jump_to_task:
     mov esp, [esi + r_ESP]
     mov esi, [esi + r_ESI]
 
+    ; Stack the task_exit function
+    extern task_exit
+    push task_exit 
+
     mov al, 0x20                    ; End of interrupt signal
     out 0x20, al                    ; Send the EOI to PIC
 
