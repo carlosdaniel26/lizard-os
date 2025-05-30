@@ -10,13 +10,13 @@
 #include <kernel/utils/alias.h>
 #include <kernel/init.h>
 
-struct task *task1 = NULL;
+Task *task1 = NULL;
 
-struct task *current_task = NULL;
+Task *current_task = NULL;
 
 extern void cpuid_kprint();
 
-void kprint_task_state(struct task *t)
+void kprint_task_state(Task *t)
 {
 	kprintf("==== Task Name: %s\n ====", t->name);
 	kprintf("State: ");
@@ -53,7 +53,7 @@ void kprint_task_state(struct task *t)
 	kprintf("CPU Time Consumed: %u\n", t->cpu_time_consumed);
 }
 
-static inline void clean_task(struct task *task)
+static inline void clean_task(Task *task)
 {
 	/* Clean Task*/
 	task->stack_top = NULL;
@@ -77,9 +77,9 @@ static inline void clean_task(struct task *task)
 	task->cpu_time_consumed = 0;
 }
 
-struct task *create_task(void (*entry_point)(void), const char p_name[])
+Task *create_task(void (*entry_point)(void), const char p_name[])
 {
-	struct task *task = (struct task *)kmalloc(sizeof(struct task));
+	Task *task = (Task *)kmalloc(sizeof(Task));
 	if (task == NULL) {
 		kprintf("Error allocating PID1\n");
 		return 0;
@@ -114,7 +114,7 @@ void task_exit()
 void init_tasks()
 {
 	/* Create PID 1 */
-	struct task *task1 = create_task((void *)init, "init");
+	Task *task1 = create_task((void *)init, "init");
 	current_task = task1;
 	jump_to_task(task1);
 }
@@ -140,7 +140,7 @@ void scheduler()
 {
 	save_task_context();
 
-	struct task *next_task = current_task->next_task;
+	Task *next_task = current_task->next_task;
 	if (next_task == NULL) {
 		next_task = task1;
 	}

@@ -15,13 +15,13 @@ enum task_state {
 };
 
 
-struct task
+typedef struct Task
 {
 	void *stack_top;
 	void *virtual_address_space;
 
-	struct task *prev_task;
-	struct task *next_task;
+	struct Task *prev_task;
+	struct Task *next_task;
 	enum task_state state;
 
 	uint32_t eax, ebx, ecx, edx;
@@ -42,20 +42,20 @@ struct task
 	int pid;				/* Process ID the task belongs to*/
 	char name[MAX_PROCESS_NAME];		/* Task name (for debugging/monitoring purposes)*/
 	uint32_t cpu_time_consumed; /* CPU time consumed by the task so far*/
-}__attribute__((packed));
+}__attribute__((packed)) Task;
 
-struct task *create_task(void (*entry_point)(void), const char p_name[]);
+Task *create_task(void (*entry_point)(void), const char p_name[]);
 void save_task_context();
 void jump_to_task();
-void switch_task(struct task *current_task, struct task *next_task);
-struct task *get_current_task();
-void block_task(struct task *task);
-void terminate_task(struct task *task);
+void switch_task(Task *current_task, Task *next_task);
+Task *get_current_task();
+void block_task(Task *task);
+void terminate_task(Task *task);
 void scheduler();
-void initialize_task(struct task *task, void (*entry_point)(void));
+void initialize_task(Task *task, void (*entry_point)(void));
 void task_exit(void);
-uint32_t get_task_id(struct task *task);
-void kprint_task_state(struct task *t);
+uint32_t get_task_id(Task *task);
+void kprint_task_state(Task *t);
 void init_tasks();
 
 
