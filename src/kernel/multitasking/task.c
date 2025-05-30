@@ -77,8 +77,14 @@ static inline void clean_task(struct task *task)
 	task->cpu_time_consumed = 0;
 }
 
-int create_task(struct task *task, void (*entry_point)(void), const char p_name[])
+struct task *create_task(void (*entry_point)(void), const char p_name[])
 {
+	struct task *task = (struct task *)kmalloc(sizeof(struct task));
+	if (task == NULL) {
+		kprintf("Error allocating PID1\n");
+		return 0;
+	}
+
 	clean_task(task);
 
 	/* Create State */
@@ -95,7 +101,7 @@ int create_task(struct task *task, void (*entry_point)(void), const char p_name[
 
    	task->eip = (uint32_t)entry_point;
 
-	return 1;
+	return task;
 }
 
 void task_exit()
@@ -108,12 +114,7 @@ void task_exit()
 void init_tasks()
 {
 	/* Create PID 1 */
-	task1 = (struct task *)kmalloc(sizeof(struct task));
-	if (task1 == NULL) {
-		kprintf("Error allocating PID1\n");
-		return;
-	}
-	create_task(task1, (void *)init, "init");
+	struct task *task1 = create_task((void *)init, "init");
 	current_task = task1;
 	jump_to_task(task1);
 }

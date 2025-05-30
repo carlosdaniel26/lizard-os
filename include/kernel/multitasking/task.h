@@ -44,7 +44,7 @@ struct task
 	uint32_t cpu_time_consumed; /* CPU time consumed by the task so far*/
 }__attribute__((packed));
 
-int create_task(struct task *task, void (*entry_point)(void), const char p_name[]);
+struct task *create_task(void (*entry_point)(void), const char p_name[]);
 void save_task_context();
 void jump_to_task();
 void switch_task(struct task *current_task, struct task *next_task);
