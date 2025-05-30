@@ -110,10 +110,10 @@ rw:
 # Target to use QEMU
 run-debug:
 	@echo "(QEMU) Running in debug mode"
-	@qemu-system-i386 -s -S $(QEMUFLAGS)
+	@qemu-system-x86_64 -s -S $(QEMUFLAGS)
 run:
 	@echo "(QEMU) Running in normal mode"
-	@qemu-system-i386 $(QEMUFLAGS) $(KVMFLAGS) 
+	@qemu-system-x86_64 $(QEMUFLAGS) $(KVMFLAGS) 
 
 gdb:
 	@gdb -tui -ex "target remote :1234" -x script.gdb
