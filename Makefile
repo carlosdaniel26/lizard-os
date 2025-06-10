@@ -3,7 +3,7 @@ MAKEFLAGS += -rR
 .SUFFIXES:
 
 ARCH := x86_64
-QEMUFLAGS := -m 2G
+QEMUFLAGS := -m 2G -S -s
 
 override IMAGE_NAME := template-$(ARCH)
 
@@ -131,3 +131,6 @@ clean:
 distclean:
 	$(MAKE) -C kernel distclean
 	@rm -rf iso_root *.iso *.hdd kernel-deps limine ovmf
+
+gdb:
+	gdb -tui -ex "target remote :1234" -x script.gdb
