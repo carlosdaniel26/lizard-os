@@ -14,11 +14,11 @@ PREFIX := /usr/local
 
 # Check if the architecture is supported.
 ifeq ($(filter $(ARCH),aarch64 loongarch64 riscv64 x86_64),)
-    $(error Architecture $(ARCH) not supported)
+	$(error Architecture $(ARCH) not supported)
 endif
 
 # User controllable C compiler command.
-CC := cc
+CC := gcc
 
 # User controllable C flags.
 CFLAGS := -g -O2 -pipe
@@ -27,8 +27,8 @@ CFLAGS := -g -O2 -pipe
 CPPFLAGS :=
 
 ifeq ($(ARCH),x86_64)
-    # User controllable nasm flags.
-    NASMFLAGS := -F dwarf -g
+	# User controllable nasm flags.
+	NASMFLAGS := -F dwarf -g
 endif
 
 # User controllable linker flags. We set none by default.
@@ -36,9 +36,9 @@ LDFLAGS :=
 
 # Ensure the dependencies have been obtained.
 ifneq ($(shell ( test '$(MAKECMDGOALS)' = clean || test '$(MAKECMDGOALS)' = distclean ); echo $$?),0)
-    ifeq ($(shell ( ! test -d freestnd-c-hdrs || ! test -d cc-runtime || ! test -f src/limine.h ); echo $$?),0)
-        $(error Please run the ./get-deps script first)
-    endif
+	ifeq ($(shell ( ! test -d freestnd-c-hdrs || ! test -d cc-runtime || ! test -f src/limine.h ); echo $$?),0)
+		$(error Please run the ./get-deps script first)
+	endif
 endif
 
 # Check if CC is Clang.
@@ -46,61 +46,61 @@ override CC_IS_CLANG := $(shell ! $(CC) --version 2>/dev/null | grep 'clang' >/d
 
 # Internal C flags that should not be changed by the user.
 override CFLAGS += \
-    -Wall \
-    -Wextra \
-    -std=gnu11 \
-    -nostdinc \
-    -ffreestanding \
-    -fno-stack-protector \
-    -fno-stack-check \
-    -fno-PIC \
-    -ffunction-sections \
-    -fdata-sections
+	-Wall \
+	-Wextra \
+	-std=gnu11 \
+	-nostdinc \
+	-ffreestanding \
+	-fno-stack-protector \
+	-fno-stack-check \
+	-fno-PIC \
+	-ffunction-sections \
+	-fdata-sections
 
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
-    -I src \
-    -isystem freestnd-c-hdrs \
-    $(CPPFLAGS) \
-    -DLIMINE_API_REVISION=3 \
-    -MMD \
-    -MP
+	-I src \
+	-isystem freestnd-c-hdrs \
+	$(CPPFLAGS) \
+	-DLIMINE_API_REVISION=3 \
+	-MMD \
+	-MP
 
 ifeq ($(ARCH),x86_64)
-    # Internal nasm flags that should not be changed by the user.
-    override NASMFLAGS += \
-        -Wall
+	# Internal nasm flags that should not be changed by the user.
+	override NASMFLAGS += \
+		-Wall
 endif
 
 # Architecture specific internal flags.
 ifeq ($(ARCH),x86_64)
-    ifeq ($(CC_IS_CLANG),1)
-        override CC += \
-            -target x86_64-unknown-none
-    endif
-    override CFLAGS += \
-        -m64 \
-        -march=x86-64 \
-        -mno-80387 \
-        -mno-mmx \
-        -mno-sse \
-        -mno-sse2 \
-        -mno-red-zone \
-        -mcmodel=kernel
-    override LDFLAGS += \
-        -Wl,-m,elf_x86_64
-    override NASMFLAGS += \
-        -f elf64
+	ifeq ($(CC_IS_CLANG),1)
+		override CC += \
+			-target x86_64-unknown-none
+	endif
+	override CFLAGS += \
+		-m64 \
+		-march=x86-64 \
+		-mno-80387 \
+		-mno-mmx \
+		-mno-sse \
+		-mno-sse2 \
+		-mno-red-zone \
+		-mcmodel=kernel
+	override LDFLAGS += \
+		-Wl,-m,elf_x86_64
+	override NASMFLAGS += \
+		-f elf64
 endif
 
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
-    -Wl,--build-id=none \
-    -nostdlib \
-    -static \
-    -z max-page-size=0x1000 \
-    -Wl,--gc-sections \
-    -T linker-$(ARCH).ld
+	-Wl,--build-id=none \
+	-nostdlib \
+	-static \
+	-z max-page-size=0x1000 \
+	-Wl,--gc-sections \
+	-T linker-$(ARCH).ld
 
 # Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
 # object and header dependency file names.
@@ -125,24 +125,26 @@ all: bin-$(ARCH)/$(OUTPUT)
 
 # Link rules for the final executable.
 bin-$(ARCH)/$(OUTPUT): GNUmakefile linker-$(ARCH).ld $(OBJ)
-	mkdir -p "$$(dirname $@)"
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@
+	@mkdir -p "$$(dirname $@)"
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@
 
 # Compilation rules for *.c files.
 obj-$(ARCH)/%.c.o: %.c GNUmakefile
-	mkdir -p "$$(dirname $@)"
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@mkdir -p "$$(dirname $@)"
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo "(CC) $<"
 
 # Compilation rules for *.S files.
 obj-$(ARCH)/%.S.o: %.S GNUmakefile
-	mkdir -p "$$(dirname $@)"
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@mkdir -p "$$(dirname $@)"
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 ifeq ($(ARCH),x86_64)
 # Compilation rules for *.asm (nasm) files.
 obj-$(ARCH)/%.asm.o: %.asm GNUmakefile
-	mkdir -p "$$(dirname $@)"
-	nasm $(NASMFLAGS) $< -o $@
+	@mkdir -p "$$(dirname $@)"
+	@nasm $(NASMFLAGS) $< -o $@
+	@echo "(AS) $<"
 endif
 
 # Remove object files and the final executable.
