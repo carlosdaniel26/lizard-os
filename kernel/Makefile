@@ -17,6 +17,8 @@ ifeq ($(filter $(ARCH),aarch64 loongarch64 riscv64 x86_64),)
 	$(error Architecture $(ARCH) not supported)
 endif
 
+BUILD := ../build/$(ARCH)/kernel
+
 # User controllable C compiler command.
 CC := gcc
 
@@ -110,38 +112,38 @@ override ASFILES := $(filter %.S,$(SRCFILES))
 ifeq ($(ARCH),x86_64)
 override NASMFILES := $(filter %.asm,$(SRCFILES))
 endif
-override OBJ := $(addprefix obj-$(ARCH)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o))
+override OBJ := $(addprefix $(BUILD)/$(ARCH)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o))
 ifeq ($(ARCH),x86_64)
-override OBJ += $(addprefix obj-$(ARCH)/,$(NASMFILES:.asm=.asm.o))
+override OBJ += $(addprefix $(BUILD)/$(ARCH)/,$(NASMFILES:.asm=.asm.o))
 endif
-override HEADER_DEPS := $(addprefix obj-$(ARCH)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
+override HEADER_DEPS := $(addprefix $(BUILD)/$(ARCH)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
 # Default target. This must come first, before header dependencies.
 .PHONY: all
-all: bin-$(ARCH)/$(OUTPUT)
+all: $(BUILD)/$(ARCH)/$(OUTPUT)
 
 # Include header dependencies.
 -include $(HEADER_DEPS)
 
 # Link rules for the final executable.
-bin-$(ARCH)/$(OUTPUT): GNUmakefile linker-$(ARCH).ld $(OBJ)
+$(BUILD)/$(ARCH)/$(OUTPUT): Makefile linker-$(ARCH).ld $(OBJ)
 	@mkdir -p "$$(dirname $@)"
 	@$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@
 
 # Compilation rules for *.c files.
-obj-$(ARCH)/%.c.o: %.c GNUmakefile
+$(BUILD)/$(ARCH)/%.c.o: %.c Makefile
 	@mkdir -p "$$(dirname $@)"
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 	@echo "(CC) $<"
 
 # Compilation rules for *.S files.
-obj-$(ARCH)/%.S.o: %.S GNUmakefile
+$(BUILD)/$(ARCH)/%.S.o: %.S Makefile
 	@mkdir -p "$$(dirname $@)"
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 ifeq ($(ARCH),x86_64)
 # Compilation rules for *.asm (nasm) files.
-obj-$(ARCH)/%.asm.o: %.asm GNUmakefile
+$(BUILD)/$(ARCH)/%.asm.o: %.asm Makefile
 	@mkdir -p "$$(dirname $@)"
 	@nasm $(NASMFLAGS) $< -o $@
 	@echo "(AS) $<"
@@ -150,18 +152,18 @@ endif
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf bin-$(ARCH) obj-$(ARCH)
+	rm -rf $(BUILD)/$(ARCH) obj-$(ARCH)
 
 # Remove everything built and generated including downloaded dependencies.
 .PHONY: distclean
 distclean:
-	rm -rf bin-* obj-* freestnd-c-hdrs cc-runtime src/limine.h
+	rm -rf freestnd-c-hdrs cc-runtime src/limine.h
 
 # Install the final built executable to its final on-root location.
 .PHONY: install
 install: all
 	install -d "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)"
-	install -m 644 bin-$(ARCH)/$(OUTPUT) "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)/$(OUTPUT)-$(ARCH)"
+	install -m 644 $(BUILD)/$(ARCH)/$(OUTPUT) "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)/$(OUTPUT)-$(ARCH)"
 
 # Try to undo whatever the "install" target did.
 .PHONY: uninstall

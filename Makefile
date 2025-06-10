@@ -7,6 +7,8 @@ QEMUFLAGS := -m 2G
 
 override IMAGE_NAME := template-$(ARCH)
 
+BUILD := build/$(ARCH)/kernel
+
 CC := gcc
 CFLAGS := -g -O2 -pipe
 CPPFLAGS :=
@@ -82,7 +84,7 @@ kernel: kernel-deps
 $(IMAGE_NAME).iso: limine/limine kernel
 	@rm -rf iso_root
 	@mkdir -p iso_root/boot
-	@cp kernel/bin-$(ARCH)/kernel iso_root/boot/
+	@cp $(BUILD)/$(ARCH)/kernel iso_root/boot/
 	@mkdir -p iso_root/boot/limine
 	@cp limine.conf iso_root/boot/limine/
 	@mkdir -p iso_root/EFI/BOOT
@@ -112,7 +114,7 @@ else
 endif
 	@mformat -i $(IMAGE_NAME).hdd@@1M
 	@mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT ::/boot ::/boot/limine
-	@mcopy -i $(IMAGE_NAME).hdd@@1M kernel/bin-$(ARCH)/kernel ::/boot
+	@mcopy -i $(IMAGE_NAME).hdd@@1M $(BUILD)/$(ARCH)/kernel ::/boot
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine.conf ::/boot/limine
 ifeq ($(ARCH),x86_64)
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/limine-bios.sys ::/boot/limine
