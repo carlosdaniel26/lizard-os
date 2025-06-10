@@ -2,20 +2,16 @@
 MAKEFLAGS += -rR
 .SUFFIXES:
 
-# Target architecture to build for. Default to x86_64.
 ARCH := x86_64
-
-# Default user QEMU flags. These are appended to the QEMU command calls.
 QEMUFLAGS := -m 2G
 
 override IMAGE_NAME := template-$(ARCH)
 
-# Toolchain for building the 'limine' executable for the host.
-HOST_CC := cc
-HOST_CFLAGS := -g -O2 -pipe
-HOST_CPPFLAGS :=
-HOST_LDFLAGS :=
-HOST_LIBS :=
+CC := gcc
+CFLAGS := -g -O2 -pipe
+CPPFLAGS :=
+LDFLAGS :=
+LIBS :=
 
 .PHONY: all
 all: $(IMAGE_NAME).iso
@@ -68,11 +64,11 @@ limine/limine:
 	rm -rf limine
 	git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary --depth=1
 	$(MAKE) -C limine \
-		CC="$(HOST_CC)" \
-		CFLAGS="$(HOST_CFLAGS)" \
-		CPPFLAGS="$(HOST_CPPFLAGS)" \
-		LDFLAGS="$(HOST_LDFLAGS)" \
-		LIBS="$(HOST_LIBS)"
+		CC="$(CC)" \
+		CFLAGS="$(CFLAGS)" \
+		CPPFLAGS="$(CPPFLAGS)" \
+		LDFLAGS="$(LDFLAGS)" \
+		LIBS="$(LIBS)"
 
 kernel-deps:
 	./kernel/get-deps
