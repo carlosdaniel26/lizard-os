@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <limine.h>
 
+#include <framebuffer.h>
+
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
 
@@ -38,10 +40,15 @@ void kmain()
 
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
-    for (size_t i = 0; i < framebuffer->height * framebuffer->width; i++) 
+    setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address);
+
+    clear_framebuffer();
+
+    const char str[] = "Welcome to lizard-OS";
+
+    for (size_t i = 0; i < sizeof(str)-1; i++)
     {
-        volatile uint32_t *fb_ptr = framebuffer->address;
-        fb_ptr[i] = 0xffffff;
+        draw_char(FONT_WIDTH * i, 0, 0, str[i]);
     }
 
     hlt();
