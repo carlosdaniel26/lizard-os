@@ -79,3 +79,96 @@ char *strchr(const char *str, int ch)
     
     return NULL;
 }
+
+bool strsIsEqual(const char *str1, const char *str2, size_t size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		if (str1[i] != str2[i])
+			return 0;
+	}
+
+	return 1;
+}
+
+void unsigned_to_string(uint64_t value, char *str)
+{
+	char buffer[20];
+	int i = 0;
+
+	if (value == 0) {
+		str[0] = '0';
+		str[1] = '\0';
+		return;
+	}
+
+	/* convert in reverse order*/
+	while (value > 0) {
+		buffer[i++] = (value % 10) + '0';   /* (get last digit), convert to ASCII*/
+		value /= 10;						/* decrease number by one decimal case*/
+	}
+
+	/* reverse*/
+	for (int j = 0; j < i; j++) {
+		str[j] = buffer[i - j - 1];
+	}
+	str[i] = '\0'; /* null in the end*/
+}
+
+unsigned get_unsigned2string_final_size(uint64_t value)
+{
+	unsigned i = 0;
+
+	if (value == 0)
+		return 1;
+
+	while (value > 0)
+	{
+		value /= 10;
+		i++;
+	}
+
+	return i;
+}
+
+unsigned get_u64tostring_final_size(uint64_t value)
+{
+	unsigned i = 0;
+
+	if (value == 0)
+		return 1;
+
+	while (value > 0)
+	{
+		value /= 10;
+		i++;
+	}
+
+	return i;
+}
+
+void unsigned_to_hexstring(uint64_t value, char *str)
+{
+	const char *hex_digits = "0123456789abcdef";
+	int index = 0;
+	char buffer[17]; /* 16 digits + null terminator*/
+
+	/* Handle zero case*/
+	if (value == 0) {
+		str[index++] = '0';
+		str[index] = '\0';
+		return;
+	}
+
+	/* Convert number to hex string*/
+	while (value > 0) {
+		buffer[index++] = hex_digits[value & 0xF];
+		value >>= 4;
+	}
+
+	/* Reverse the string*/
+	for (int i = 0; i < index; i++) {
+		str[i] = buffer[index - i - 1];
+	}
+	str[index] = '\0';
+}
