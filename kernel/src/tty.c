@@ -5,6 +5,7 @@
 #include <tty.h>
 #include <framebuffer.h>
 #include <vga.h>
+#include <ss.h>
 
 size_t terminal_width;
 size_t terminal_height;
