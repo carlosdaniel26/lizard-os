@@ -46,8 +46,7 @@ void keyboard_poll_loop() {
         {
             uint8_t scancode = keyboard_read_scancode();
 
-            if (scancode < 0x80)
-                draw_char(0, 0, 0xFFFFFF, convertScancode[scancode]);
+            tty_handler_input(scancode);
         }
     }
 }
