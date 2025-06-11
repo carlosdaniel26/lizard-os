@@ -40,8 +40,8 @@ void tty_initialize()
 
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_background_color = VGA_COLOR_BLACK;
-	terminal_color = VGA_COLOR_WHITE;
+	terminal_background_color = TERMINAL_BG_COLOR;
+	terminal_color = TERMINAL_COLOR;
 }
 
 void tty_scroll()

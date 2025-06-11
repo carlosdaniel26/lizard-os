@@ -6,6 +6,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <vga.h>
+
+#define TERMINAL_BG_COLOR VGA_COLOR_WHITE
+#define TERMINAL_COLOR VGA_COLOR_BLUE
+
 void tty_initialize();
 void tty_clean();
 void tty_putentryat(char c, uint32_t color, size_t x, size_t y);
