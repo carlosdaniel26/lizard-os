@@ -15,6 +15,8 @@ void tty_write(const char* data, size_t size);
 void tty_writestring(const char* data);
 void tty_handler_input(char scancode);
 void tty_backspace();
+void tty_breakline();
+void tty_tab();
 
 /* KBDUS means US Keyboard Layout. This is a scancode table
 *  used to layout a standard US keyboard. I have left some

@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <tty.h>
 #include <framebuffer.h>
 #include <vga.h>
 
@@ -164,48 +165,51 @@ void tty_backspace()
 	}
 }
 
-// void tty_handler_input(char scancode)
-// {
+#define KEY_BACKSAPCE	0x0E
+#define KEY_ENTER		0x1C
 
-// 	if (scancode == KEY_BACKSAPCE)
-// 	{
-// 		tty_backspace();
-// 	}
+void tty_handler_input(char scancode)
+{
 
-// 	else if (scancode == KEY_ENTER)
-// 	{
-// 		char cmd_buffer[512];
+	if (scancode == KEY_BACKSAPCE)
+	{
+		tty_backspace();
+	}
 
-// 		size_t i = 0;
-// 		size_t j = 0;
+	else if (scancode == KEY_ENTER)
+	{
+		char cmd_buffer[512];
 
-// 		for (i = (cmd_start_row * terminal_text_width) + cmd_start_column; 
-// 			i < (terminal_row * terminal_text_width) + terminal_column;
-// 			i++)
-// 		{
+		size_t i = 0;
+		size_t j = 0;
 
-// 			cmd_buffer[j++] = text_buffer[i];
-// 		}
+		for (i = (cmd_start_row * terminal_text_width) + cmd_start_column; 
+			i < (terminal_row * terminal_text_width) + terminal_column;
+			i++)
+		{
 
-// 		cmd_buffer[j] = '\0';
+			cmd_buffer[j++] = text_buffer[i];
+		}
 
-// 		tty_breakline();
-// 		runcmd(cmd_buffer);
+		cmd_buffer[j] = '\0';
+
+		tty_breakline();
+		runcmd(cmd_buffer);
 		
-// 		kprint_prompt();
-// 	}
-// 	else if ((unsigned)scancode < 0x80) /* dont handle break codes (scancode >= 0x80)*/
-// 	{
-// 		char c = convertScancode[(unsigned)scancode];
+		kprint_prompt();
+	}
+	else if ((unsigned)scancode < 0x80) /* dont handle break codes (scancode >= 0x80)*/
+	{
+		char c = convertScancode[(unsigned)scancode];
 
-// 		if (is_ascii_character(c))
-// 		{
-// 			tty_putchar(c);
+		if (is_ascii_character(c))
+		{
+			tty_putchar(c);
 
-// 			if (terminal_column == terminal_text_width)
-// 			{
-// 				tty_breakline();
-// 			}
-// 		}
-// 	}
-// }
+			if (terminal_column == terminal_text_width)
+			{
+				tty_breakline();
+			}
+		}
+	}
+}
