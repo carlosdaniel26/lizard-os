@@ -5,6 +5,7 @@
 
 #include <framebuffer.h>
 #include <tty.h>
+#include <ss.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -73,6 +74,7 @@ void kmain()
 
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
     tty_initialize();
+    shit_shell_init();
     keyboard_poll_loop();
     hlt();
 }
