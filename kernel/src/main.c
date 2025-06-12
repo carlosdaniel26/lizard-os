@@ -75,6 +75,7 @@ void kmain()
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
     tty_initialize();
     shit_shell_init();
+    pmm_init();
     keyboard_poll_loop();
     hlt();
 }
