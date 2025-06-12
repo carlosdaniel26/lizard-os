@@ -34,6 +34,12 @@ uint32_t total_blocks;
 
 void handle_mmap()
 {
+	if (memmap_request.response == NULL)
+	{
+		kpanic("memmap request empty");
+		while(1){}
+	}
+
 	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
 	{
         struct limine_memmap_entry *entry = memmap_request.response->entries[i];
@@ -87,6 +93,8 @@ void pmm_reserve_block(uint32_t block_number)
 
 void pmm_init()
 {
+
+	handle_mmap();
 
 	mem_ammount_kb = align_down(mem_ammount_kb, BLOCK_SIZE_KB);
 
