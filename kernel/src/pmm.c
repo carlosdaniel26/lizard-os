@@ -17,6 +17,7 @@
 
 #define get_absolute_bid(addr) ((uintptr_t)addr / 4096)
 
+__attribute__((used, section(".limine_requests")))
 static volatile struct limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0
