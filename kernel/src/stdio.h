@@ -18,7 +18,8 @@ int kprintf(const char* __restrict, ...);
 	terminal_color = VGA_COLOR_RED; \
 	kprintf("[PANIC]"); \
 	terminal_color = temp; \
-	kprintf("%s:%u: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+	kprintf("%s:%u: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+	while(1){}
 
 int putchar(char character);
 void dd(const char * restrict format, ...);
