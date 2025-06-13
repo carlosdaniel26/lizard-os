@@ -6,6 +6,7 @@
 #include <framebuffer.h>
 #include <tty.h>
 #include <ss.h>
+#include <rtc.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -61,6 +62,8 @@ static void hlt()
 
 void kmain() 
 {
+    save_boot_time();
+
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
         hlt();
     }
@@ -75,7 +78,7 @@ void kmain()
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
     tty_initialize();
     shit_shell_init();
-    pmm_init();
+    //pmm_init();
     keyboard_poll_loop();
     hlt();
 }
