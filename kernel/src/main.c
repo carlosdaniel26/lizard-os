@@ -80,6 +80,10 @@ void kmain()
     tty_initialize();
     shit_shell_init();
     pmm_init();
+    init_gdt();
+    init_idt();
+    pic_remap(0x20, 0x28);
+    pic_unmask_irq(1);
     keyboard_poll_loop();
     hlt();
 }
