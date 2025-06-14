@@ -181,7 +181,7 @@ void pmm_init()
 	 */
 }
 
-void *pmm_alloc_block(uint32_t ammount)
+void *pmm_alloc_blocks(uint32_t ammount)
 {
 	if (ammount == 0)
 		return NULL;
@@ -217,30 +217,6 @@ void *pmm_alloc_block(uint32_t ammount)
 		else
 		{
 			free_blocks_in_row = 0;
-			continue;
-		}
-	}
-
-	return NULL;
-}
-
-void *pmm_alloc_blocks()
-{
-	/* bytes*/
-	for (uint32_t block = 0; block < bitmap_size; block++)
-	{
-		/* the block are free*/
-		if (pmm_check_block(block) == MEMORY_AVAILABLE)
-		{
-			pmm_reserve_block(block);
-
-			void *addr = (void*)  pmm_block_addr(block);
-
-			return addr;
-		}
-		/* the block are in use*/
-		else
-		{
 			continue;
 		}
 	}
