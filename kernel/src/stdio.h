@@ -13,13 +13,6 @@ int kprintf(const char* __restrict, ...);
 #define debug_printf(fmt, ...) \
 	kprintf("[DEBUG] %s:%u: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 
-#define kpanic(fmt, ...) \
-	uint32_t temp = terminal_color; \
-	terminal_color = VGA_COLOR_RED; \
-	kprintf("[PANIC]"); \
-	terminal_color = temp; \
-	kprintf("%s:%u: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-	while(1){}
-
+void kpanic(const char *str);
 int putchar(char character);
 void dd(const char * restrict format, ...);

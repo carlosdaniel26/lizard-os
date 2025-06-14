@@ -7,6 +7,20 @@
 #include <tty.h>
 #include <alias.h>
 
+void kpanic(const char *str)
+{
+	extern uint32_t terminal_color;
+
+    uint32_t temp = terminal_color;
+    
+    terminal_color = VGA_COLOR_RED;
+    kprintf("[PANIC]");
+    terminal_color = temp;
+
+    kprintf(str);
+    
+    while (1) {}
+}
 
 bool kprint(const char* data, size_t length) {
 	const unsigned char* bytes = (const unsigned char*) data;
