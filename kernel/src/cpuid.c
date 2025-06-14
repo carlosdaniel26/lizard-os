@@ -11,7 +11,7 @@ void cpuid(uint32_t code, uint32_t *output)
 {
 	__asm__ __volatile__(
 		"cpuid"
-		: "=a" (output[0]), "=b" (output[1]), "=c" (output[3]), "=d" (output[2])
+		: "=a" (output[0]), "=b" (output[1]), "=c" (output[2]), "=d" (output[3])
 		: "a" (code)
 	);
 }
