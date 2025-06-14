@@ -23,9 +23,17 @@ static volatile struct limine_memmap_request memmap_request = {
     .revision = 0
 };
 
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
+    .revision = 0
+};
+
 extern uint8_t kernel_start;
 extern uint8_t kernel_end;
 
+
+uint64_t hhdm_offset;
 uint64_t mem_ammount_b;
 uint64_t mem_ammount_kb;
 uint8_t *mem_bitmap;
@@ -33,26 +41,6 @@ uint8_t *mem_start;
 uint32_t bitmap_size;
 uint32_t total_blocks;
 
-void handle_mmap()
-{
-	if (memmap_request.response == NULL)
-	{
-		kpanic("memmap request empty");
-		while(1){}
-	}
-
-	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
-	{
-        struct limine_memmap_entry *entry = memmap_request.response->entries[i];
-
-        if (entry->type == LIMINE_MEMMAP_USABLE) 
-        {
-            mem_ammount_b += entry->length;
-        }
-    }
-
-    mem_ammount_kb = mem_ammount_b / 1024;
-}
 
 static inline uint32_t pmm_block_number(void *ptr)
 {
@@ -71,6 +59,90 @@ static inline uint32_t pmm_block_number(void *ptr)
 static inline uint32_t pmm_block_addr(uint32_t block_number)
 {
 	return (uintptr_t)mem_start + (block_number * BLOCK_SIZE);
+}
+
+/*
+ * This Function bellow has a lot of code to optmize.
+ * Mainly on loops, work is needed, fix this on free time.
+ */
+
+void handle_mmap()
+{
+	if (memmap_request.response == NULL)
+	{
+		kpanic("memmap request empty");
+		while(1){}
+	}
+
+	if (hhdm_request.response == NULL)
+	{
+		kpanic("hhdm request empty");
+		while(1){}
+	}
+
+	hhdm_offset = hhdm_request.response->offset;
+
+	/* Count Free Bytes */
+	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
+	{
+	    struct limine_memmap_entry *entry = memmap_request.response->entries[i];
+
+	    if (entry->type == LIMINE_MEMMAP_USABLE) {
+	        mem_ammount_b += entry->length;
+	    }
+	}
+
+	mem_ammount_kb = mem_ammount_b / 1024;
+	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
+	bitmap_size = total_blocks / 8;
+
+
+	int mem_bitmap_set;
+
+	/* Find area for the membitmap and then restart loop to reserve the blocks */
+	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
+	{
+	    struct limine_memmap_entry *entry = memmap_request.response->entries[i];
+
+	    if (entry->type != LIMINE_MEMMAP_USABLE)
+	        continue;
+
+	    if (entry->length >= bitmap_size + 4096) 
+	    {
+	        mem_bitmap = (uint8_t*)(entry->base + hhdm_offset);
+	        mem_bitmap_set = 1;
+	        break;
+	    }
+	}
+
+	/* Then Reserve Unusable Addresses */
+	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
+	{
+	    struct limine_memmap_entry *entry = memmap_request.response->entries[i];
+
+	    if (entry->type != LIMINE_MEMMAP_USABLE)
+	    {
+	    	for (uint64_t j = entry->base; j < entry->length; j++)
+	    	{
+	    		pmm_reserve_block(pmm_block_number(j + hhdm_offset));
+	    	}
+	   	}
+	}
+
+	/* Reserve the blocks used by the bitmap */
+	for (uint64_t i = (uint64_t)mem_start; i < bitmap_size; i++) 
+	{
+	    struct limine_memmap_entry *entry = memmap_request.response->entries[i];
+
+	    pmm_reserve_block(pmm_block_number((void*)i + hhdm_offset));	
+	}
+
+	/* Exception */
+	if (! mem_bitmap_set)
+	{
+		kpanic("hhdm request empty");
+		while(1){}
+	}
 }
 
 #define AVAILABLE 0
@@ -95,18 +167,9 @@ void pmm_reserve_block(uint32_t block_number)
 void pmm_init()
 {
 
-	handle_mmap();
+	handle_mmap();	
 
-	mem_ammount_kb = align_down(mem_ammount_kb, BLOCK_SIZE_KB);
-
-	mem_ammount_b = mem_ammount_kb * 1024;
-
-	total_blocks = mem_ammount_kb / BLOCK_SIZE_KB;
-	bitmap_size = total_blocks / (8);
-
-	mem_bitmap = &kernel_end + 1;
-
-	//memset(mem_bitmap, 0, bitmap_size); /* init the bitmap*/
+	memset(mem_bitmap, 0, bitmap_size); /* init the bitmap*/
 
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
 
