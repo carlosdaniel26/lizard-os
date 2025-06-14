@@ -37,26 +37,6 @@ static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
-bool keyboard_has_data() {
-    return inb(0x64) & 1;
-}
-
-uint8_t keyboard_read_scancode() 
-{
-    return inb(0x60);
-}
-
-void keyboard_poll_loop() {
-    while (true) {
-        if (keyboard_has_data()) 
-        {
-            uint8_t scancode = keyboard_read_scancode();
-
-            tty_handler_input(scancode);
-        }
-    }
-}
-
 static void hlt() 
 {
     while(1) {
