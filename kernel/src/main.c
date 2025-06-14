@@ -8,6 +8,9 @@
 #include <ss.h>
 #include <rtc.h>
 #include <pmm.h>
+#include <gdt.h>
+#include <idt.h>
+#include <pic.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
