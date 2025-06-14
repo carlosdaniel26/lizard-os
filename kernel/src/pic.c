@@ -42,9 +42,9 @@ void PIC_remap()
     outb(PIC1_DATA, PIC_MODE_CONFIG);
     outb(PIC2_DATA, PIC_MODE_CONFIG);
 
-    /* Unmask interrupts on the PIC */
-    outb(PIC1_DATA, 0xF9);
-    outb(PIC2_DATA, 0xFC);
+    /* mask interrupts on the PIC */
+    outb(PIC1_DATA, 0x00);
+    outb(PIC2_DATA, 0x00);
 }
 
 void PIC_sendEOI(uint8_t irq)

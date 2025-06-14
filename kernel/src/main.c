@@ -86,7 +86,7 @@ void kmain()
     pmm_init();
     init_gdt();
     init_idt();
-    PIC_remap(0x20, 0x28);
+    PIC_remap();
     PIC_unmaskIRQ(1);
     hlt();
 }
