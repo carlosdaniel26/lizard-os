@@ -17,6 +17,8 @@ CPPFLAGS :=
 LDFLAGS :=
 LIBS :=
 
+# Targets
+
 .PHONY: all
 all: $(IMAGE_NAME).iso
 	@echo "(ISO) $(IMAGE_NAME) generated!!"
@@ -92,6 +94,8 @@ kernel-deps:
 .PHONY: kernel
 kernel: kernel-deps
 	$(MAKE) -C kernel
+
+# Build
 
 $(IMAGE_NAME).iso: limine/limine kernel
 	@rm -rf iso_root
