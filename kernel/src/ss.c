@@ -6,6 +6,7 @@
 #include <rtc.h>
 #include <helpers.h>
 #include <cpuid.h>
+#include <pmm.h>
 
 extern size_t cmd_start_column;
 extern size_t cmd_start_row;

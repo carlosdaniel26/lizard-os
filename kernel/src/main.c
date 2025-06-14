@@ -7,6 +7,7 @@
 #include <tty.h>
 #include <ss.h>
 #include <rtc.h>
+#include <pmm.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
