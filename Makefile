@@ -5,7 +5,7 @@ MAKEFLAGS += -rR
 ARCH := x86_64
 
 QEMUDEBUGFLAGS := -S -s
-QEMUFLAGS := -m 2G
+QEMUFLAGS := -m 3G
 
 override IMAGE_NAME := template-$(ARCH)
 
