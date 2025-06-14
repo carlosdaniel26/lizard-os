@@ -61,6 +61,14 @@ static inline uintptr_t pmm_block_addr(block_id_t block_number)
 	return (uintptr_t)mem_start + (block_number * BLOCK_SIZE);
 }
 
+static inline bool pmm_check_block(block_id_t block_number)
+{
+	uint32_t byte_index = block_number / 8;
+	uint32_t bit_index  = block_number % 8;
+
+	return ptr_get_bit(mem_bitmap + byte_index, bit_index);
+}
+
 /*
  * This Function bellow has a lot of code to optmize.
  * Mainly on loops, work is needed, fix this on free time.
@@ -149,22 +157,6 @@ void handle_mmap()
 	}
 }
 
-static inline bool pmm_check_block(block_id_t block_number)
-{
-	uint32_t byte_index = block_number / 8;
-	uint32_t bit_index  = block_number % 8;
-
-	return ptr_get_bit(mem_bitmap + byte_index, bit_index);
-}
-
-void pmm_reserve_block(block_id_t block_number)
-{
-	uint32_t byte_index = block_number / 8;
-	uint32_t bit_index  = block_number % 8;
-
-	ptr_set_bit(mem_bitmap + byte_index, bit_index);
-}
-
 void pmm_init()
 {
 
@@ -179,6 +171,14 @@ void pmm_init()
 	/**
 	 * [1MB][BITMAP][MEM]
 	 */
+}
+
+void pmm_reserve_block(block_id_t block_number)
+{
+	uint32_t byte_index = block_number / 8;
+	uint32_t bit_index  = block_number % 8;
+
+	ptr_set_bit(mem_bitmap + byte_index, bit_index);
 }
 
 void *pmm_alloc_blocks(uint32_t ammount)
