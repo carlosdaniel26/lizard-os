@@ -1,10 +1,12 @@
 #include <stdint.h>
 #include <tty.h>
 #include <io.h>
+#include <pic.h>
 
 #define KEYBOARD_DATA_PORT 0x60
 
-void isr_keyboard()
+__attribute__((interrupt))
+void isr_keyboard(void *frame)
 {
  	while (inb(0x64) & 0x01)
     {
