@@ -61,6 +61,7 @@ void kmain()
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
+    init_cpuid();
     tty_initialize();
     shit_shell_init();
     pmm_init();
