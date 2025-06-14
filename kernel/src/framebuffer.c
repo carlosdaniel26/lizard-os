@@ -116,13 +116,13 @@ static unsigned char font[] = {
 
 void clear_framebuffer()
 {
-	for (uint64_t x = 0; x < width; x++)
-	{
 		for (uint64_t y = 0; y < height; y++)
 		{
-			framebuffer[y * (pitch / 4) + x] = terminal_background_color;
+			for (uint64_t x = 0; x < width; x++)
+			{
+				framebuffer[y * (pitch / 4) + x] = terminal_background_color;
+			}
 		}
-	}
 }
 
 void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth)
