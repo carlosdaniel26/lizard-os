@@ -17,7 +17,7 @@ extern uint32_t width;
 
 extern uint32_t terminal_color;
 extern uint32_t terminal_background_color;
-extern uint64_t mem_ammount_kb;
+extern uint64_t mem_ammount_b;
 extern uint32_t total_blocks;
 
 extern CPUID cpu;
@@ -64,6 +64,9 @@ static inline void lzfetch()
 	struct Uptime time = {0};
 	time = calculate_uptime();
 
+	uint64_t mem_ammount_mb = mem_ammount_b / (1024*1024);
+
+
     kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
     kprintf("|                  _         |\t\t\t\t\t\t\t------------------\n");
     kprintf("|                 /\"\\        |\t\t\t\t\t\t\tKernel:  lz-kernel 0.1\n");
@@ -75,7 +78,7 @@ static inline void lzfetch()
     kprintf("|    ^        /    \\         |\t\t\t\t\t\t\tTerminal: tty0\n");
     kprintf("|   /|       (      )        |\t\t\t\t\t\t\tTheme:    CalangoGreen\n");
     kprintf("|  / |     ,__\\    /__,      |\t\t\t\t\t\t\tCPU:      %s\n", cpu.brand_name);
-    kprintf("|  \\ \\   _//---,  ,--\\\\_     |\t\t\t\t\t\t\tRAM:      %uMB\n", mem_ammount_kb / 1024);
+    kprintf("|  \\ \\   _//---,  ,--\\\\_     |\t\t\t\t\t\t\tRAM:      %u.%uGB\n", mem_ammount_mb / (1024));
     kprintf("|   \\ \\   /\\  /  /   /\\      | \n");
     kprintf("|    \\ \\.___,/  /            |\n");
     kprintf("|     \\.______,/             |\n");

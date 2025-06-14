@@ -106,7 +106,7 @@ void pmm_init()
 
 	mem_bitmap = &kernel_end + 1;
 
-	memset(mem_bitmap, 0, bitmap_size); /* init the bitmap*/
+	//memset(mem_bitmap, 0, bitmap_size); /* init the bitmap*/
 
 	mem_start = (uint8_t*)mem_bitmap + bitmap_size;
 
