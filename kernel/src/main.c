@@ -59,8 +59,9 @@ void keyboard_poll_loop() {
 
 static void hlt() 
 {
-    for (;;) {
+    while(1) {
         asm ("hlt");
+        asm("sti");
     }
 }
 
@@ -87,6 +88,5 @@ void kmain()
     init_idt();
     PIC_remap(0x20, 0x28);
     PIC_unmaskIRQ(1);
-    while(1){}
     hlt();
 }
