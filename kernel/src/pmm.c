@@ -39,10 +39,10 @@ uint64_t mem_ammount_kb;
 uint8_t *mem_bitmap;
 uint8_t *mem_start;
 uint32_t bitmap_size;
-uint32_t total_blocks;
+block_id_t total_blocks;
 
 
-static inline uint32_t pmm_block_number(void *ptr)
+static inline block_id_t pmm_block_number(void *ptr)
 {
 	if ((uintptr_t)ptr % 4096 == 0)
 		return ((uintptr_t)ptr - (uintptr_t)mem_start) / BLOCK_SIZE;
@@ -56,7 +56,7 @@ static inline uint32_t pmm_block_number(void *ptr)
 	return block_number;
 }
 
-static inline uint32_t pmm_block_addr(uint32_t block_number)
+static inline uintptr_t pmm_block_addr(block_id_t block_number)
 {
 	return (uintptr_t)mem_start + (block_number * BLOCK_SIZE);
 }
@@ -124,7 +124,7 @@ void handle_mmap()
 	    {
 	    	for (uint64_t j = entry->base; j < entry->length; j++)
 	    	{
-	    		pmm_reserve_block(pmm_block_number(j + hhdm_offset));
+	    		pmm_reserve_block(pmm_block_number((void*)j + hhdm_offset));
 	    	}
 	   	}
 	}
@@ -136,7 +136,7 @@ void handle_mmap()
 	}
 
 	/* Reserve the blocks used by the kernel ELF */
-	for (uint64_t i = (uint64_t)&kernel_start; i < &kernel_end; i++) 
+	for (uint64_t i = (uint64_t)&kernel_start; i < (uint64_t)&kernel_end; i++) 
 	{
 	    pmm_reserve_block(pmm_block_number((void*)i + hhdm_offset));	
 	}
@@ -152,7 +152,7 @@ void handle_mmap()
 #define AVAILABLE 0
 #define RESERVED 1
 
-static inline bool pmm_check_block(uint32_t block_number)
+static inline bool pmm_check_block(block_id_t block_number)
 {
 	uint32_t byte_index = block_number / 8;
 	uint32_t bit_index  = block_number % 8;
@@ -160,7 +160,7 @@ static inline bool pmm_check_block(uint32_t block_number)
 	return ptr_get_bit(mem_bitmap + byte_index, bit_index);
 }
 
-void pmm_reserve_block(uint32_t block_number)
+void pmm_reserve_block(block_id_t block_number)
 {
 	uint32_t byte_index = block_number / 8;
 	uint32_t bit_index  = block_number % 8;
@@ -190,7 +190,7 @@ void *pmm_alloc_block(uint32_t ammount)
 		return NULL;
 
 	uint32_t free_blocks_in_row = 0;
-	uint32_t start_block = 0;
+	block_id_t start_block = 0;
 
 	/* Block Seek */
 	for (uint32_t block = 0; block < bitmap_size; block++)
@@ -206,7 +206,7 @@ void *pmm_alloc_block(uint32_t ammount)
 			if (free_blocks_in_row == ammount)
 			{
 				/* Reserved set of blocks */
-				for (uint32_t b = start_block; b <= block; b++)
+				for (block_id_t b = start_block; b <= block; b++)
 				{
 					pmm_reserve_block(b);
 				}
@@ -253,7 +253,7 @@ void *pmm_alloc_blocks()
 
 void pmm_free_block(void *ptr)
 {
-	uint32_t block_number = pmm_block_number(ptr);
+	block_id_t block_number = pmm_block_number(ptr);
 
 	if ( block_number >= total_blocks)
 		return;
@@ -264,11 +264,11 @@ void pmm_free_block(void *ptr)
 	ptr_unset_bit(&mem_bitmap[byte_index], bit_index);
 }
 
-uint32_t pmm_free_block_count()
+block_id_t pmm_free_block_count()
 {
-	uint32_t free_ammount = 0;
+	block_id_t free_ammount = 0;
 
-	for (uint32_t block = 0; block < total_blocks; block++)
+	for (block_id_t block = 0; block < total_blocks; block++)
 	{
 		if (pmm_check_block(block) == AVAILABLE)
 			free_ammount++;
