@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <idt.h>
+#include <pic.h>
 
 static idt_entry idt[IDT_ENTRIES];
 static idt_ptr idt_descriptor;
