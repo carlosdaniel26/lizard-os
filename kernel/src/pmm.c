@@ -149,9 +149,6 @@ void handle_mmap()
 	}
 }
 
-#define AVAILABLE 0
-#define RESERVED 1
-
 static inline bool pmm_check_block(block_id_t block_number)
 {
 	uint32_t byte_index = block_number / 8;
@@ -196,7 +193,7 @@ void *pmm_alloc_block(uint32_t ammount)
 	for (uint32_t block = 0; block < bitmap_size; block++)
 	{
 		/* the block are free*/
-		if (pmm_check_block(block) == AVAILABLE)
+		if (pmm_check_block(block) == MEMORY_AVAILABLE)
 		{
 			if (free_blocks_in_row == 0)
 				start_block = block;
@@ -233,7 +230,7 @@ void *pmm_alloc_blocks()
 	for (uint32_t block = 0; block < bitmap_size; block++)
 	{
 		/* the block are free*/
-		if (pmm_check_block(block) == AVAILABLE)
+		if (pmm_check_block(block) == MEMORY_AVAILABLE)
 		{
 			pmm_reserve_block(block);
 
@@ -270,7 +267,7 @@ block_id_t pmm_free_block_count()
 
 	for (block_id_t block = 0; block < total_blocks; block++)
 	{
-		if (pmm_check_block(block) == AVAILABLE)
+		if (pmm_check_block(block) == MEMORY_AVAILABLE)
 			free_ammount++;
 	}
 
