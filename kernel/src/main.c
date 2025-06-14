@@ -87,6 +87,6 @@ void kmain()
     init_idt();
     PIC_remap(0x20, 0x28);
     PIC_unmaskIRQ(1);
-    keyboard_poll_loop();
+    while(1){}
     hlt();
 }
