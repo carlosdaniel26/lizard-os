@@ -132,8 +132,12 @@ void handle_mmap()
 	/* Reserve the blocks used by the bitmap */
 	for (uint64_t i = (uint64_t)mem_start; i < bitmap_size; i++) 
 	{
-	    struct limine_memmap_entry *entry = memmap_request.response->entries[i];
+	    pmm_reserve_block(pmm_block_number((void*)i + hhdm_offset));	
+	}
 
+	/* Reserve the blocks used by the kernel ELF */
+	for (uint64_t i = (uint64_t)&kernel_start; i < &kernel_end; i++) 
+	{
 	    pmm_reserve_block(pmm_block_number((void*)i + hhdm_offset));	
 	}
 
