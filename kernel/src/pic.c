@@ -1,54 +1,63 @@
 #include <stdint.h>
 #include <io.h>
+#include <idt.h>
 
-#define PIC1_COMMAND 0x20
-#define PIC1_DATA    0x21
-#define PIC2_COMMAND 0xA0
-#define PIC2_DATA    0xA1
+#define PIC1_COMMAND        0x20
+#define PIC1_DATA       0x21
+#define PIC2_COMMAND        0xA0
+#define PIC2_DATA       0xA1
+#define PIC_EOI         0x20
 
-#define ICW1_INIT    0x10
-#define ICW1_ICW4    0x01
-#define ICW4_8086    0x01
-#define PIC_EOI      0x20
+#define PIC_INIT_COMMAND    0x11
+#define PIC_CASCADE_CONFIG  0x04
+#define PIC_MODE_CONFIG     0x01
 
-void pic_remap(int offset1, int offset2) 
+#define PIC_VECTOR_OFFSET1 32
+#define PIC_VECTOR_OFFSET2 40
+
+#define SLAVE_PIC_HAS_TO_BE_WARNED irq >= 8
+
+/**
+ * Remap PIC vectors to avoid conflict with CPU exceptions.
+ * By default, the interrupts are (0-15), while the CPU exceptions have a range between (0-31).
+ * Here we remap the IRQs to 32-47.
+ */
+void PIC_remap()
 {
-    uint8_t a1, a2;
+    /* Start initialization of PIC */
+    outb(PIC1_COMMAND, PIC_INIT_COMMAND); /* Master PIC*/
+    outb(PIC2_COMMAND, PIC_INIT_COMMAND); /* Slave PIC*/
 
-    /* Save previous mask */
-    a1 = inb(PIC1_DATA);
-    a2 = inb(PIC2_DATA);
+    /* Interrupt vector offsets */
+    outb(PIC1_DATA, PIC_VECTOR_OFFSET1); /* (IRQ0-7) -> (32-39)*/
+    outb(PIC2_DATA, PIC_VECTOR_OFFSET2); /* (IRQ8-15) -> (40-47)*/
 
-    /* Init on ICW4 mode */
-    outb(ICW1_INIT | ICW1_ICW4, PIC1_COMMAND);
-    io_wait();
-    outb(ICW1_INIT | ICW1_ICW4, PIC2_COMMAND);
-    io_wait();
+    /* Tell Master PIC there is a slave PIC at IRQ2 (0000 0100) */
+    outb(PIC1_DATA, PIC_CASCADE_CONFIG); /* Master PIC*/
 
-    /* Offsets */
-    outb(offset1, PIC1_DATA);
-    io_wait();
-    outb(offset2, PIC2_DATA);
-    io_wait();
+    /* Tell Slave PIC its cascade identity (0000 0010) */
+    outb(PIC2_DATA, 0x02);
 
-    /* Setup Master/Slave */
-    outb(4, PIC1_DATA);
-    io_wait();
-    outb(2, PIC2_DATA);
-    io_wait();
+    /* Set PIC to x86 mode */
+    outb(PIC1_DATA, PIC_MODE_CONFIG);
+    outb(PIC2_DATA, PIC_MODE_CONFIG);
 
-    /* 8086 Mode */
-    outb(ICW4_8086, PIC1_DATA);
-    io_wait();
-    outb(ICW4_8086, PIC2_DATA);
-    io_wait();
-
-    /* Restore previous mask */
-    outb(a1, PIC1_DATA);
-    outb(a2, PIC2_DATA);
+    /* Unmask interrupts on the PIC */
+    outb(PIC1_DATA, 0xF9);
+    outb(PIC2_DATA, 0xFC);
 }
 
-void pic_unmask_irq(uint8_t irq) 
+void PIC_sendEOI(uint8_t irq)
+{
+    if (SLAVE_PIC_HAS_TO_BE_WARNED)
+    {
+        outb(PIC2_COMMAND, PIC_EOI);
+    }
+
+    outb(PIC1_COMMAND, PIC_EOI);
+}
+
+void PIC_unmaskIRQ(uint8_t irq) 
 {
     uint16_t port;
     uint8_t value;
@@ -63,13 +72,4 @@ void pic_unmask_irq(uint8_t irq)
     value = inb(port);
     value &= ~(1 << irq);
     outb(value, port);
-}
-
-void pic_send_eoi(uint8_t irq)
-{
-    if (irq >= 8) 
-    {
-        outb(PIC_EOI, PIC2_COMMAND);
-    }
-    outb(PIC_EOI, PIC1_COMMAND);
 }

@@ -33,10 +33,8 @@ static inline void idt_load()
 __attribute__((interrupt))
 void default_handler(void* frame)
 {
-    pic_send_eoi(15);
+    PIC_sendEOI(15);
     return;
-    (void)frame;
-    while (1) __asm__("hlt");
 }
 
 void init_idt()
