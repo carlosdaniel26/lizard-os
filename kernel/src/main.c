@@ -12,6 +12,7 @@
 #include <idt.h>
 #include <pic.h>
 #include <cpuid.h>
+#include <helpers.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -36,14 +37,6 @@ static inline uint8_t inb(uint16_t port) {
 
 static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
-}
-
-static void hlt() 
-{
-    while(1) {
-        asm ("hlt");
-        asm("sti");
-    }
 }
 
 void kmain() 

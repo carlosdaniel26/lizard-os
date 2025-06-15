@@ -3,6 +3,14 @@
 #include <helpers.h>
 #include <rtc.h>
 
+void hlt() 
+{
+    while(1) {
+        asm ("hlt");
+        asm("sti");
+    }
+}
+
 int oct2bin(unsigned char *str, int size)
 {
 	int n = 0;
