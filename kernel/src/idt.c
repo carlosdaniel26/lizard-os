@@ -7,7 +7,7 @@
 static idt_entry idt[IDT_ENTRIES];
 static idt_ptr idt_descriptor;
 
-static void set_idt_gate(int vector, void (*isr)(), uint8_t flags)
+void set_idt_gate(int vector, void (*isr)(), uint8_t flags)
 {
     uint64_t addr = (uint64_t)isr;
 
@@ -42,8 +42,6 @@ void init_idt()
 {
     for (int i = 0; i < IDT_ENTRIES; i++)
         set_idt_gate(i, default_handler, 0x8E);
-
-    set_idt_gate(33, isr_keyboard, 0x8E);
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base  = (uint64_t)&idt;

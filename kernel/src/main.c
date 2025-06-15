@@ -13,6 +13,7 @@
 #include <pic.h>
 #include <cpuid.h>
 #include <helpers.h>
+#include <keyboard.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -62,6 +63,6 @@ void kmain()
     init_gdt();
     init_idt();
     PIC_remap();
-    PIC_unmaskIRQ(1);
+    init_keyboard();
     hlt();
 }
