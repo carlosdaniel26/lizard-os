@@ -89,3 +89,8 @@ void get_rtc_time()
 
 	}
 }
+
+const char *get_month_string(uint8_t month_id)
+{
+	return months_strings[month_id];
+}

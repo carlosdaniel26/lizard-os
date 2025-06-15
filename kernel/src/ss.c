@@ -124,6 +124,17 @@ void free()
 }
 
 
+extern struct RTC_timer RTC_clock;
+
+static inline void date()
+{
+	kprintf("%s %u %u:%u:%u %u\n", 
+		get_month_string(RTC_clock.month), 
+		RTC_clock.hours,
+		RTC_clock.minutes,
+		RTC_clock.seconds,
+		RTC_clock.year);
+}
 
 /* Main */
 #define CMD_IS(cmd, name) (strcmp(cmd, name) == 0)
@@ -145,5 +156,9 @@ void runcmd(const char *command)
 	else if (CMD_IS(command, "free"))
 	{
 		free();
+	}
+	else if (CMD_IS(command, "date"))
+	{
+		date();
 	}
 }

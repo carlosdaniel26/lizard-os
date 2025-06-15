@@ -24,5 +24,6 @@ void isr_timer();
 void enable_rtc_interrupts();
 void get_rtc_time();
 void kprint_rtc_time();
+const char *get_month_string(uint8_t month_id);
 
 #endif
