@@ -123,12 +123,12 @@ int kprintf(const char* restrict format, ...) {
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			uint32_t size = get_unsigned2string_final_size(number) + 1; /* +1 for null terminator*/
-			char str[size];
+			uint32_t size = get_unsigned2hex_final_size(number);
+			char str[size + 1];
 			memset(str, 0, sizeof(str));
 
 			unsigned_to_hexstring((uint64_t)number, str);
-			if (!kprint(str, sizeof(str)))
+			if (!kprint(str, sizeof(str) - 1))
 				return -1;
 			written++;
 		}

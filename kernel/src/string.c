@@ -147,26 +147,39 @@ unsigned get_u64tostring_final_size(uint64_t value)
 	return i;
 }
 
+unsigned get_unsigned2hex_final_size(uint64_t value)
+{
+	unsigned i = 0;
+
+	if (value == 0)
+		return 1;
+
+	while (value > 0)
+	{
+		value /= 16;
+		i++;
+	}
+
+	return i;
+}
+
 void unsigned_to_hexstring(uint64_t value, char *str)
 {
 	const char *hex_digits = "0123456789abcdef";
 	int index = 0;
-	char buffer[17]; /* 16 digits + null terminator*/
+	char buffer[16];
 
-	/* Handle zero case*/
 	if (value == 0) {
-		str[index++] = '0';
-		str[index] = '\0';
+		str[0] = '0';
+		str[1] = '\0';
 		return;
 	}
 
-	/* Convert number to hex string*/
-	while (value > 0) {
+	while (value > 0 && index < 16) {
 		buffer[index++] = hex_digits[value & 0xF];
 		value >>= 4;
 	}
 
-	/* Reverse the string*/
 	for (int i = 0; i < index; i++) {
 		str[i] = buffer[index - i - 1];
 	}
