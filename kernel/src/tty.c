@@ -86,15 +86,15 @@ void tty_putchar(char c)
 	if (c == '\n')
 	{
 		tty_breakline();
+		return;
 	}
 	else if (c == '\t')
 	{
 		tty_tab();
+		return;
 	}
-	else
-	{
-		tty_putentryat(c, terminal_color, terminal_column, terminal_row);
-	}
+	
+	tty_putentryat(c, terminal_color, terminal_column, terminal_row);
 
 	if (++terminal_column == terminal_text_width)
 	{

@@ -8,8 +8,8 @@
 
 #include <vga.h>
 
-#define TERMINAL_BG_COLOR VGA_COLOR_WHITE
-#define TERMINAL_COLOR VGA_COLOR_BLUE
+#define TERMINAL_BG_COLOR VGA_COLOR_BLACK
+#define TERMINAL_COLOR VGA_COLOR_WHITE
 
 void tty_initialize();
 void tty_clean();
