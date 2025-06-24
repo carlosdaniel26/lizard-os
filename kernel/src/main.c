@@ -58,11 +58,12 @@ void kmain()
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
     init_cpuid();
     tty_initialize();
-    shit_shell_init();
     pmm_init();
     init_gdt();
     init_idt();
     PIC_remap();
     init_keyboard();
+    shit_shell_init();
+    //setup_paging();
     hlt();
 }
