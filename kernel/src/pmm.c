@@ -3,6 +3,8 @@
 #include <string.h>
 #include <limine.h>
 #include <tty.h>
+#include <stdio.h>
+#include <pmm.h>
 
 #define ALIGN_UP(x, a) (((x) + ((a)-1)) & ~((a)-1))
 #define BLOCK_SIZE 4096
@@ -17,6 +19,8 @@ static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST, .revision = 0
 };
 
+extern uint32_t framebuffer_length;
+
 uint64_t mem_ammount_b = 0;
 uint8_t *bitmap = NULL;
 uint64_t total_blocks = 0;
@@ -30,16 +34,17 @@ void pmm_init()
 {
     hhdm_offset = hhdm_request.response->offset;
 
-    uint64_t mem_bytes = 0;
+    /* Count memory */
     for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
     {
         struct limine_memmap_entry *e = memmap_request.response->entries[i];
         if (e->type == LIMINE_MEMMAP_USABLE)
-            mem_bytes += e->length;
+            mem_ammount_b += e->length;
     }
 
-    total_blocks = mem_bytes / BLOCK_SIZE;
+    total_blocks = mem_ammount_b / BLOCK_SIZE;
 
+    /* Init memory as reserved */
     for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
     {
         struct limine_memmap_entry *e = memmap_request.response->entries[i];
@@ -51,9 +56,12 @@ void pmm_init()
         }
     }
 
+    /* Free the usable blocks */
     for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) 
     {
         struct limine_memmap_entry *e = memmap_request.response->entries[i];
+
+        if (e->type == LIMINE_MEMMAP_FRAMEBUFFER) framebuffer_length = e->length;
         if (e->type != LIMINE_MEMMAP_USABLE) continue;
 
         uintptr_t start = ALIGN_UP((uintptr_t)e->base, BLOCK_SIZE);
@@ -79,7 +87,6 @@ void pmm_init()
 	        set_bit(bid);
 	}
 
-    set_bit(0);
     //pmm_test_all();
 }
 

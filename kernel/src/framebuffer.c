@@ -9,6 +9,8 @@ uint64_t height;
 uint64_t width;
 uint32_t pitch;
 
+uint32_t framebuffer_length;
+
 extern uint32_t terminal_background_color;
 
 static unsigned char font[] = {
@@ -131,6 +133,8 @@ void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth)
 	pitch = pth;
 	width = w;
 	height = h;
+
+	/* framebuffer length assigned on pmm.c: pmm_init() function */
 }
 
 void draw_pixel(uint64_t x, uint64_t y, uint32_t color)
