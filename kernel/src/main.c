@@ -8,12 +8,14 @@
 #include <ss.h>
 #include <rtc.h>
 #include <pmm.h>
+#include <vmm.h>
 #include <gdt.h>
 #include <idt.h>
 #include <pic.h>
 #include <cpuid.h>
 #include <helpers.h>
 #include <keyboard.h>
+#include <alias.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -30,18 +32,18 @@ static volatile LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".limine_requests_end")))
 static volatile LIMINE_REQUESTS_END_MARKER;
 
-static inline uint8_t inb(uint16_t port) {
-    uint8_t ret;
-    __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
-    return ret;
-}
-
-static inline void outb(uint16_t port, uint8_t val) {
-    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
-}
+uint64_t stack_start;
 
 void kmain() 
 {
+    asm volatile (
+        "mov %%esp, %0"
+        :
+        : "m"(stack_start)
+        : "memory"
+    );
+
+    stop_interrupts();
     save_boot_time();
 
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
@@ -64,6 +66,11 @@ void kmain()
     PIC_remap();
     init_keyboard();
     shit_shell_init();
-    //setup_paging();
+    vmm_init();
+    vmm_map_kernel();
+    vmm_map_framebuffer();
+    vmm_map_stack();
+    vmm_load_pml4();
+    start_interrupts();
     hlt();
 }
