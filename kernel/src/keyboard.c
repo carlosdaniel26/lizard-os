@@ -17,6 +17,8 @@ void init_keyboard()
 __attribute__((interrupt))
 void isr_keyboard(void *frame)
 {
+    (void)frame;
+    
  	while (inb(0x64) & 0x01)
     {
         uint8_t scancode = inb(KEYBOARD_DATA_PORT);
