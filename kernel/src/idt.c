@@ -34,6 +34,8 @@ static inline void idt_load()
 __attribute__((interrupt))
 void default_handler(void* frame)
 {
+    (void)frame;
+    
     PIC_sendEOI(15);
     return;
 }
