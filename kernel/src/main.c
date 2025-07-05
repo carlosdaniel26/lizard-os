@@ -67,10 +67,6 @@ void kmain()
     init_keyboard();
     shit_shell_init();
     vmm_init();
-    vmm_map_kernel();
-    vmm_map_framebuffer();
-    vmm_map_stack();
-    vmm_load_pml4();
     start_interrupts();
     hlt();
 }

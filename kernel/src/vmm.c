@@ -24,7 +24,8 @@ extern uint32_t framebuffer_length;
  
 static uint64_t *kernel_pml4;
 
-static inline void invlpg(void *addr) {
+static inline void invlpg(void *addr) 
+{
     __asm__ volatile ("invlpg (%0)" : : "r"(addr) : "memory");
 }
 
@@ -34,12 +35,7 @@ static uint64_t *vmm_alloc_table() {
     return (uint64_t *)page;
 }
 
-void vmm_init() {
-    kernel_pml4 = vmm_alloc_table();
-}
-//    0xffff80007ff86fd8
-
-void vmm_map(uint64_t virt, uint64_t phys, uint64_t flags)
+void vmm_map(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t flags)
 {
     /* Normalize values */
     virt = (uint64_t)align_ptr_down(virt, PAGE_SIZE);
@@ -54,14 +50,14 @@ void vmm_map(uint64_t virt, uint64_t phys, uint64_t flags)
     uint64_t *pdpt, *pd, *pt;
 
     /* PDPT */
-    if (! (kernel_pml4[pml4_i] & PAGE_PRESENT))
+    if (! (pml4[pml4_i] & PAGE_PRESENT))
     {
         pdpt = vmm_alloc_table();
-        kernel_pml4[pml4_i] = ((uint64_t)pdpt - hhdm_offset) | flags;
+        pml4[pml4_i] = ((uint64_t)pdpt - hhdm_offset) | flags;
     } 
     else 
     {
-        pdpt = (uint64_t *)((kernel_pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+        pdpt = (uint64_t *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
     }
 
     /* PD */
@@ -90,37 +86,81 @@ void vmm_map(uint64_t virt, uint64_t phys, uint64_t flags)
     invlpg((void *)virt);
 }
 
-void vmm_maprange(uint64_t virt, uint64_t phys, uint64_t length_in_blocks, uint64_t flags)
+static inline void vmm_maprange(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t length_in_blocks, uint64_t flags)
 {
     for (uint64_t i = 0; i < length_in_blocks; i++)
     {
-        vmm_map(virt, phys, flags);
+        vmm_map(pml4, virt, phys, flags);
         virt += PAGE_SIZE;
         phys += PAGE_SIZE;
     }
 }
 
-void vmm_load_pml4() 
+static inline void vmm_load_pml4() 
 {
     register uint64_t phys = (uint64_t)kernel_pml4 - hhdm_offset;
     __asm__ volatile("mov %0, %%cr3" :: "r"(phys));
 }
 
-
-void vmm_map_kernel()
+void vmm_init() 
 {
+    kernel_pml4 = vmm_alloc_table();
+    
+    /* == DEFAULT MAPPING == */
+
+    /* Kernel */
     uint64_t vir = kernel_address_request.response->virtual_base;
     uint64_t phys = kernel_address_request.response->physical_base;
+    vmm_maprange(kernel_pml4, vir, phys, (uint64_t)(&kernel_end - &kernel_start), PAGE_PRESENT | PAGE_WRITABLE);
 
-    vmm_maprange(vir, phys, (uint64_t)(&kernel_end - &kernel_start), PAGE_PRESENT | PAGE_WRITABLE);
+    /* Framebuffer */
+    vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset, framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+
+    /* Map Stack */
+    vmm_maprange(kernel_pml4, stack_start + hhdm_offset, stack_start, 1, PAGE_PRESENT | PAGE_WRITABLE);
 }
 
-void vmm_map_framebuffer()
+void *vmm_alloc_page()
 {
-    vmm_maprange((uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset, framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+    uintptr_t ptr = (uintptr_t)pmm_alloc_block();
+    vmm_map(kernel_pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
+
+    return (void*)ptr + hhdm_offset;
 }
 
-void vmm_map_stack()
+int vmm_free_page(uintptr_t ptr)
 {
-    vmm_maprange(stack_start + hhdm_offset, stack_start, 1, PAGE_PRESENT | PAGE_WRITABLE);
+    ptr = (uintptr_t)align_ptr_down(ptr, PAGE_SIZE);
+
+    /* Calculate index */
+    uint64_t pml4_i = (ptr >> 39) & 0x1FF;
+    uint64_t pdpt_i = (ptr >> 30) & 0x1FF;
+    uint64_t pd_i   = (ptr >> 21) & 0x1FF;
+    uint64_t pt_i   = (ptr >> 12) & 0x1FF;
+
+    uint64_t *pdpt, *pd, *pt;
+
+    /* Get the table */
+    pdpt = (uint64_t *)((kernel_pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+
+    pd = (uint64_t *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
+
+    pt = (uint64_t *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
+
+    /* PDPT */
+    if (! (kernel_pml4[pml4_i] & PAGE_PRESENT))
+        return -1;
+
+    /* PD */
+    if (! (pdpt[pdpt_i] & PAGE_PRESENT)) 
+        return -1;
+
+    /* PT */
+    if (! (pd[pd_i] & PAGE_PRESENT))
+        return -1;
+
+    /* Not present anymore */
+    pt[pt_i] &= (~PAGE_PRESENT | ~PAGE_WRITABLE);
+
+    return 0;
 }
