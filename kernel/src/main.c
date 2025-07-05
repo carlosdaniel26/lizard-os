@@ -37,7 +37,7 @@ uint64_t stack_start;
 void kmain() 
 {
     asm volatile (
-        "mov %%esp, %0"
+        "mov %%rsp, %0"
         :
         : "m"(stack_start)
         : "memory"
