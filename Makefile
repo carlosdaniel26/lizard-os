@@ -50,7 +50,8 @@ run-hdd-x86_64: ovmf/ovmf-code-$(ARCH).fd $(IMAGE_NAME).hdd
 
 .PHONY: run-bios
 run-bios: $(IMAGE_NAME).iso
-	qemu-system-$(ARCH) \
+	@echo "(QEMU)"
+	@qemu-system-$(ARCH) \
 		-M q35 \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
@@ -58,7 +59,8 @@ run-bios: $(IMAGE_NAME).iso
 
 .PHONY: debug
 debug: $(IMAGE_NAME).iso
-	qemu-system-$(ARCH) \
+	@echo "(QEMU)"
+	@qemu-system-$(ARCH) \
 		-M q35 \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
