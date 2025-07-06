@@ -24,5 +24,5 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
 	memcpy(task->name, name, strlen(name));
 
 	task->priority = priority;
-	task->rip = (uint64_t)entry_point;
+	task->regs.rip = (uint64_t)entry_point;
 }

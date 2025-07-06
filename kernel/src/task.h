@@ -5,23 +5,9 @@
 
 #define TASK_NAME_MAX_LEN 32
 
-typedef struct  __attribute__((packed)) Task
-{
-	char name[TASK_NAME_MAX_LEN];
+__attribute__((packed))
+typedef struct CpuState {
 
-	enum {
-		TASK_RUNNING,
-		TASK_READY,
-		TASK_WAITING,
-		TASK_TERMINATED
-	} state;
-
-	uint32_t priority;
-	uint32_t ticks_remaining;
-
-	struct Task *next;
-
-	/* Context Info */
 	uint64_t cr3;
 	uint64_t *stack;
 
@@ -54,6 +40,25 @@ typedef struct  __attribute__((packed)) Task
 	uint16_t fs;
 	uint16_t gs;
 	uint16_t ss;
+} CpuState;
+
+typedef struct  __attribute__((packed)) Task
+{
+	char name[TASK_NAME_MAX_LEN];
+
+	enum {
+		TASK_RUNNING,
+		TASK_READY,
+		TASK_WAITING,
+		TASK_TERMINATED
+	} state;
+
+	CpuState regs;
+
+	uint32_t priority;
+	uint32_t ticks_remaining;
+
+	struct Task *next;
 } Task;
 
 void task_init();
