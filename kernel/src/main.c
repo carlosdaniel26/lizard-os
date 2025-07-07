@@ -69,8 +69,8 @@ void kmain()
     shit_shell_init();
     stop_interrupts();
     vmm_init();
-    start_interrupts();
     pit_init();
     task_init();
+    start_interrupts();
     hlt();
 }
