@@ -130,7 +130,7 @@ void vmm_init()
 
 void *vmm_alloc_page()
 {
-    uintptr_t ptr = (uintptr_t)pmm_alloc_block();
+    uintptr_t ptr = (uintptr_t)pmm_alloc_block() - hhdm_offset;
     vmm_map(kernel_pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
 
     return (void*)ptr + hhdm_offset;
