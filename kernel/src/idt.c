@@ -3,9 +3,25 @@
 #include <idt.h>
 #include <pic.h>
 #include <keyboard.h>
+#include <isr_vector.h>
+#include <task.h>
 
 static idt_entry idt[IDT_ENTRIES];
 static idt_ptr idt_descriptor;
+
+void (*isr_table[IDT_ENTRIES])(CpuState *regs);
+
+
+void isr_common_entry(uint64_t int_id, CpuState *regs)
+{
+    PIC_sendEOI(15);
+
+    if (isr_table[int_id])
+    {
+        isr_table[int_id](regs);
+    }
+
+}
 
 void set_idt_gate(int vector, void (*isr)(), uint8_t flags)
 {
@@ -31,19 +47,10 @@ static inline void idt_load()
     );
 }
 
-__attribute__((interrupt))
-void default_handler(void* frame)
-{
-    (void)frame;
-    
-    PIC_sendEOI(15);
-    return;
-}
-
 void init_idt()
 {
     for (int i = 0; i < IDT_ENTRIES; i++)
-        set_idt_gate(i, default_handler, 0x8E);
+        set_idt_gate(i, isr_vectors[i], 0x8E);
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base  = (uint64_t)&idt;

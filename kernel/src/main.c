@@ -16,6 +16,7 @@
 #include <helpers.h>
 #include <keyboard.h>
 #include <alias.h>
+#include <pit.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -66,7 +67,10 @@ void kmain()
     PIC_remap();
     init_keyboard();
     shit_shell_init();
+    stop_interrupts();
     vmm_init();
     start_interrupts();
+    pit_init();
+    task_init();
     hlt();
 }

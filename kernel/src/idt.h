@@ -1,6 +1,9 @@
 #ifndef IDT_H
 #define IDT_H
 
+#include <stdint.h>
+#include <task.h>
+
 #define IDT_ENTRIES 256
 
 typedef struct {
@@ -18,15 +21,7 @@ typedef struct {
     uint64_t base;
 } __attribute__((packed)) idt_ptr;
 
-typedef struct {
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
-} __attribute__((packed)) InterruptFrame;
-
-
+void isr_common_entry(uint64_t int_id, CpuState *regs);
 void init_idt();
 void set_idt_gate(int vector, void (*isr)(), uint8_t flags);
 

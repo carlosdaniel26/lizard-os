@@ -2,8 +2,10 @@
 #define PIT_H
 
 #include <idt.h>
+#include <task.h>
 
-void init_pit();
-void isr_pit(InterruptFrame *frame);
+
+void pit_init();
+void isr_pit(CpuState *frame);
 
 #endif
