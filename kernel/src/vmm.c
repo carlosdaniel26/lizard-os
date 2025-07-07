@@ -119,6 +119,12 @@ void vmm_init()
     /* Map Stack */
     vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1, PAGE_PRESENT | PAGE_WRITABLE);
 
+    /* Map pmm bitmap */
+    extern uint8_t *bitmap;
+    extern uint64_t total_blocks;
+
+    vmm_maprange(kernel_pml4, bitmap, bitmap - hhdm_offset, total_blocks, PAGE_PRESENT | PAGE_WRITABLE);
+
     vmm_load_pml4();
 }
 
