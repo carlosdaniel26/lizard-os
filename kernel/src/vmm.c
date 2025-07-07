@@ -117,7 +117,9 @@ void vmm_init()
     vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset, framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map Stack */
-    vmm_maprange(kernel_pml4, stack_start + hhdm_offset, stack_start, 1, PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1, PAGE_PRESENT | PAGE_WRITABLE);
+
+    vmm_load_pml4();
 }
 
 void *vmm_alloc_page()
