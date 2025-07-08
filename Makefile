@@ -7,7 +7,7 @@ ARCH := x86_64
 QEMUDEBUGFLAGS := -S -s
 QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt
 
-override IMAGE_NAME := template-$(ARCH)
+override IMAGE_NAME := lizard-os_$(ARCH)
 
 BUILD := build/$(ARCH)/kernel
 
