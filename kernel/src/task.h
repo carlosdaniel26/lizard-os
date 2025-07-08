@@ -30,7 +30,7 @@ typedef struct CpuState {
     uint64_t ss;
 } CpuState;
 
-typedef struct  __attribute__((packed)) Task
+typedef struct Task
 {
 	char name[TASK_NAME_MAX_LEN];
 

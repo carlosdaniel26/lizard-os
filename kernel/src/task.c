@@ -26,8 +26,8 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
 	task->priority = priority;
 	task->regs.rip = (uint64_t)entry_point;
 
-    char *ptr = vmm_alloc_page();
-    memset(ptr, 0, 4096);
+    uint64_t ptr = (uint64_t)vmm_alloc_page();
+    memset((void*)ptr, 0, 4096);
 
     task->regs.rsp = ptr + 4096;
 }
