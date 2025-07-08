@@ -270,15 +270,19 @@ static unsigned char font[] = {
     0x00, 0x00, 0x40, 0x40, 0x40, 0x5c, 0x62, 0x42, 0x42, 0x42, 0x42, 0x62, 0x5c, 0x40, 0x40, 0x40,
     0x00, 0x24, 0x24, 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x46, 0x3a, 0x02, 0x02, 0x42, 0x3c};
 
-void clear_framebuffer() {
+void clear_framebuffer()
+{
     for (uint64_t y = 0; y < height; y++)
     {
         for (uint64_t x = 0; x < width; x++)
-        { framebuffer[y * (pitch / 4) + x] = terminal_background_color; }
+        {
+            framebuffer[y * (pitch / 4) + x] = terminal_background_color;
+        }
     }
 }
 
-void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth) {
+void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth)
+{
     framebuffer = fb;
     pitch = pth;
     width = w;
@@ -287,11 +291,13 @@ void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth) {
     /* framebuffer length assigned on pmm.c: pmm_init() function */
 }
 
-void draw_pixel(uint64_t x, uint64_t y, uint32_t color) {
+void draw_pixel(uint64_t x, uint64_t y, uint32_t color)
+{
     framebuffer[(y * (pitch / 4)) + x] = color;
 }
 
-void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character) {
+void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character)
+{
     uint64_t first_byte_idx = character * FONT_HEIGHT;
     uint32_t bg_color = terminal_background_color;
     for (size_t y = 0; y < FONT_HEIGHT; y++)
@@ -305,7 +311,8 @@ void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char characte
     }
 }
 
-void scroll_framebuffer(uint32_t pixels) {
+void scroll_framebuffer(uint32_t pixels)
+{
     if (pixels == 0 || pixels >= height)
         return;
 
@@ -317,5 +324,7 @@ void scroll_framebuffer(uint32_t pixels) {
 
     uint32_t *clear_start = fb_ptr + move_pixels;
     for (uint32_t i = 0; i < scroll_offset; i++)
-    { clear_start[i] = terminal_background_color; }
+    {
+        clear_start[i] = terminal_background_color;
+    }
 }

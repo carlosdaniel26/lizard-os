@@ -29,17 +29,22 @@ __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_RE
 
 uint64_t stack_start;
 
-void kmain() {
+void kmain()
+{
     asm volatile("mov %%rsp, %0" : : "m"(stack_start) : "memory");
 
     stop_interrupts();
     save_boot_time();
 
     if (LIMINE_BASE_REVISION_SUPPORTED == false)
-    { hlt(); }
+    {
+        hlt();
+    }
 
     if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
-    { hlt(); }
+    {
+        hlt();
+    }
 
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 

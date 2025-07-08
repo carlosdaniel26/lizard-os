@@ -6,17 +6,20 @@
 
 CPUID cpu;
 
-void cpuid(uint32_t code, uint32_t *output) {
+void cpuid(uint32_t code, uint32_t *output)
+{
     __asm__ __volatile__("cpuid"
                          : "=a"(output[0]), "=b"(output[1]), "=c"(output[2]), "=d"(output[3])
                          : "a"(code));
 }
 
-void init_cpuid() {
+void init_cpuid()
+{
     cpuid_get_brand();
 }
 
-void cpuid_get_brand() {
+void cpuid_get_brand()
+{
     uint32_t regs[4];
     char *brand = cpu.brand_name;
 
@@ -33,7 +36,8 @@ void cpuid_get_brand() {
     brand[48] = '\0';
 }
 
-int cpuid_get_feature(uint64_t feature_id) {
+int cpuid_get_feature(uint64_t feature_id)
+{
     uint32_t registers[4];
 
     cpuid(0x01, &registers[0]);
@@ -45,7 +49,8 @@ int cpuid_get_feature(uint64_t feature_id) {
     return (feature_id & registers[2] & registers[3]);
 }
 
-bool check_apic() {
+bool check_apic()
+{
     uint32_t output[4];
 
     cpuid(1, output);
@@ -53,7 +58,8 @@ bool check_apic() {
     return output[3] & CPUID_FEAT_EDX_APIC;
 }
 
-void cpuid_kprint() {
+void cpuid_kprint()
+{
     tty_writestring("Cpu brand: ");
     tty_writestring(cpu.brand_name);
     tty_writestring("\n");

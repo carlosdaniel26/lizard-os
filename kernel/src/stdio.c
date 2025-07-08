@@ -6,7 +6,8 @@
 #include <string.h>
 #include <tty.h>
 
-void kpanic(const char *str) {
+void kpanic(const char *str)
+{
     extern uint32_t terminal_color;
 
     uint32_t temp = terminal_color;
@@ -18,10 +19,12 @@ void kpanic(const char *str) {
     kprintf(str);
 
     while (1)
-    {}
+    {
+    }
 }
 
-bool kprint(const char *data, size_t length) {
+bool kprint(const char *data, size_t length)
+{
     const unsigned char *bytes = (const unsigned char *)data;
     for (size_t i = 0; i < length; i++)
         if (tty_putchar(bytes[i]) == EOF)
@@ -29,7 +32,8 @@ bool kprint(const char *data, size_t length) {
     return true;
 }
 
-int kprintf(const char *restrict format, ...) {
+int kprintf(const char *restrict format, ...)
+{
     va_list parameters;
     va_start(parameters, format);
 
@@ -160,7 +164,8 @@ int kprintf(const char *restrict format, ...) {
     return written;
 }
 
-void dd(const char *restrict format, ...) {
+void dd(const char *restrict format, ...)
+{
     va_list args;
     va_start(args, format);
     kprintf(format, args);

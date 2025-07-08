@@ -14,7 +14,9 @@
 /* Normalize */
 #define NORMALIZE_RATE(rate)                                                                       \
     if ((rate) < 2 || (rate) > 15)                                                                 \
-    { (rate) = 6; /* Default frequency (1024 Hz) */ }
+    {                                                                                              \
+        (rate) = 6; /* Default frequency (1024 Hz) */                                              \
+    }
 
 const char *months_strings[] = {"Undefined", "January",  "February", "March",  "April",
                                 "May",       "June",     "July",     "August", "September",
@@ -22,12 +24,14 @@ const char *months_strings[] = {"Undefined", "January",  "February", "March",  "
 
 struct RTC_timer RTC_clock;
 
-void isr_timer() {
+void isr_timer()
+{
     outb(RTC_COMMAND_PORT, 0x0C);
     inb(RTC_DATA_PORT);
 }
 
-void enable_rtc_interrupts() {
+void enable_rtc_interrupts()
+{
     uint8_t rate = 6;
     /* 1. Unmask IRQ8 in the PIC*/
     outb(PIC2_DATA, inb(PIC2_DATA) & ~0x01);
@@ -51,7 +55,8 @@ void enable_rtc_interrupts() {
     inb(RTC_DATA_PORT); /* Read the data port to clear the interrupt*/
 }
 
-static uint8_t bcd_to_binary(uint8_t bcd) {
+static uint8_t bcd_to_binary(uint8_t bcd)
+{
     return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
 }
 
@@ -61,14 +66,16 @@ static uint8_t bcd_to_binary(uint8_t bcd) {
 /* 	outb(RTC_DATA_PORT, value);*/
 /* }*/
 
-static uint8_t rtc_read_b(uint8_t reg) {
+static uint8_t rtc_read_b(uint8_t reg)
+{
     outb(RTC_COMMAND_PORT, reg);
     uint8_t result = inb(RTC_DATA_PORT);
 
     return bcd_to_binary(result);
 }
 
-void get_rtc_time() {
+void get_rtc_time()
+{
     uint8_t *RTC_array = (uint8_t *)&RTC_clock;
 
     for (uint8_t reg = 0; reg <= 0xD; reg++)
@@ -79,6 +86,7 @@ void get_rtc_time() {
     }
 }
 
-const char *get_month_string(uint8_t month_id) {
+const char *get_month_string(uint8_t month_id)
+{
     return months_strings[month_id];
 }

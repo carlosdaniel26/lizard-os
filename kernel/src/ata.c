@@ -12,7 +12,8 @@ ATADevice ata_devices[2];
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
 
-void unmask_ata_primary_irq() {
+void unmask_ata_primary_irq()
+{
     uint8_t mask = inb(PIC2_DATA);
 
     mask &= ~(1 << 6);
@@ -20,7 +21,8 @@ void unmask_ata_primary_irq() {
     outb(PIC2_DATA, mask);
 }
 
-static int ata_wait(uint16_t io_base, uint8_t mask, int set) {
+static int ata_wait(uint16_t io_base, uint8_t mask, int set)
+{
     for (int i = 0; i < 100000; ++i)
     {
         uint8_t status = inb(io_base + ATA_REG_STATUS);
@@ -37,13 +39,15 @@ static int ata_wait(uint16_t io_base, uint8_t mask, int set) {
     return -1;
 }
 
-static inline void ata_select(ATADevice *dev) {
+static inline void ata_select(ATADevice *dev)
+{
     outb(dev->io_base + ATA_REG_DRIVE, 0xA0);
 
     io_wait();
 }
 
-void ata_print_devices() {
+void ata_print_devices()
+{
     for (int i = 0; i < 2; i++)
     {
         if (ata_devices[i].present)
@@ -53,7 +57,8 @@ void ata_print_devices() {
     }
 }
 
-void ata_detect_devices() {
+void ata_detect_devices()
+{
     for (uint8_t i = PRIMARY; i <= SECONDARY; i++)
     {
         ata_devices[i].id = i;
@@ -64,7 +69,9 @@ void ata_detect_devices() {
         {
             ata_devices[i].present = 1;
         } else
-        { ata_devices[i].present = 0; }
+        {
+            ata_devices[i].present = 0;
+        }
     }
 
     outb(ata_devices[0].io_base + ATA_REG_COMMAND, 0x00);
@@ -76,7 +83,8 @@ void ata_detect_devices() {
     // unmask_ata_primary_irq();
 }
 
-int ata_identify(ATADevice *dev) {
+int ata_identify(ATADevice *dev)
+{
     ata_select(dev);
 
     /* Send some dummy I/O to the control register*/
@@ -95,7 +103,9 @@ int ata_identify(ATADevice *dev) {
 
     uint16_t identify_data[256];
     for (int i = 0; i < 256; ++i)
-    { identify_data[i] = inw(dev->io_base); }
+    {
+        identify_data[i] = inw(dev->io_base);
+    }
 
     dev->cylinders = identify_data[1];
     dev->heads = identify_data[3];
@@ -115,7 +125,8 @@ int ata_identify(ATADevice *dev) {
     return 0;
 }
 
-int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer) {
+int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
+{
     uint16_t ata = dev->io_base;
     uint8_t lba_mode = ((lba >> 24) & 0x0F); /* First 4 bits */
 
@@ -147,7 +158,8 @@ int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer) {
     return 0;
 }
 
-int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer) {
+int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer)
+{
     uint16_t ata = dev->io_base;
 
     uint8_t lba_high = (lba >> 24) & 0x0F; /* First 4 bits */
@@ -179,9 +191,12 @@ int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer) {
     return 0;
 }
 
-ATADevice *ata_get(uint8_t drive_id) {
+ATADevice *ata_get(uint8_t drive_id)
+{
     if (drive_id <= 2)
-    { return &ata_devices[drive_id]; }
+    {
+        return &ata_devices[drive_id];
+    }
 
     return NULL;
 }

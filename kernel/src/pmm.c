@@ -23,17 +23,21 @@ uint8_t *bitmap = NULL;
 uint64_t total_blocks = 0;
 uint64_t hhdm_offset = 0;
 
-static inline void set_bit(uint64_t i) {
+static inline void set_bit(uint64_t i)
+{
     bitmap[i / 8] |= (1 << (i % 8));
 }
-static inline void clear_bit(uint64_t i) {
+static inline void clear_bit(uint64_t i)
+{
     bitmap[i / 8] &= ~(1 << (i % 8));
 }
-static inline int test_bit(uint64_t i) {
+static inline int test_bit(uint64_t i)
+{
     return (bitmap[i / 8] >> (i % 8)) & 1;
 }
 
-void pmm_init() {
+void pmm_init()
+{
     hhdm_offset = hhdm_request.response->offset;
 
     /* Count memory */
@@ -95,7 +99,8 @@ void pmm_init() {
     // pmm_test_all();
 }
 
-void *pmm_alloc_block() {
+void *pmm_alloc_block()
+{
     for (uint64_t i = 0; i < total_blocks; i++)
     {
         if (!test_bit(i))
@@ -107,7 +112,8 @@ void *pmm_alloc_block() {
     return NULL;
 }
 
-void pmm_test_all() {
+void pmm_test_all()
+{
     kprintf("PMM: Testing all blocks...\n");
     uint64_t tested = 0;
 

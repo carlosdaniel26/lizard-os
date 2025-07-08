@@ -2,7 +2,8 @@
 #include <rtc.h>
 #include <stdint.h>
 
-void hlt() {
+void hlt()
+{
     while (1)
     {
         asm("hlt");
@@ -10,7 +11,8 @@ void hlt() {
     }
 }
 
-int oct2bin(unsigned char *str, int size) {
+int oct2bin(unsigned char *str, int size)
+{
     int n = 0;
     unsigned char *c = str;
     while (size-- > 0)
@@ -22,7 +24,8 @@ int oct2bin(unsigned char *str, int size) {
     return n;
 }
 
-char toupper(char c) {
+char toupper(char c)
+{
     if (c >= 'a' && c <= 'z')
         return c - 32;
 
@@ -32,7 +35,8 @@ char toupper(char c) {
 extern struct RTC_timer RTC_clock;
 struct RTC_timer boot_time;
 
-static uint8_t days_in_month(uint8_t month, uint8_t year) {
+static uint8_t days_in_month(uint8_t month, uint8_t year)
+{
     static const uint8_t days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     if (month == 2)
     {
@@ -42,12 +46,14 @@ static uint8_t days_in_month(uint8_t month, uint8_t year) {
     return days[month - 1];
 }
 
-void save_boot_time() {
+void save_boot_time()
+{
     get_rtc_time();
     boot_time = RTC_clock;
 }
 
-struct Uptime calculate_uptime() {
+struct Uptime calculate_uptime()
+{
     struct Uptime up = {0};
 
     get_rtc_time();

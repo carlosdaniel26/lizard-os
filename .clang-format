@@ -12,7 +12,7 @@ AllowShortFunctionsOnASingleLine: false
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterControlStatement: true
-
+  AfterFunction: true
 
 SortIncludes: true
 IncludeBlocks: Regroup

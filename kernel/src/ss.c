@@ -22,7 +22,8 @@ extern uint32_t total_blocks;
 
 extern CPUID cpu;
 
-void kprint_prompt() {
+void kprint_prompt()
+{
     terminal_background_color = VGA_COLOR_BLACK;
     terminal_color = VGA_COLOR_GREEN;
     tty_writestring("root: ");
@@ -31,17 +32,20 @@ void kprint_prompt() {
     cmd_start_row = terminal_row;
 }
 
-void shit_shell_init() {
+void shit_shell_init()
+{
     kprint_prompt();
 }
 
 /* Commands */
 
-static inline void clear() {
+static inline void clear()
+{
     tty_clean();
 }
 
-static inline void lsblk() {
+static inline void lsblk()
+{
     // for(uint8_t i = 0; i <= 2; i++)
     // {
     // 	ATADevice *dev = ata_get(i);
@@ -53,7 +57,8 @@ static inline void lsblk() {
     // }
 }
 
-static inline void lzfetch() {
+static inline void lzfetch()
+{
 
     struct Uptime time = {0};
     time = calculate_uptime();
@@ -83,7 +88,8 @@ static inline void lzfetch() {
     terminal_background_color = VGA_COLOR_BLACK;
 }
 
-void free() {
+void free()
+{
 #define BLOCK_SIZE_KB 4096
 
     uint32_t free_blocks = 0;
@@ -117,7 +123,8 @@ void free() {
 
 extern struct RTC_timer RTC_clock;
 
-static inline void date() {
+static inline void date()
+{
     kprintf("%s %u %u:%u:%u %u\n", get_month_string(RTC_clock.month), RTC_clock.hours,
             RTC_clock.minutes, RTC_clock.seconds, RTC_clock.year);
 }
@@ -125,7 +132,8 @@ static inline void date() {
 /* Main */
 #define CMD_IS(cmd, name) (strcmp(cmd, name) == 0)
 
-void runcmd(const char *command) {
+void runcmd(const char *command)
+{
     if (CMD_IS(command, "lsblk"))
     {
         lsblk();
@@ -139,5 +147,7 @@ void runcmd(const char *command) {
     {
         free();
     } else if (CMD_IS(command, "date"))
-    { date(); }
+    {
+        date();
+    }
 }

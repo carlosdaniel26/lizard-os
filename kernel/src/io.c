@@ -1,6 +1,7 @@
 #include <stdint.h>
 
-uint8_t inb(uint16_t port) {
+uint8_t inb(uint16_t port)
+{
     uint8_t return_value;
 
     __asm__ volatile("inb %w1, %b0"       /* Read a byte from the specified I/O port*/
@@ -14,7 +15,8 @@ uint8_t inb(uint16_t port) {
     return return_value;
 }
 
-uint16_t inw(uint16_t port) {
+uint16_t inw(uint16_t port)
+{
     uint16_t return_value;
 
     __asm__ volatile("inw %w1, %w0"       /* Read a byte from the specified I/O port*/
@@ -28,13 +30,15 @@ uint16_t inw(uint16_t port) {
     return return_value;
 }
 
-uint32_t inl(uint16_t port) {
+uint32_t inl(uint16_t port)
+{
     uint32_t return_value;
     __asm__ volatile("inl %1, %0" : "=a"(return_value) : "Nd"(port) : "memory");
     return return_value;
 }
 
-void outb(uint16_t port, uint8_t value) {
+void outb(uint16_t port, uint8_t value)
+{
     __asm__ volatile(
         "outb %b0, %w1" /* Write a byte to the specified I/O port*/
         :               /* No output operands*/
@@ -45,7 +49,8 @@ void outb(uint16_t port, uint8_t value) {
     );
 }
 
-void outw(uint16_t port, uint16_t value) {
+void outw(uint16_t port, uint16_t value)
+{
     __asm__ volatile(
         "outw %w0, %w1" /* Write a byte to the specified I/O port*/
         :               /* No output operands*/
@@ -56,10 +61,12 @@ void outw(uint16_t port, uint16_t value) {
     );
 }
 
-void outl(uint16_t port, uint32_t value) {
+void outl(uint16_t port, uint32_t value)
+{
     __asm__ volatile("outl %0, %1" : : "a"(value), "Nd"(port) : "memory");
 }
 
-void io_wait(void) {
+void io_wait(void)
+{
     outb(0x80, 0);
 }
