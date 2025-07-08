@@ -5,7 +5,7 @@
 
 #define TASK_NAME_MAX_LEN 32
 
-typedef struct CpuState {
+typedef struct   __attribute__((packed)) CpuState {
     uint64_t rax;
     uint64_t rdi;
     uint64_t rsi;
