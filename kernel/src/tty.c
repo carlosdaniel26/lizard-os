@@ -6,6 +6,7 @@
 #include <framebuffer.h>
 #include <vga.h>
 #include <ss.h>
+#include <spinlock.h>
 
 size_t terminal_width;
 size_t terminal_height;
@@ -25,6 +26,8 @@ char text_buffer[1000 * 1000];
 
 uint32_t *fb;
 
+static spinlock_t tty_lock;
+
 void tty_initialize()
 {
 	extern uint32_t width;
@@ -42,6 +45,8 @@ void tty_initialize()
 	terminal_column = 0;
 	terminal_background_color = TERMINAL_BG_COLOR;
 	terminal_color = TERMINAL_COLOR;
+
+    spinlock_init(&tty_lock);
 }
 
 void tty_scroll()
@@ -83,13 +88,16 @@ void tty_putentryat(char c, uint32_t color, size_t x, size_t y)
 
 void tty_putchar(char c)
 {
+    spinlock_acquire(&tty_lock);
 	if (c == '\n')
 	{
 		tty_breakline();
+		spinlock_release(&tty_lock);
 		return;
 	}
 	else if (c == '\t')
 	{
+		spinlock_release(&tty_lock);
 		tty_tab();
 		return;
 	}
@@ -101,6 +109,7 @@ void tty_putchar(char c)
 		tty_breakline();
 	}
 
+	spinlock_release(&tty_lock);
 }
 
 void tty_breakline()
@@ -144,6 +153,7 @@ void tty_write(const char* data, size_t size)
 	{
 		tty_putchar(data[i]);
 	}
+	//spinlock_release(&tty_lock);
 }
 
 void tty_writestring(const char* data)
