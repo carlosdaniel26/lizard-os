@@ -23,33 +23,8 @@ LIBS :=
 all: $(IMAGE_NAME).iso
 	@echo "(ISO) $(IMAGE_NAME) generated!!"
 
-.PHONY: all-hdd
-all-hdd: $(IMAGE_NAME).hdd
-
 .PHONY: run
-run: run-$(ARCH)
-
-.PHONY: run-hdd
-run-hdd: run-hdd-$(ARCH)
-
-.PHONY: run-x86_64
-run-x86_64: ovmf/ovmf-code-$(ARCH).fd $(IMAGE_NAME).iso
-	qemu-system-$(ARCH) \
-		-M q35 \
-		-drive if=pflash,unit=0,format=raw,file=ovmf/ovmf-code-$(ARCH).fd,readonly=on \
-		-cdrom $(IMAGE_NAME).iso \
-		$(QEMUFLAGS)
-
-.PHONY: run-hdd-x86_64
-run-hdd-x86_64: ovmf/ovmf-code-$(ARCH).fd $(IMAGE_NAME).hdd
-	qemu-system-$(ARCH) \
-		-M q35 \
-		-drive if=pflash,unit=0,format=raw,file=ovmf/ovmf-code-$(ARCH).fd,readonly=on \
-		-hda $(IMAGE_NAME).hdd \
-		$(QEMUFLAGS)
-
-.PHONY: run-bios
-run-bios: $(IMAGE_NAME).iso
+run: $(IMAGE_NAME).iso
 	@echo "(QEMU)"
 	@qemu-system-$(ARCH) \
 		-M q35 \
@@ -66,14 +41,6 @@ debug: $(IMAGE_NAME).iso
 		-boot d \
 		$(QEMUFLAGS) \
 		$(QEMUDEBUGFLAGS)
-
-
-.PHONY: run-hdd-bios
-run-hdd-bios: $(IMAGE_NAME).hdd
-	qemu-system-$(ARCH) \
-		-M q35 \
-		-hda $(IMAGE_NAME).hdd \
-		$(QEMUFLAGS)
 
 ovmf/ovmf-code-$(ARCH).fd:
 	mkdir -p ovmf
