@@ -93,13 +93,13 @@ char tty_putchar(char c)
 	{
 		tty_breakline();
 		spinlock_release(&tty_lock);
-		return;
+		return c;
 	}
 	else if (c == '\t')
 	{
 		spinlock_release(&tty_lock);
 		tty_tab();
-		return;
+		return c;
 	}
 	
 	tty_putentryat(c, terminal_color, terminal_column, terminal_row);
