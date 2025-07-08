@@ -3,19 +3,19 @@
 #include <stdio.h>
 #include <task.h>
 #include <helpers.h>
+#include <vmm.h>
 
-Task proc1;
 Task *current_task;
+Task proc1;
 
 void proc1_func()
 {
-	kprintf("proc1\n");
 	hlt();
 }
 
 void task_init()
 {
-	task_create(&proc1, &proc1_func, "proc1", 1);
+    task_create(&proc1, &proc1_func, "proc1", 1);
 }
 
 void task_create(struct Task *task, void (*entry_point)(void), const char *name, uint32_t priority)
@@ -25,6 +25,11 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
 
 	task->priority = priority;
 	task->regs.rip = (uint64_t)entry_point;
+
+    char *ptr = vmm_alloc_page();
+    memset(ptr, 0, 4096);
+
+    task->regs.rsp = ptr + 4096;
 }
 
 void task_load_context(CpuState *regs, Task *task)
@@ -50,7 +55,7 @@ void task_load_context(CpuState *regs, Task *task)
     regs->rip = saved->rip;
     // regs->cs  = saved->cs;
     // regs->rflags = saved->rflags;
-    // //regs->rsp = saved->rsp;
+    regs->rsp = saved->rsp;
     // regs->ss  = saved->ss;
 }
 
@@ -77,7 +82,7 @@ void task_save_context(CpuState *regs)
     saved->rip = regs->rip;
     // saved->cs  = regs->cs;
     // saved->rflags = regs->rflags;
-    // saved->rsp = regs->rsp;
+    saved->rsp = regs->rsp;
     // saved->ss  = regs->ss;
 }
 
@@ -103,6 +108,9 @@ void scheduler(CpuState *regs)
 		return;
 	}
 
-	task_load_context(regs, current_task);
+	task_load_context(regs, next_task);
 	current_task = next_task;
+
+    regs->rip = current_task->regs.rip;
+    regs->rsp = current_task->regs.rsp;
 }
