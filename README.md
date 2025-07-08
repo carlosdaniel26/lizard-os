@@ -20,50 +20,8 @@ If you're here to understand how systems work — not how to use systems that al
 
 ---
 
-## 🐍 Features (So Far)
-
-- **Multiboot2-compliant bootloader support**  
-  `process_multiboot2_tags()` gets all the low-level boot info right after GRUB hands over control.
-
-- **Basic libc-like utilities**  
-  Forget glibc. You’ve got:
-  - `kprint()`, `kprintf()`, `putchar()` for raw output
-  - Custom string functions like `strlen`, `strcmp`, `strsIsEqual`
-  - `unsigned_to_string()` and `unsigned_to_hexstring()` for dirty debugging
-
-- **Memory Management**  
-  - Physical memory manager (`pmm_init()`, `pmm_reserve_block()`)
-  - Paging and early heap (`kmalloc(bytes)`, `kfree()`, `enable_paging()`)
-
-- **Multitasking**  
-  - PID allocator, task switching, context saving
-  - Cooperative scheduler
-  - Functions like `block_task()`, `terminate_task()`, `switch_task()`
-
-- **I/O and Devices**
-  - **ATA PIO driver**: `atapio_read_sector()`, `atapio_write_sector()`
-  - **RAM Disk** for testing without real disks
-  - **Keyboard, PIT, RTC, PIC**, and **basic IDT/GDT setup**
-  - Low-level I/O: `inb()`, `outb()`, `io_wait()`, etc.
-
-- **File and VFS layer (WIP)**  
-  Basic file abstraction: `vfs_read()`, `vfs_write()`, `vfs_delete()`  
-  FAT16 test read to verify BPB and raw file access.
-
-- **Terminal and Shell**  
-  - Text-mode framebuffer driver: `draw_char()`, `scroll_framebuffer()`
-  - TTY handler with input handling
-  - Dumb shell: `shit_shell_init()`, `runcmd()`  
-    Yes, that’s its actual name. It works, get over it.
-
-- **Debugging**
-  - Use `dd()` or `debug_printf()` to spit out what you need when you need it.
-  - `kprint_task_state()` to inspect tasks.
-
----
-
 ## 💾 Build and Run
 
 ```sh
-make dev
+make run
 ```
