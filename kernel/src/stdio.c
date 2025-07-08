@@ -26,7 +26,7 @@ bool kprint(const char* data, size_t length)
 {
 	const unsigned char* bytes = (const unsigned char*) data;
 	for (size_t i = 0; i < length; i++)
-		if (tty_putchar(&character, sizeof(character)) == EOF)
+		if (tty_putchar(bytes[i]) == EOF)
 			return false;
 	return true;
 }
