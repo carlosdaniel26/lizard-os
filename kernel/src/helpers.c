@@ -2,19 +2,19 @@
 #include <rtc.h>
 #include <stdint.h>
 
-void hlt()
-{
-    while (1) {
+void hlt() {
+    while (1)
+    {
         asm("hlt");
         asm("sti");
     }
 }
 
-int oct2bin(unsigned char *str, int size)
-{
+int oct2bin(unsigned char *str, int size) {
     int n = 0;
     unsigned char *c = str;
-    while (size-- > 0) {
+    while (size-- > 0)
+    {
         n *= 8;
         n += *c - '0';
         c++;
@@ -22,8 +22,7 @@ int oct2bin(unsigned char *str, int size)
     return n;
 }
 
-char toupper(char c)
-{
+char toupper(char c) {
     if (c >= 'a' && c <= 'z')
         return c - 32;
 
@@ -33,24 +32,22 @@ char toupper(char c)
 extern struct RTC_timer RTC_clock;
 struct RTC_timer boot_time;
 
-static uint8_t days_in_month(uint8_t month, uint8_t year)
-{
+static uint8_t days_in_month(uint8_t month, uint8_t year) {
     static const uint8_t days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    if (month == 2) {
+    if (month == 2)
+    {
         if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
             return 29;
     }
     return days[month - 1];
 }
 
-void save_boot_time()
-{
+void save_boot_time() {
     get_rtc_time();
     boot_time = RTC_clock;
 }
 
-struct Uptime calculate_uptime()
-{
+struct Uptime calculate_uptime() {
     struct Uptime up = {0};
 
     get_rtc_time();
@@ -62,28 +59,34 @@ struct Uptime calculate_uptime()
     int month = RTC_clock.month - boot_time.month;
     int year = RTC_clock.year - boot_time.year;
 
-    if (sec < 0) {
+    if (sec < 0)
+    {
         sec += 60;
         min--;
     }
-    if (min < 0) {
+    if (min < 0)
+    {
         min += 60;
         hour--;
     }
-    if (hour < 0) {
+    if (hour < 0)
+    {
         hour += 24;
         day--;
     }
-    if (day < 0) {
+    if (day < 0)
+    {
         month--;
-        if (month < 0) {
+        if (month < 0)
+        {
             month += 12;
             year--;
         }
         day +=
             days_in_month((boot_time.month == 1 ? 12 : boot_time.month - 1), 2000 + boot_time.year);
     }
-    if (month < 0) {
+    if (month < 0)
+    {
         month += 12;
         year--;
     }

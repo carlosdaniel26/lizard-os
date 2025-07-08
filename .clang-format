@@ -9,6 +9,10 @@ AllowShortIfStatementsOnASingleLine: false
 SpaceBeforeParens: ControlStatements
 IndentCaseLabels: true
 AllowShortFunctionsOnASingleLine: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterControlStatement: true
+
 
 SortIncludes: true
 IncludeBlocks: Regroup

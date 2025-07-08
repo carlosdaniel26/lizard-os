@@ -8,18 +8,16 @@
 Task *current_task;
 Task proc1;
 
-void proc1_func()
-{
+void proc1_func() {
     hlt();
 }
 
-void task_init()
-{
+void task_init() {
     task_create(&proc1, &proc1_func, "proc1", 1);
 }
 
-void task_create(struct Task *task, void (*entry_point)(void), const char *name, uint32_t priority)
-{
+void task_create(struct Task *task, void (*entry_point)(void), const char *name,
+                 uint32_t priority) {
     /* task->name = name */
     memcpy(task->name, name, strlen(name));
 
@@ -32,8 +30,7 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
     task->regs.rsp = ptr + 4096;
 }
 
-void task_load_context(CpuState *regs, Task *task)
-{
+void task_load_context(CpuState *regs, Task *task) {
     CpuState *saved = &task->regs;
 
     regs->rax = saved->rax;
@@ -59,8 +56,7 @@ void task_load_context(CpuState *regs, Task *task)
     // regs->ss  = saved->ss;
 }
 
-void task_save_context(CpuState *regs)
-{
+void task_save_context(CpuState *regs) {
     CpuState *saved = &current_task->regs;
 
     saved->rax = regs->rax;
@@ -86,9 +82,9 @@ void task_save_context(CpuState *regs)
     // saved->ss  = regs->ss;
 }
 
-void scheduler(CpuState *regs)
-{
-    if (!current_task) {
+void scheduler(CpuState *regs) {
+    if (!current_task)
+    {
         current_task = &proc1;
         task_load_context(regs, current_task);
         return;
@@ -97,13 +93,11 @@ void scheduler(CpuState *regs)
     task_save_context(regs);
 
     Task *next_task = current_task->next;
-    if (next_task == NULL) {
-        next_task = &proc1;
-    }
+    if (next_task == NULL)
+    { next_task = &proc1; }
 
-    if (next_task == current_task) {
-        return;
-    }
+    if (next_task == current_task)
+    { return; }
 
     task_load_context(regs, next_task);
     current_task = next_task;

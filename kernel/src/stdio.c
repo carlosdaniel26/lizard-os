@@ -6,8 +6,7 @@
 #include <string.h>
 #include <tty.h>
 
-void kpanic(const char *str)
-{
+void kpanic(const char *str) {
     extern uint32_t terminal_color;
 
     uint32_t temp = terminal_color;
@@ -18,12 +17,11 @@ void kpanic(const char *str)
 
     kprintf(str);
 
-    while (1) {
-    }
+    while (1)
+    {}
 }
 
-bool kprint(const char *data, size_t length)
-{
+bool kprint(const char *data, size_t length) {
     const unsigned char *bytes = (const unsigned char *)data;
     for (size_t i = 0; i < length; i++)
         if (tty_putchar(bytes[i]) == EOF)
@@ -31,23 +29,25 @@ bool kprint(const char *data, size_t length)
     return true;
 }
 
-int kprintf(const char *restrict format, ...)
-{
+int kprintf(const char *restrict format, ...) {
     va_list parameters;
     va_start(parameters, format);
 
     int written = 0;
 
-    while (*format != '\0') {
+    while (*format != '\0')
+    {
         size_t maxrem = INT_MAX - written;
 
-        if (format[0] != '%' || format[1] == '%') {
+        if (format[0] != '%' || format[1] == '%')
+        {
             if (format[0] == '%')
                 format++;
             size_t amount = 1;
             while (format[amount] && format[amount] != '%')
                 amount++;
-            if (maxrem < amount) {
+            if (maxrem < amount)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -60,10 +60,12 @@ int kprintf(const char *restrict format, ...)
 
         const char *format_begun_at = format++;
 
-        if (*format == 'c') {
+        if (*format == 'c')
+        {
             format++;
             char c = (char)va_arg(parameters, int /* char promotes to int */);
-            if (!maxrem) {
+            if (!maxrem)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -71,11 +73,13 @@ int kprintf(const char *restrict format, ...)
                 return -1;
             written++;
 
-        } else if (*format == 's') {
+        } else if (*format == 's')
+        {
             format++;
             const char *str = va_arg(parameters, const char *);
             size_t len = strlen(str);
-            if (maxrem < len) {
+            if (maxrem < len)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -83,10 +87,12 @@ int kprintf(const char *restrict format, ...)
                 return -1;
             written += len;
 
-        } else if (strsIsEqual(format, "llu", 3)) {
+        } else if (strsIsEqual(format, "llu", 3))
+        {
             format += 3;
             uint64_t number = (uint64_t)va_arg(parameters, uint64_t);
-            if (!maxrem) {
+            if (!maxrem)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -99,10 +105,12 @@ int kprintf(const char *restrict format, ...)
                 return -1;
             written += size;
 
-        } else if (*format == 'u') {
+        } else if (*format == 'u')
+        {
             format++;
             unsigned number = (unsigned)va_arg(parameters, unsigned);
-            if (!maxrem) {
+            if (!maxrem)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -115,10 +123,12 @@ int kprintf(const char *restrict format, ...)
                 return -1;
             written++;
 
-        } else if (*format == 'x') {
+        } else if (*format == 'x')
+        {
             format++;
             unsigned number = (unsigned)va_arg(parameters, unsigned);
-            if (!maxrem) {
+            if (!maxrem)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -130,10 +140,12 @@ int kprintf(const char *restrict format, ...)
             if (!kprint(str, sizeof(str) - 1))
                 return -1;
             written++;
-        } else {
+        } else
+        {
             format = format_begun_at;
             size_t len = strlen(format);
-            if (maxrem < len) {
+            if (maxrem < len)
+            {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
@@ -148,8 +160,7 @@ int kprintf(const char *restrict format, ...)
     return written;
 }
 
-void dd(const char *restrict format, ...)
-{
+void dd(const char *restrict format, ...) {
     va_list args;
     va_start(args, format);
     kprintf(format, args);
