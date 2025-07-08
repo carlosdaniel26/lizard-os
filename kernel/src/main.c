@@ -1,4 +1,5 @@
 #include <alias.h>
+#include <ata.h>
 #include <cpuid.h>
 #include <framebuffer.h>
 #include <gdt.h>
@@ -62,6 +63,7 @@ void kmain()
     vmm_init();
     pit_init();
     task_init();
+    ata_detect_devices();
     start_interrupts();
     hlt();
 }

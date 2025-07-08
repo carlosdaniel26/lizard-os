@@ -1,3 +1,4 @@
+#include <ata.h>
 #include <cpuid.h>
 #include <helpers.h>
 #include <pmm.h>
@@ -46,15 +47,16 @@ static inline void clear()
 
 static inline void lsblk()
 {
-    // for(uint8_t i = 0; i <= 2; i++)
-    // {
-    // 	ATADevice *dev = ata_get(i);
-    // 	if (dev->present == 0) continue;
+    for (uint8_t i = 0; i <= 2; i++)
+    {
+        ATADevice *dev = ata_get(i);
+        if (dev->present == 0)
+            continue;
 
-    // 	kprintf("HDD %u\n", i + 1);
-    // 	kprintf("%s\n", dev->model);
-    // 	kprintf("MB: %u\n", (dev->total_bytes  / (1024 * 1024)) + 1);
-    // }
+        kprintf("HDD %u\n", i + 1);
+        kprintf("%s\n", dev->model);
+        kprintf("MB: %u\n", (dev->total_bytes / (1024 * 1024)) + 1);
+    }
 }
 
 static inline void lzfetch()
