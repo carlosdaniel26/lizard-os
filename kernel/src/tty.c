@@ -86,7 +86,7 @@ void tty_putentryat(char c, uint32_t color, size_t x, size_t y)
 	text_buffer[(y * terminal_text_width) +  x] = c;
 }
 
-void tty_putchar(char c)
+char tty_putchar(char c)
 {
     spinlock_acquire(&tty_lock);
 	if (c == '\n')
@@ -110,6 +110,8 @@ void tty_putchar(char c)
 	}
 
 	spinlock_release(&tty_lock);
+
+	return c;
 }
 
 void tty_breakline()

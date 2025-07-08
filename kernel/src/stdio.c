@@ -22,10 +22,11 @@ void kpanic(const char *str)
     while (1) {}
 }
 
-bool kprint(const char* data, size_t length) {
+bool kprint(const char* data, size_t length) 
+{
 	const unsigned char* bytes = (const unsigned char*) data;
 	for (size_t i = 0; i < length; i++)
-		if (putchar(bytes[i]) == EOF)
+		if (tty_putchar(&character, sizeof(character)) == EOF)
 			return false;
 	return true;
 }
@@ -148,13 +149,6 @@ int kprintf(const char* restrict format, ...) {
 
 	va_end(parameters);
 	return written;
-}
-
-int putchar(char character)
-{
-	tty_write(&character, sizeof(character));
-
-	return character;
 }
 
 void dd(const char * restrict format, ...)

@@ -14,7 +14,7 @@
 void tty_initialize();
 void tty_clean();
 void tty_putentryat(char c, uint32_t color, size_t x, size_t y);
-void tty_putchar(char c);
+char tty_putchar(char c);
 void tty_breakline();
 void tty_write(const char* data, size_t size);
 void tty_writestring(const char* data);
