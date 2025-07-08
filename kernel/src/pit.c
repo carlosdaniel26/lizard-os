@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <pit.h>
 #include <pic.h>
-#include <isr_vector.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
 
