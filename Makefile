@@ -91,21 +91,18 @@ endif
 $(IMAGE_NAME).hdd: limine/limine kernel
 	@rm -f $(IMAGE_NAME).hdd
 	@dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
-ifeq ($(ARCH),x86_64)
+
 	PATH=$$PATH:/usr/sbin:/sbin sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00 -m 1
 	@./limine/limine bios-install $(IMAGE_NAME).hdd
-else
-	PATH=$$PATH:/usr/sbin:/sbin sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00
-endif
+
 	@mformat -i $(IMAGE_NAME).hdd@@1M
 	@mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT ::/boot ::/boot/limine
 	@mcopy -i $(IMAGE_NAME).hdd@@1M $(BUILD)/$(ARCH)/kernel ::/boot
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine.conf ::/boot/limine
-ifeq ($(ARCH),x86_64)
+
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/limine-bios.sys ::/boot/limine
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/BOOTX64.EFI ::/EFI/BOOT
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/BOOTIA32.EFI ::/EFI/BOOT
-endif
 
 .PHONY: clean
 clean:
