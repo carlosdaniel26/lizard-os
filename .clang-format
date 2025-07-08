@@ -4,23 +4,15 @@ TabWidth: 4
 UseTab: Never
 ColumnLimit: 100
 BreakBeforeBraces: Linux
+
+SortIncludes: true
 PointerAlignment: Right
 AllowShortIfStatementsOnASingleLine: false
 SpaceBeforeParens: ControlStatements
 IndentCaseLabels: true
 AllowShortFunctionsOnASingleLine: false
+
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterControlStatement: true
   AfterFunction: true
-
-SortIncludes: true
-IncludeBlocks: Regroup
-IncludeIsMainRegex: '^(.*\/)?([^\/]+)\.h"$'
-IncludeCategories:
-  - Regex: '^"[^"]+\.h"$'
-    Priority: 0
-    SortPriority: 0
-  - Regex: '^<.*>$'
-    Priority: 1
-    SortPriority: 1
