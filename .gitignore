@@ -3,5 +3,5 @@
 /ovmf
 /build
 *.iso
-*.hdd
+*.img
 qemu_log.txt

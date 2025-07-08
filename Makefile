@@ -65,6 +65,10 @@ kernel-deps:
 kernel: kernel-deps
 	$(MAKE) -C kernel
 
+.PHONY: hdd
+hdd:
+	qemu-img create -f raw hda.img 512M
+
 # Build
 
 $(IMAGE_NAME).iso: limine/limine kernel
