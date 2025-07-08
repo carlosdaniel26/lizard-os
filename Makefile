@@ -5,7 +5,8 @@ MAKEFLAGS += -rR
 ARCH := x86_64
 
 QEMUDEBUGFLAGS := -S -s
-QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt
+QEMUHDAFLAGS := -drive file=hda.img,format=raw,if=ide
+QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt $(QEMUHDAFLAGS)
 
 override IMAGE_NAME := lizard-os_$(ARCH)
 
@@ -27,7 +28,7 @@ all: $(IMAGE_NAME).iso
 run: $(IMAGE_NAME).iso
 	@echo "(QEMU)"
 	@qemu-system-$(ARCH) \
-		-M q35 \
+		-M pc \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
 		$(QEMUFLAGS)
@@ -36,7 +37,7 @@ run: $(IMAGE_NAME).iso
 debug: $(IMAGE_NAME).iso
 	@echo "(QEMU)"
 	@qemu-system-$(ARCH) \
-		-M q35 \
+		-M pc \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
 		$(QEMUFLAGS) \
