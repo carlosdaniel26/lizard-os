@@ -1,12 +1,12 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <stddef.h>
 
-#define FONT_WIDTH	8
-#define FONT_HEIGHT	16
+#define FONT_WIDTH 8
+#define FONT_HEIGHT 16
 
 void clear_framebuffer();
 void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth);

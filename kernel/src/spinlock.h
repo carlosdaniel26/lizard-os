@@ -1,8 +1,8 @@
 #ifndef SPINLOCK_H
 #define SPINLOCK_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     volatile bool locked;

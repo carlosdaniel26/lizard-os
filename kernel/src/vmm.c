@@ -1,19 +1,16 @@
-#include <limine.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
 #include <helpers.h>
+#include <limine.h>
 #include <pmm.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include <vmm.h>
 
-__attribute__((used, section(".limine_requests")))
-static volatile struct limine_executable_address_request kernel_address_request = {
-    .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST,
-    .revision = 0
-};
+__attribute__((
+    used, section(".limine_requests"))) static volatile struct limine_executable_address_request
+    kernel_address_request = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
 extern uint64_t stack_start;
-
 
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
@@ -21,15 +18,16 @@ extern uint32_t kernel_end;
 extern uint64_t hhdm_offset;
 extern uint32_t *framebuffer;
 extern uint32_t framebuffer_length;
- 
+
 static uint64_t *kernel_pml4;
 
-static inline void invlpg(void *addr) 
+static inline void invlpg(void *addr)
 {
-    __asm__ volatile ("invlpg (%0)" : : "r"(addr) : "memory");
+    __asm__ volatile("invlpg (%0)" : : "r"(addr) : "memory");
 }
 
-static uint64_t *vmm_alloc_table() {
+static uint64_t *vmm_alloc_table()
+{
     void *page = pmm_alloc_block();
     memset(page, 0, PAGE_SIZE);
     return (uint64_t *)page;
@@ -44,41 +42,32 @@ void vmm_map(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t flags)
     /* Calculate index */
     uint64_t pml4_i = (virt >> 39) & 0x1FF;
     uint64_t pdpt_i = (virt >> 30) & 0x1FF;
-    uint64_t pd_i   = (virt >> 21) & 0x1FF;
-    uint64_t pt_i   = (virt >> 12) & 0x1FF;
+    uint64_t pd_i = (virt >> 21) & 0x1FF;
+    uint64_t pt_i = (virt >> 12) & 0x1FF;
 
     uint64_t *pdpt, *pd, *pt;
 
     /* PDPT */
-    if (! (pml4[pml4_i] & PAGE_PRESENT))
-    {
+    if (!(pml4[pml4_i] & PAGE_PRESENT)) {
         pdpt = vmm_alloc_table();
         pml4[pml4_i] = ((uint64_t)pdpt - hhdm_offset) | flags;
-    } 
-    else 
-    {
+    } else {
         pdpt = (uint64_t *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
     }
 
     /* PD */
-    if (! (pdpt[pdpt_i] & PAGE_PRESENT)) 
-    {
+    if (!(pdpt[pdpt_i] & PAGE_PRESENT)) {
         pd = vmm_alloc_table();
         pdpt[pdpt_i] = ((uint64_t)pd - hhdm_offset) | flags;
-    }
-    else 
-    {
+    } else {
         pd = (uint64_t *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
     }
 
     /* PT */
-    if (! (pd[pd_i] & PAGE_PRESENT))
-    {
+    if (!(pd[pd_i] & PAGE_PRESENT)) {
         pt = vmm_alloc_table();
         pd[pd_i] = ((uint64_t)pt - hhdm_offset) | flags;
-    } 
-    else 
-    {
+    } else {
         pt = (uint64_t *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
     }
 
@@ -86,44 +75,48 @@ void vmm_map(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t flags)
     invlpg((void *)virt);
 }
 
-static inline void vmm_maprange(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t length_in_blocks, uint64_t flags)
+static inline void vmm_maprange(uint64_t *pml4, uint64_t virt, uint64_t phys,
+                                uint64_t length_in_blocks, uint64_t flags)
 {
-    for (uint64_t i = 0; i < length_in_blocks; i++)
-    {
+    for (uint64_t i = 0; i < length_in_blocks; i++) {
         vmm_map(pml4, virt, phys, flags);
         virt += PAGE_SIZE;
         phys += PAGE_SIZE;
     }
 }
 
-static inline void vmm_load_pml4() 
+static inline void vmm_load_pml4()
 {
     register uint64_t phys = (uint64_t)kernel_pml4 - hhdm_offset;
-    __asm__ volatile("mov %0, %%cr3" :: "r"(phys));
+    __asm__ volatile("mov %0, %%cr3" ::"r"(phys));
 }
 
-void vmm_init() 
+void vmm_init()
 {
     kernel_pml4 = vmm_alloc_table();
-    
+
     /* == DEFAULT MAPPING == */
 
     /* Kernel */
     uint64_t vir = kernel_address_request.response->virtual_base;
     uint64_t phys = kernel_address_request.response->physical_base;
-    vmm_maprange(kernel_pml4, vir, phys, (uint64_t)(&kernel_end - &kernel_start), PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_maprange(kernel_pml4, vir, phys, (uint64_t)(&kernel_end - &kernel_start),
+                 PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Framebuffer */
-    vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset, framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
+                 framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map Stack */
-    vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1, PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1,
+                 PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map pmm bitmap */
     extern uint8_t *bitmap;
     extern uint64_t total_blocks;
 
-    vmm_maprange(kernel_pml4, (uint64_t)bitmap, (uint64_t)bitmap - hhdm_offset, total_blocks, PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_maprange(kernel_pml4, (uint64_t)bitmap, (uint64_t)bitmap - hhdm_offset, total_blocks,
+                 PAGE_PRESENT | PAGE_WRITABLE);
 
     vmm_load_pml4();
 }
@@ -133,7 +126,7 @@ void *vmm_alloc_page()
     uintptr_t ptr = (uintptr_t)pmm_alloc_block() - hhdm_offset;
     vmm_map(kernel_pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
 
-    return (void*)ptr + hhdm_offset;
+    return (void *)ptr + hhdm_offset;
 }
 
 int vmm_free_page(uintptr_t ptr)
@@ -143,8 +136,8 @@ int vmm_free_page(uintptr_t ptr)
     /* Calculate index */
     uint64_t pml4_i = (ptr >> 39) & 0x1FF;
     uint64_t pdpt_i = (ptr >> 30) & 0x1FF;
-    uint64_t pd_i   = (ptr >> 21) & 0x1FF;
-    uint64_t pt_i   = (ptr >> 12) & 0x1FF;
+    uint64_t pd_i = (ptr >> 21) & 0x1FF;
+    uint64_t pt_i = (ptr >> 12) & 0x1FF;
 
     uint64_t *pdpt, *pd, *pt;
 
@@ -156,15 +149,15 @@ int vmm_free_page(uintptr_t ptr)
     pt = (uint64_t *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
 
     /* PDPT */
-    if (! (kernel_pml4[pml4_i] & PAGE_PRESENT))
+    if (!(kernel_pml4[pml4_i] & PAGE_PRESENT))
         return -1;
 
     /* PD */
-    if (! (pdpt[pdpt_i] & PAGE_PRESENT)) 
+    if (!(pdpt[pdpt_i] & PAGE_PRESENT))
         return -1;
 
     /* PT */
-    if (! (pd[pd_i] & PAGE_PRESENT))
+    if (!(pd[pd_i] & PAGE_PRESENT))
         return -1;
 
     /* Not present anymore */

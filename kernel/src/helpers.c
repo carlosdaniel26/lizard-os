@@ -1,31 +1,30 @@
-#include <stdint.h>
-
 #include <helpers.h>
 #include <rtc.h>
+#include <stdint.h>
 
-void hlt() 
+void hlt()
 {
-    while(1) {
-        asm ("hlt");
+    while (1) {
+        asm("hlt");
         asm("sti");
     }
 }
 
 int oct2bin(unsigned char *str, int size)
 {
-	int n = 0;
-	unsigned char *c = str;
-	while (size-- > 0) {
-		n *= 8;
-		n += *c - '0';
-		c++;
-	}
-	return n;
+    int n = 0;
+    unsigned char *c = str;
+    while (size-- > 0) {
+        n *= 8;
+        n += *c - '0';
+        c++;
+    }
+    return n;
 }
 
 char toupper(char c)
 {
-    if(c >= 'a' && c <= 'z')
+    if (c >= 'a' && c <= 'z')
         return c - 32;
 
     return c;
@@ -34,9 +33,9 @@ char toupper(char c)
 extern struct RTC_timer RTC_clock;
 struct RTC_timer boot_time;
 
-static uint8_t days_in_month(uint8_t month, uint8_t year) 
+static uint8_t days_in_month(uint8_t month, uint8_t year)
 {
-    static const uint8_t days[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+    static const uint8_t days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     if (month == 2) {
         if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
             return 29;
@@ -81,7 +80,8 @@ struct Uptime calculate_uptime()
             month += 12;
             year--;
         }
-        day += days_in_month((boot_time.month == 1 ? 12 : boot_time.month - 1), 2000 + boot_time.year);
+        day +=
+            days_in_month((boot_time.month == 1 ? 12 : boot_time.month - 1), 2000 + boot_time.year);
     }
     if (month < 0) {
         month += 12;

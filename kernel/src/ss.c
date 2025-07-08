@@ -1,12 +1,11 @@
-#include <string.h>
+#include <cpuid.h>
+#include <helpers.h>
+#include <pmm.h>
+#include <rtc.h>
 #include <stdio.h>
-
+#include <string.h>
 #include <tty.h>
 #include <vga.h>
-#include <rtc.h>
-#include <helpers.h>
-#include <cpuid.h>
-#include <pmm.h>
 
 extern size_t cmd_start_column;
 extern size_t cmd_start_row;
@@ -25,53 +24,52 @@ extern CPUID cpu;
 
 void kprint_prompt()
 {
-	terminal_background_color = VGA_COLOR_BLACK;
-	terminal_color = VGA_COLOR_GREEN;
-	tty_writestring("root: ");
-	terminal_color = VGA_COLOR_WHITE;
-	cmd_start_column = terminal_column;
-	cmd_start_row = terminal_row;
+    terminal_background_color = VGA_COLOR_BLACK;
+    terminal_color = VGA_COLOR_GREEN;
+    tty_writestring("root: ");
+    terminal_color = VGA_COLOR_WHITE;
+    cmd_start_column = terminal_column;
+    cmd_start_row = terminal_row;
 }
 
 void shit_shell_init()
 {
-	kprint_prompt();
+    kprint_prompt();
 }
 
 /* Commands */
 
 static inline void clear()
 {
-	tty_clean();
+    tty_clean();
 }
 
 static inline void lsblk()
 {
-	// for(uint8_t i = 0; i <= 2; i++)
-	// {
-	// 	ATADevice *dev = ata_get(i);
-	// 	if (dev->present == 0) continue;
+    // for(uint8_t i = 0; i <= 2; i++)
+    // {
+    // 	ATADevice *dev = ata_get(i);
+    // 	if (dev->present == 0) continue;
 
-	// 	kprintf("HDD %u\n", i + 1);
-	// 	kprintf("%s\n", dev->model);
-	// 	kprintf("MB: %u\n", (dev->total_bytes  / (1024 * 1024)) + 1);
-	// }
+    // 	kprintf("HDD %u\n", i + 1);
+    // 	kprintf("%s\n", dev->model);
+    // 	kprintf("MB: %u\n", (dev->total_bytes  / (1024 * 1024)) + 1);
+    // }
 }
-
 
 static inline void lzfetch()
 {
 
-	struct Uptime time = {0};
-	time = calculate_uptime();
+    struct Uptime time = {0};
+    time = calculate_uptime();
 
-	uint64_t mem_ammount_mb = mem_ammount_b / (1024*1024);
-
+    uint64_t mem_ammount_mb = mem_ammount_b / (1024 * 1024);
 
     kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
     kprintf("|                  _         |\t\t\t\t\t\t\t------------------\n");
     kprintf("|                 /\"\\        |\t\t\t\t\t\t\tKernel:  lz-kernel 0.1\n");
-    kprintf("|                /o o\\       |\t\t\t\t\t\t\tUptime:  %ud %uH:%uM:%us\n", time.days, time.hours, time.minutes, time.seconds);
+    kprintf("|                /o o\\       |\t\t\t\t\t\t\tUptime:  %ud %uH:%uM:%us\n", time.days,
+            time.hours, time.minutes, time.seconds);
     kprintf("|           _\\/  \\   / \\/_   |\t\t\t\t\t\t\tShell:   shit-shell v0.0.3\n");
     kprintf("|            \\\\._/  /_.//    |\t\t\t\t\t\t\tPackages: 5 (hardcoded)\n");
     kprintf("|            `--,  ,----'    |\t\t\t\t\t\t\tResolution: %ux%u\n", width, height);
@@ -92,7 +90,7 @@ static inline void lzfetch()
 
 void free()
 {
-	#define BLOCK_SIZE_KB 4096
+#define BLOCK_SIZE_KB 4096
 
     uint32_t free_blocks = 0;
     uint32_t used_blocks = free_blocks - free_blocks;
@@ -105,7 +103,8 @@ void free()
     uint32_t used_mb = (used_kb + 512) / 1024;
     uint32_t total_mb = (total_kb + 512) / 1024;
 
-    #define print_mem(value_kb, value_mb) ((value_mb > 0) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
+#define print_mem(value_kb, value_mb)                                                              \
+    ((value_mb > 0) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
 
     kprintf("Memory Available: ");
     print_mem(free_kb, free_mb);
@@ -119,21 +118,15 @@ void free()
     print_mem(total_kb, total_mb);
     kprintf(" (%u blocos)\n", total_blocks);
 
-
-    #undef print_mem
+#undef print_mem
 }
-
 
 extern struct RTC_timer RTC_clock;
 
 static inline void date()
 {
-	kprintf("%s %u %u:%u:%u %u\n", 
-		get_month_string(RTC_clock.month), 
-		RTC_clock.hours,
-		RTC_clock.minutes,
-		RTC_clock.seconds,
-		RTC_clock.year);
+    kprintf("%s %u %u:%u:%u %u\n", get_month_string(RTC_clock.month), RTC_clock.hours,
+            RTC_clock.minutes, RTC_clock.seconds, RTC_clock.year);
 }
 
 /* Main */
@@ -141,24 +134,15 @@ static inline void date()
 
 void runcmd(const char *command)
 {
-	if (CMD_IS(command, "lsblk"))
-	{
-		lsblk();
-	}
-	else if (CMD_IS(command, "clear"))
-	{
-		clear();
-	}
-	else if (CMD_IS(command, "lzfetch"))
-	{
-		lzfetch();
-	}
-	else if (CMD_IS(command, "free"))
-	{
-		free();
-	}
-	else if (CMD_IS(command, "date"))
-	{
-		date();
-	}
+    if (CMD_IS(command, "lsblk")) {
+        lsblk();
+    } else if (CMD_IS(command, "clear")) {
+        clear();
+    } else if (CMD_IS(command, "lzfetch")) {
+        lzfetch();
+    } else if (CMD_IS(command, "free")) {
+        free();
+    } else if (CMD_IS(command, "date")) {
+        date();
+    }
 }

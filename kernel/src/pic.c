@@ -1,16 +1,16 @@
-#include <stdint.h>
-#include <io.h>
 #include <idt.h>
+#include <io.h>
+#include <stdint.h>
 
-#define PIC1_COMMAND        0x20
-#define PIC1_DATA       0x21
-#define PIC2_COMMAND        0xA0
-#define PIC2_DATA       0xA1
-#define PIC_EOI         0x20
+#define PIC1_COMMAND 0x20
+#define PIC1_DATA 0x21
+#define PIC2_COMMAND 0xA0
+#define PIC2_DATA 0xA1
+#define PIC_EOI 0x20
 
-#define PIC_INIT_COMMAND    0x11
-#define PIC_CASCADE_CONFIG  0x04
-#define PIC_MODE_CONFIG     0x01
+#define PIC_INIT_COMMAND 0x11
+#define PIC_CASCADE_CONFIG 0x04
+#define PIC_MODE_CONFIG 0x01
 
 #define PIC_VECTOR_OFFSET1 32
 #define PIC_VECTOR_OFFSET2 40
@@ -49,15 +49,14 @@ void PIC_remap()
 
 void PIC_sendEOI(uint8_t irq)
 {
-    if (SLAVE_PIC_HAS_TO_BE_WARNED)
-    {
+    if (SLAVE_PIC_HAS_TO_BE_WARNED) {
         outb(PIC2_COMMAND, PIC_EOI);
     }
 
     outb(PIC1_COMMAND, PIC_EOI);
 }
 
-void PIC_unmaskIRQ(uint8_t irq) 
+void PIC_unmaskIRQ(uint8_t irq)
 {
     uint16_t port;
     uint8_t value;

@@ -1,16 +1,16 @@
 #ifndef _STRING_H
 #define _STRING_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
-int memcmp(const void*, const void*, size_t size);
-int strcmp(const void* aptr, const void* bptr);
-void* memcpy(void* __restrict, const void* __restrict, size_t size);
-void* memmove(void*, const void*, size_t size);
-void* memset(void*, int value, size_t size);
-size_t strlen(const char*);
+int memcmp(const void *, const void *, size_t size);
+int strcmp(const void *aptr, const void *bptr);
+void *memcpy(void *__restrict, const void *__restrict, size_t size);
+void *memmove(void *, const void *, size_t size);
+void *memset(void *, int value, size_t size);
+size_t strlen(const char *);
 char *strchr(const char *str, int ch);
 bool strsIsEqual(const char *str1, const char *str2, size_t size);
 void unsigned_to_string(uint64_t value, char *str);
