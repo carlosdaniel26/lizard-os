@@ -1,3 +1,5 @@
+#include <alias.h>
+#include <helpers.h>
 #include <limine.h>
 #include <pmm.h>
 #include <stddef.h>
@@ -23,17 +25,17 @@ uint8_t *bitmap = NULL;
 uint64_t total_blocks = 0;
 uint64_t hhdm_offset = 0;
 
-static inline void set_bit(uint64_t i)
+static inline void pmm_reserve_block(uint64_t i)
 {
-    bitmap[i / 8] |= (1 << (i % 8));
+    BIT_SET(bitmap[i / 8], (i % 8));
 }
-static inline void clear_bit(uint64_t i)
+static inline void pmm_unreserve_block(uint64_t i)
 {
-    bitmap[i / 8] &= ~(1 << (i % 8));
+    BIT_CLEAR(bitmap[i / 8], (i % 8));
 }
-static inline int test_bit(uint64_t i)
+static inline int pmm_test_block(uint64_t i)
 {
-    return (bitmap[i / 8] >> (i % 8)) & 1;
+    return BIT_TEST(bitmap[i / 8], (i % 8));
 }
 
 void pmm_init()
@@ -80,7 +82,7 @@ void pmm_init()
             uint64_t bid = addr / BLOCK_SIZE;
             if (bid >= total_blocks)
                 continue;
-            clear_bit(bid);
+            pmm_unreserve_block(bid);
         }
     }
 
@@ -93,7 +95,7 @@ void pmm_init()
     {
         uint64_t bid = addr / BLOCK_SIZE;
         if (bid < total_blocks)
-            set_bit(bid);
+            pmm_reserve_block(bid);
     }
 
     // pmm_test_all();
@@ -103,9 +105,9 @@ void *pmm_alloc_block()
 {
     for (uint64_t i = 0; i < total_blocks; i++)
     {
-        if (!test_bit(i))
+        if (!pmm_test_block(i))
         {
-            set_bit(i);
+            pmm_reserve_block(i);
             return (void *)(i * BLOCK_SIZE + hhdm_offset);
         }
     }
