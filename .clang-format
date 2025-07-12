@@ -2,8 +2,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-ColumnLimit: 100
-BreakBeforeBraces: Linux
+ColumnLimit: 0
 
 SortIncludes: true
 PointerAlignment: Right
@@ -15,4 +14,4 @@ AllowShortFunctionsOnASingleLine: false
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterControlStatement: true
-  AfterFunction: true
+  AfterFunction: trueBreakBeforeBinaryOperators: All

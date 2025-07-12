@@ -1,6 +1,7 @@
 #include <alias.h>
 #include <ata.h>
 #include <cpuid.h>
+#include <fat16.h>
 #include <framebuffer.h>
 #include <gdt.h>
 #include <helpers.h>
@@ -21,7 +22,8 @@
 __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request
-    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
+    framebuffer_request
+    = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
 
 __attribute__((used,
                section(".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
@@ -64,6 +66,12 @@ void kmain()
     pit_init();
     task_init();
     ata_detect_devices();
-    start_interrupts();
+    // start_interrupts();
+    ATADevice *disk = ata_get(0);
+    Fat16 fs;
+
+    fat16_mount(&fs, disk);
+    read_and_print_file(&fs, "carlos.txt");
+
     hlt();
 }
