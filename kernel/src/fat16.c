@@ -5,6 +5,8 @@
 
 /* Map: [Reserved][FATs][Root Dir][Data] */
 
+#define FAT16_FIRST_DATA_CLUSTER 2
+#define FAT16_FAT_ENTRY_SIZE 2
 #define FAT16_DIR_ENTRY_SIZE 32
 #define FILE_NAME_SIZE 11
 
@@ -29,18 +31,18 @@ static inline uint32_t get_sector_size(Fat16 *fs)
 
 static uint32_t fat16_cluster_to_lba(Fat16 *fs, uint16_t cluster)
 {
-    return fs->data_region_lba + ((cluster - 2) * fs->bpb.sectors_per_cluster);
+    return fs->data_region_lba + ((cluster - FAT16_FIRST_DATA_CLUSTER) * fs->bpb.sectors_per_cluster);
 }
 
 static uint16_t fat16_next_cluster(Fat16 *fs, uint16_t cluster)
 {
-    uint32_t fat_offset = cluster * 2;
+    uint32_t fat_offset = cluster * FAT16_FAT_ENTRY_SIZE;
     uint32_t fat_sector = fs->fat_start_lba + (fat_offset / fs->bpb.bytes_per_sector);
     uint32_t ent_offset = fat_offset % fs->bpb.bytes_per_sector;
 
-    char buffer[512]; // max sector size
+    char buffer[512];
     if (atapio_read_sector(fs->disk, fat_sector, buffer) != 0)
-        return 0xFFFF;
+        return 0xFFF8;
 
     uint16_t next;
     memcpy(&next, buffer + ent_offset, sizeof(uint16_t));
@@ -72,21 +74,16 @@ static int fat16_compare_filename(const char *filename, const Fat16Directory *en
     return memcmp(formatted, entry->name, FILE_NAME_SIZE) == 0;
 }
 
-static int fat16_read_root_dir(Fat16 *fs, const char *filename, Fat16Directory *out)
+static int _fat16_read_dir_common(Fat16 *fs, uint32_t start_lba, uint32_t total_sectors, Fat16Directory *out, const char *filename)
 {
-    uint32_t entries = fs->bpb.root_entry_count;
-    uint32_t sectors = fs->root_dir_sectors;
-    uint32_t lba = fs->root_dir_lba;
+    char buffer[512];
     uint32_t sector_size = get_sector_size(fs);
 
-    char buffer[512];
-
-    for (uint32_t i = 0; i < sectors; i++)
+    for (uint32_t i = 0; i < total_sectors; i++)
     {
-        if (atapio_read_sector(fs->disk, lba + i, buffer) != 0)
+        if (atapio_read_sector(fs->disk, start_lba + i, buffer) != 0)
             return -1;
 
-        /* Seek inside of the sector for the Directory*/
         for (uint32_t j = 0; j < sector_size / FAT16_DIR_ENTRY_SIZE; j++)
         {
             Fat16Directory *entry = (Fat16Directory *)(buffer + j * FAT16_DIR_ENTRY_SIZE);
@@ -111,6 +108,16 @@ static int fat16_read_root_dir(Fat16 *fs, const char *filename, Fat16Directory *
     return -1;
 }
 
+int fat16_read_root_dir(Fat16 *fs, const char *filename, Fat16Directory *out)
+{
+    return _fat16_read_dir_common(
+        fs,
+        fs->root_dir_lba,
+        fs->root_dir_sectors,
+        out,
+        filename);
+}
+
 /* === Public API === */
 
 int fat16_mount(Fat16 *fs, ATADevice *disk)
@@ -127,11 +134,12 @@ int fat16_mount(Fat16 *fs, ATADevice *disk)
 
     fs->fat_start_lba = fs->bpb.reserved_sector_count;
 
-    fs->root_dir_sectors = DIV_ROUND_UP(
-        fs->bpb.root_entry_count * FAT16_DIR_ENTRY_SIZE,
-        fs->bpb.bytes_per_sector);
+    fs->root_dir_sectors = DIV_ROUND_UP(fs->bpb.root_entry_count * FAT16_DIR_ENTRY_SIZE, fs->bpb.bytes_per_sector);
 
+    /* Root dir lba is right after the FAT */
     fs->root_dir_lba = fs->fat_start_lba + (fs->bpb.num_fats * fs->bpb.fat_size_16);
+
+    /* Data region is right after root lba */
     fs->data_region_lba = fs->root_dir_lba + fs->root_dir_sectors;
 
     uint32_t total_sectors = fs->bpb.total_sectors_16 ? fs->bpb.total_sectors_16 : fs->bpb.total_sectors_32;
@@ -215,15 +223,15 @@ int fat16_read_dir(Fat16 *fs, Fat16Directory *entry, char *out_buffer)
 
 int read_and_print_file(Fat16 *fs, const char *filename)
 {
-    Fat16Directory entry = {0};
+    Fat16Directory dir = {0};
     Fat16Directory root = {0};
     root.attributes = FAT16_ATTR_DIRECTORY;
     root.first_cluster_low = 0; // Root dir has no cluster
 
-    fat16_find_in_dir(fs, &root, (char *)filename, &entry);
+    fat16_find_in_dir(fs, &root, (char *)filename, &dir);
 
     char buffer[512] = {0};
-    if (fat16_read_dir(fs, &entry, buffer) != 0)
+    if (fat16_read_dir(fs, &dir, buffer) != 0)
     {
         return kprintf("Error reading file: %s\n", filename);
     }
