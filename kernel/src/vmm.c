@@ -136,6 +136,16 @@ void *vmm_alloc_page()
     return (void *)ptr + hhdm_offset;
 }
 
+void *vmm_alloc_block_row(uint64_t ammount)
+{
+    uintptr_t ptr = (uintptr_t)pmm_alloc_block_row(ammount) - hhdm_offset;
+
+    for (uint64_t i = 0; i < ammount; i++)
+    {
+        vmm_map(kernel_pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE), PAGE_PRESENT | PAGE_WRITABLE);
+    }
+}
+
 int vmm_free_page(uintptr_t ptr)
 {
     ptr = (uintptr_t)align_ptr_down(ptr, PAGE_SIZE);

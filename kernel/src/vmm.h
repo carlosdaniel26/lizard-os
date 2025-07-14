@@ -9,6 +9,7 @@
 
 void vmm_init();
 void *vmm_alloc_page();
+void *vmm_alloc_block_row(uint64_t ammount);
 int vmm_free_page(uintptr_t ptr);
 
 #endif

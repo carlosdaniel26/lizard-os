@@ -114,6 +114,42 @@ void *pmm_alloc_block()
     return NULL;
 }
 
+void *pmm_alloc_block_row(uint64_t ammount)
+{
+    if (ammount == 0)
+        return NULL;
+
+    void *base = 0x00;
+    uint64_t base_block = 0;
+    uint64_t free_in_row = 0;
+
+    for (uint64_t i = 0; i < total_blocks; i++)
+    {
+        if (!pmm_test_block(i))
+        {
+            if (base == NULL)
+            {
+                base = (void *)(i * BLOCK_SIZE + hhdm_offset);
+                base_block = i;
+            }
+
+            free_in_row++;
+
+            if (free_in_row == ammount)
+            {
+                /* Reserve each block */
+                for (uint64_t block = base_block; block <= base_block; block++)
+                {
+                    pmm_reserve_block(block);
+                }
+
+                return (void *)((uint64_t)base * BLOCK_SIZE + hhdm_offset);
+            }
+        }
+    }
+    return NULL;
+}
+
 void pmm_test_all()
 {
     kprintf("PMM: Testing all blocks...\n");
