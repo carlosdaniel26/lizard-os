@@ -5,7 +5,6 @@
 
 /* Map: [Reserved][FATs][Root Dir][Data] */
 
-#define FAT16_FIRST_DATA_CLUSTER 2
 #define FAT16_FAT_ENTRY_SIZE 2
 #define FAT16_DIR_ENTRY_SIZE 32
 #define FILE_NAME_SIZE 11
@@ -31,7 +30,16 @@ static inline uint32_t get_sector_size(Fat16 *fs)
 
 static uint32_t fat16_cluster_to_lba(Fat16 *fs, uint16_t cluster)
 {
-    return fs->data_region_lba + ((cluster - FAT16_FIRST_DATA_CLUSTER) * fs->bpb.sectors_per_cluster);
+    /*
+     * First 2 values for cluster nums (0x0 and 0x1) are not available.
+     * The place for them in FAT table is used to store the FAT signature.
+     * First cluster number is 0x2.
+     *
+     * It is, the clusters 0x0 and 0x1 will never be called, but when a
+     * cluster >= 2 comes in, it will have to come 2 steps back to
+     * data_region base.
+     */
+    return fs->data_region_lba + ((cluster - 2) * fs->bpb.sectors_per_cluster);
 }
 
 static uint16_t fat16_next_cluster(Fat16 *fs, uint16_t cluster)
