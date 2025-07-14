@@ -40,6 +40,7 @@ static uint16_t fat16_next_cluster(Fat16 *fs, uint16_t cluster)
     uint32_t fat_sector = fs->fat_start_lba + (fat_offset / fs->bpb.bytes_per_sector);
     uint32_t ent_offset = fat_offset % fs->bpb.bytes_per_sector;
 
+    /* Check on the Table which is the next cluster on the chain */
     char buffer[512];
     if (atapio_read_sector(fs->disk, fat_sector, buffer) != 0)
         return 0xFFF8;
@@ -209,15 +210,34 @@ int fat16_read_dir(Fat16 *fs, Fat16Directory *entry, char *out_buffer)
         return -1;
 
     uint32_t sector_size = get_sector_size(fs);
-    uint32_t sectors_to_read = DIV_ROUND_UP(entry->file_size_bytes, sector_size);
+    uint32_t bytes_read = 0;
+    uint32_t file_size = entry->file_size_bytes;
 
-    for (uint32_t i = 0; i < sectors_to_read; i++)
+    while (cluster < 0xFFF8 && bytes_read < file_size)
     {
-        uint32_t lba = fat16_cluster_to_lba(fs, cluster) + i;
-        if (atapio_read_sector(fs->disk, lba, out_buffer + (i * sector_size)) != 0)
-            return -1;
-    }
+        uint32_t lba = fat16_cluster_to_lba(fs, cluster);
 
+        for (uint32_t i = 0; i < fs->bpb.sectors_per_cluster; i++)
+        {
+            if (bytes_read >= file_size)
+                break;
+
+            char sector[512];
+
+            if (atapio_read_sector(fs->disk, lba + i, sector) != 0)
+                return -1;
+
+            uint32_t to_copy = sector_size;
+
+            if ((bytes_read + to_copy) > file_size)
+                to_copy = file_size - bytes_read;
+
+            memcpy(out_buffer + bytes_read, sector, to_copy);
+            bytes_read += to_copy;
+        }
+
+        cluster = fat16_next_cluster(fs, cluster);
+    }
     return 0;
 }
 
