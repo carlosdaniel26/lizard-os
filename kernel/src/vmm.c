@@ -144,6 +144,8 @@ void *vmm_alloc_block_row(uint64_t ammount)
     {
         vmm_map(kernel_pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE), PAGE_PRESENT | PAGE_WRITABLE);
     }
+
+    return (void *)ptr + hhdm_offset;
 }
 
 int vmm_free_page(uintptr_t ptr)
