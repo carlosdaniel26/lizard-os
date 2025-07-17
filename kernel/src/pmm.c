@@ -108,7 +108,7 @@ void *pmm_alloc_block()
         if (!pmm_test_block(i))
         {
             pmm_reserve_block(i);
-            return (void *)(i * BLOCK_SIZE + hhdm_offset);
+            return (void *)(i * BLOCK_SIZE);
         }
     }
     return NULL;
@@ -152,7 +152,7 @@ void *pmm_alloc_block_row(uint64_t ammount)
                     pmm_reserve_block(block);
                 }
 
-                return (void *)((uint64_t)base + hhdm_offset);
+                return (void *)((uint64_t)base);
             }
         }
     }

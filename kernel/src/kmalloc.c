@@ -8,20 +8,21 @@
 #define HEAP_BLOCKS (HEAP_TOTAL_SIZE / BLOCK_SIZE)
 
 extern uint32_t mem_ammount_b;
+extern uint64_t hhdm_offset;
 
 static KMemoryHeader *ptr_free = NULL;
 static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allocated*/
 
 static inline void kmalloc_init()
 {
-    void *heap_base = pmm_alloc_block();
+    void *heap_base = pmm_alloc_block() + hhdm_offset;
     if (!heap_base)
         return;
 
     /* Allocate initial 16 MB (HEAP_BLOCKS blocks) */
     for (size_t i = 1; i < HEAP_BLOCKS; i++)
     {
-        pmm_alloc_block();
+        pmm_alloc_block() + hhdm_offset;
     }
 
     ptr_free = (KMemoryHeader *)heap_base;
@@ -35,7 +36,7 @@ static inline void kmalloc_init()
 
 static bool kmalloc_extend_heap()
 {
-    void *new_block_addr = pmm_alloc_block();
+    void *new_block_addr = pmm_alloc_block() + hhdm_offset;
     if (!new_block_addr)
         return false;
 

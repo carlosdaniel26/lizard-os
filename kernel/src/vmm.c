@@ -28,7 +28,7 @@ static inline void invlpg(void *addr)
 
 static uint64_t *vmm_alloc_table()
 {
-    void *page = pmm_alloc_block();
+    void *page = pmm_alloc_block() + hhdm_offset;
     memset(page, 0, PAGE_SIZE);
     return (uint64_t *)page;
 }
@@ -130,7 +130,7 @@ void vmm_init()
 
 void *vmm_alloc_page()
 {
-    uintptr_t ptr = (uintptr_t)pmm_alloc_block() - hhdm_offset;
+    uintptr_t ptr = (uintptr_t)pmm_alloc_block();
     vmm_map(kernel_pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
 
     return (void *)ptr + hhdm_offset;
@@ -138,7 +138,7 @@ void *vmm_alloc_page()
 
 void *vmm_alloc_block_row(uint64_t ammount)
 {
-    uintptr_t ptr = (uintptr_t)pmm_alloc_block_row(ammount) - hhdm_offset;
+    uintptr_t ptr = (uintptr_t)pmm_alloc_block_row(ammount);
 
     for (uint64_t i = 0; i < ammount; i++)
     {
