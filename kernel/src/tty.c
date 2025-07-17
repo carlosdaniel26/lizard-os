@@ -29,10 +29,6 @@ static spinlock_t tty_lock;
 
 void tty_initialize()
 {
-    extern uint32_t width;
-    extern uint32_t height;
-    extern uint32_t *framebuffer;
-
     terminal_width = width;
     terminal_height = height;
     fb = framebuffer;

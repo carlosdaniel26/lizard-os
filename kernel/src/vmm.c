@@ -15,9 +15,6 @@ extern uint64_t stack_start;
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
 
-extern uint32_t *framebuffer;
-extern uint32_t framebuffer_length;
-
 static uint64_t *kernel_pml4;
 
 static inline void invlpg(void *addr)

@@ -1,4 +1,5 @@
 #include <alias.h>
+#include <framebuffer.h>
 #include <helpers.h>
 #include <limine.h>
 #include <pmm.h>
@@ -18,7 +19,6 @@ __attribute__((
     used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST, .revision = 0};
 
-extern uint32_t framebuffer_length;
 
 uint64_t mem_ammount_b = 0;
 uint8_t *bitmap = NULL;
