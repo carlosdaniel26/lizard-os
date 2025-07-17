@@ -182,5 +182,7 @@ int vmm_free_page(uintptr_t ptr)
     /* Not present anymore */
     pt[pt_i] &= (~PAGE_PRESENT | ~PAGE_WRITABLE);
 
+    pmm_free_block(ptr);
+
     return 0;
 }

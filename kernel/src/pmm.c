@@ -114,6 +114,15 @@ void *pmm_alloc_block()
     return NULL;
 }
 
+void pmm_free_block(void *ptr)
+{
+    uint64_t block = ((uint64_t)ptr - hhdm_offset) / BLOCK_SIZE;
+
+    pmm_unreserve_block(block);
+
+    return NULL;
+}
+
 void *pmm_alloc_block_row(uint64_t ammount)
 {
     if (ammount == 0)
