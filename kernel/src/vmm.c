@@ -6,16 +6,15 @@
 #include <string.h>
 #include <vmm.h>
 
-__attribute__((
-    used, section(".limine_requests"))) static volatile struct limine_executable_address_request
-    kernel_address_request = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_address_request
+    kernel_address_request
+    = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
 extern uint64_t stack_start;
 
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
 
-extern uint64_t hhdm_offset;
 extern uint32_t *framebuffer;
 extern uint32_t framebuffer_length;
 
@@ -81,8 +80,8 @@ void vmm_map(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t flags)
     invlpg((void *)virt);
 }
 
-static inline void vmm_maprange(uint64_t *pml4, uint64_t virt, uint64_t phys,
-                                uint64_t length_in_blocks, uint64_t flags)
+static inline void vmm_maprange(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t length_in_blocks,
+                                uint64_t flags)
 {
     for (uint64_t i = 0; i < length_in_blocks; i++)
     {
@@ -115,8 +114,7 @@ void vmm_init()
                  framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map Stack */
-    vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1,
-                 PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map pmm bitmap */
     extern uint8_t *bitmap;
@@ -142,7 +140,8 @@ void *vmm_alloc_block_row(uint64_t ammount)
 
     for (uint64_t i = 0; i < ammount; i++)
     {
-        vmm_map(kernel_pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE), PAGE_PRESENT | PAGE_WRITABLE);
+        vmm_map(kernel_pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE),
+                PAGE_PRESENT | PAGE_WRITABLE);
     }
 
     return (void *)ptr + hhdm_offset;

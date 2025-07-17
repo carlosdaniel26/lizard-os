@@ -12,4 +12,6 @@ void *pmm_alloc_block_row(uint64_t ammount);
 void pmm_free_block(void *ptr);
 block_id_t pmm_free_block_count();
 
+extern uint64_t hhdm_offset;
+
 #endif

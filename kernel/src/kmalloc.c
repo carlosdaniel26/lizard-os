@@ -8,7 +8,6 @@
 #define HEAP_BLOCKS (HEAP_TOTAL_SIZE / BLOCK_SIZE)
 
 extern uint32_t mem_ammount_b;
-extern uint64_t hhdm_offset;
 
 static KMemoryHeader *ptr_free = NULL;
 static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allocated*/
