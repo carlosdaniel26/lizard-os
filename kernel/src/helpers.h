@@ -27,5 +27,6 @@ struct Uptime {
 
 void hlt();
 int oct2bin(unsigned char *str, int size);
+char toupper(char c);
 void save_boot_time();
 struct Uptime calculate_uptime();
