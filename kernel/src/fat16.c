@@ -249,7 +249,7 @@ int fat16_read_dir(Fat16 *fs, Fat16Directory *entry, char *out_buffer)
     return 0;
 }
 
-int read_and_print_file(Fat16 *fs, const char *filename)
+void read_and_print_file(Fat16 *fs, const char *filename)
 {
     Fat16Directory dir = {0};
     Fat16Directory root = {0};
