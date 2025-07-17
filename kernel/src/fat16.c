@@ -23,7 +23,7 @@
 
 /* === Internal helpers === */
 
-static inline uint32_t get_sector_size(Fat16 *fs)
+static inline int get_sector_size(Fat16 *fs)
 {
     return fs->bpb.bytes_per_sector ? fs->bpb.bytes_per_sector : 512;
 }
@@ -86,7 +86,7 @@ static int fat16_compare_filename(const char *filename, const Fat16Directory *en
 static int _fat16_read_dir_common(Fat16 *fs, uint32_t start_lba, uint32_t total_sectors, Fat16Directory *out, const char *filename)
 {
     char buffer[512];
-    uint32_t sector_size = get_sector_size(fs);
+    int sector_size = get_sector_size(fs);
 
     for (uint32_t i = 0; i < total_sectors; i++)
     {
