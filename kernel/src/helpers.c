@@ -6,8 +6,8 @@ void hlt()
 {
     while (1)
     {
-        asm("hlt");
         asm("sti");
+        asm("hlt");
     }
 }
 
