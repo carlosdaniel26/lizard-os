@@ -1,5 +1,6 @@
 #include <ata.h>
 #include <fat16.h>
+#include <helpers.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -93,7 +94,7 @@ static int _fat16_read_dir_common(Fat16 *fs, uint32_t start_lba, uint32_t total_
         if (atapio_read_sector(fs->disk, start_lba + i, buffer) != 0)
             return -1;
 
-        for (uint32_t j = 0; j < sector_size / FAT16_DIR_ENTRY_SIZE; j++)
+        for (int j = 0; j < sector_size / FAT16_DIR_ENTRY_SIZE; j++)
         {
             Fat16Directory *entry = (Fat16Directory *)(buffer + j * FAT16_DIR_ENTRY_SIZE);
 
@@ -261,7 +262,8 @@ void read_and_print_file(Fat16 *fs, const char *filename)
     char buffer[512] = {0};
     if (fat16_read_dir(fs, &dir, buffer) != 0)
     {
-        return kprintf("Error reading file: %s\n", filename);
+        kprintf("Error reading file: %s\n", filename);
+        return;
     }
 
     buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination

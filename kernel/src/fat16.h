@@ -72,4 +72,7 @@ typedef struct Fat16 {
     uint32_t total_clusters;
 } Fat16;
 
+int fat16_mount(Fat16 *fs, ATADevice *disk);
+void read_and_print_file(Fat16 *fs, const char *filename);
+
 #endif
