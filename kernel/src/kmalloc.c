@@ -15,15 +15,9 @@ static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allo
 
 static inline void kmalloc_init()
 {
-    void *heap_base = pmm_alloc_block() + hhdm_offset;
+    void *heap_base = pmm_alloc_block_row(HEAP_BLOCKS) + hhdm_offset;
     if (!heap_base)
         return;
-
-    /* Allocate initial 16 MB (HEAP_BLOCKS blocks) */
-    for (size_t i = 1; i < HEAP_BLOCKS; i++)
-    {
-        pmm_alloc_block() + hhdm_offset;
-    }
 
     ptr_free = (KMemoryHeader *)heap_base;
     ptr_free->size = HEAP_TOTAL_SIZE - sizeof(KMemoryHeader);
