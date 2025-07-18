@@ -271,6 +271,7 @@ void read_and_print_file(Fat16 *fs, const char *filename)
         return;
     }
 
-    buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination
+    buffer[strlen(buffer) - 1] = '\0'; // Ensure null-termination
+
     kprintf("===== File: %s =====\n%s\n", filename, buffer);
 }
