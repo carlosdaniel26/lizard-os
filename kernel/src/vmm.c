@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <vmm.h>
+#include <framebuffer.h>
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_address_request
     kernel_address_request
