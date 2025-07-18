@@ -3,6 +3,7 @@
 #include <helpers.h>
 #include <stdio.h>
 #include <string.h>
+#include <kmalloc.h>
 
 /* Map: [Reserved][FATs][Root Dir][Data] */
 
@@ -259,7 +260,11 @@ void read_and_print_file(Fat16 *fs, const char *filename)
 
     fat16_find_in_dir(fs, &root, (char *)filename, &dir);
 
-    char buffer[512] = {0};
+    kprintf("file_size: %u\n", dir.file_size_bytes);
+
+    char *buffer = kmalloc(dir.file_size_bytes);
+    memset(buffer, 0, dir.file_size_bytes);
+    
     if (fat16_read_dir(fs, &dir, buffer) != 0)
     {
         kprintf("Error reading file: %s\n", filename);
