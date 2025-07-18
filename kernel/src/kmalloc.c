@@ -1,11 +1,12 @@
 #include <helpers.h>
 #include <kmalloc.h>
-#include <pmm.h>
+#include <vmm.h>
 
 #define BLOCK_SIZE 4096
-#define HEAP_SIZE_MB 1
-#define HEAP_TOTAL_SIZE (HEAP_SIZE_MB * 1024 * 1024)
-#define HEAP_BLOCKS (HEAP_TOTAL_SIZE / BLOCK_SIZE)
+#define START_BLOCKS 10
+#define START_HEAP_SIZE BLOCK_SIZE * START_BLOCKS
+
+#define DIV_ROUND_UP(x, y) (((x) + (y)-1) / (y))
 
 extern uint32_t mem_ammount_b;
 
@@ -14,22 +15,24 @@ static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allo
 
 static inline void kmalloc_init()
 {
-    void *heap_base = pmm_alloc_block_row(HEAP_BLOCKS) + hhdm_offset;
+    void *heap_base = vmm_alloc_block_row(START_BLOCKS);
     if (!heap_base)
         return;
 
     ptr_free = (KMemoryHeader *)heap_base;
-    ptr_free->size = HEAP_TOTAL_SIZE - sizeof(KMemoryHeader);
+    ptr_free->size = START_HEAP_SIZE - sizeof(KMemoryHeader);
     ptr_free->next = NULL;
     ptr_free->prev = NULL;
     ptr_free->is_free = true;
 
-    ptr_heap_end = (KMemoryHeader *)((char *)heap_base + HEAP_TOTAL_SIZE - sizeof(KMemoryHeader));
+    ptr_heap_end = (KMemoryHeader *)((char *)heap_base + START_HEAP_SIZE - sizeof(KMemoryHeader));
 }
 
-static bool kmalloc_extend_heap()
+static bool kmalloc_extend_heap(size_t size)
 {
-    void *new_block_addr = pmm_alloc_block() + hhdm_offset;
+    uint64_t blocks = (uint64_t)DIV_ROUND_UP(size, 4096);
+
+    void *new_block_addr = vmm_alloc_block_row(blocks);
     if (!new_block_addr)
         return false;
 
@@ -62,6 +65,8 @@ void *kmalloc(size_t n_bytes)
     if (!ptr_free)
         kmalloc_init();
 
+    size_t total_needed = 0;
+
     while (true)
     {
         KMemoryHeader *current = ptr_free;
@@ -74,7 +79,7 @@ void *kmalloc(size_t n_bytes)
                 continue;
             }
 
-            size_t total_needed = n_bytes + sizeof(KMemoryHeader);
+            total_needed = n_bytes + sizeof(KMemoryHeader);
 
             /*
              * Only split if leftover block after allocation
@@ -103,7 +108,7 @@ void *kmalloc(size_t n_bytes)
         }
 
         /* No suitable block found, try to extend heap*/
-        if (!kmalloc_extend_heap())
+        if (!kmalloc_extend_heap(total_needed))
         {
             /* Out of memory: can't extend heap further*/
             return NULL;
