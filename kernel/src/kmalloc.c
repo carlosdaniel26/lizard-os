@@ -65,7 +65,7 @@ void *kmalloc(size_t n_bytes)
 
     size_t total_needed = 0;
 
-    while (true)
+    for (int attempt = 0; attempt < 2; attempt++)
     {
         KMemoryHeader *current = ptr_free;
 
@@ -109,9 +109,11 @@ void *kmalloc(size_t n_bytes)
         if (!kmalloc_extend_heap(total_needed))
         {
             /* Out of memory: can't extend heap further*/
-            return NULL;
+            break;
         }
     }
+
+    return NULL;
 }
 
 void kfree(void *ptr)
