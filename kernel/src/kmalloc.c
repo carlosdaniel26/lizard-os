@@ -8,8 +8,6 @@
 
 #define DIV_ROUND_UP(x, y) (((x) + (y)-1) / (y))
 
-extern uint32_t mem_ammount_b;
-
 static KMemoryHeader *ptr_free = NULL;
 static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allocated*/
 
@@ -104,7 +102,7 @@ void *kmalloc(size_t n_bytes)
             }
 
             current->is_free = false;
-            return (void *)((char *)current + sizeof(KMemoryHeader));
+            return (void *)(current + sizeof(KMemoryHeader));
         }
 
         /* No suitable block found, try to extend heap*/
