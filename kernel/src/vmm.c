@@ -134,6 +134,9 @@ void *vmm_alloc_page()
 
 void *vmm_alloc_block_row(uint64_t ammount)
 {
+    if (ammount == 0)
+        return NULL;
+    
     uintptr_t ptr = (uintptr_t)pmm_alloc_block_row(ammount);
 
     for (uint64_t i = 0; i < ammount; i++)
