@@ -51,12 +51,12 @@ static uint16_t fat16_next_cluster(Fat16 *fs, uint16_t cluster)
     uint32_t ent_offset = fat_offset % fs->bpb.bytes_per_sector;
 
     /* Check on the Table which is the next cluster on the chain */
-    char buffer[512];
-    if (atapio_read_sector(fs->disk, fat_sector, buffer) != 0)
+    char sector[512];
+    if (atapio_read_sector(fs->disk, fat_sector, sector) != 0)
         return 0xFFF8;
 
     uint16_t next;
-    memcpy(&next, buffer + ent_offset, sizeof(uint16_t));
+    memcpy(&next, sector + ent_offset, sizeof(uint16_t));
     return next;
 }
 
