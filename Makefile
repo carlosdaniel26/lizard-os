@@ -68,6 +68,12 @@ kernel: kernel-deps
 .PHONY: hdd
 hdd:
 	qemu-img create -f raw hda.img 512M
+	mkfs.fat -F 16 hda.img
+	
+	sudo mount -o loop hda.img /mnt/lzos-fs
+	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'
+	sudo umount /mnt/lzos-fs
+	
 
 # Build
 
