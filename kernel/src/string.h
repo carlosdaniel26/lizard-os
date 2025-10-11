@@ -7,7 +7,7 @@
 
 int memcmp(const void *, const void *, size_t size);
 int strcmp(const void *aptr, const void *bptr);
-void *memcpy(void *__restrict, const void *__restrict, size_t size);
+void *memcpy(void *dstptr, const void *srcptr, size_t size);
 void *memmove(void *, const void *, size_t size);
 void *memset(void *, int value, size_t size);
 size_t strlen(const char *);
@@ -18,5 +18,6 @@ unsigned get_unsigned2string_final_size(uint64_t value);
 unsigned get_u64tostring_final_size(uint64_t value);
 unsigned get_unsigned2hex_final_size(uint64_t value);
 void unsigned_to_hexstring(uint64_t value, char *str);
+char *strncpy(char *dest, const char *src, size_t n);
 
 #endif

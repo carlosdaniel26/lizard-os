@@ -194,3 +194,54 @@ void unsigned_to_hexstring(uint64_t value, char *str)
     }
     str[index] = '\0';
 }
+
+char *strncpy(char *dest, const char *src, size_t n)
+{
+    size_t i;
+
+    for (i = 0; i < n && src[i] != '\0'; i++)
+    {
+        dest[i] = src[i];
+    }
+
+    // Pad the rest with '\0' if src is shorter than n
+    for (; i < n; i++)
+    {
+        dest[i] = '\0';
+    }
+
+    return dest;
+}
+
+char *strtok(char *str, const char *delim)
+{
+    static char *next;
+    char *start;
+    
+    if (str)
+        next = str;
+    if (!next)
+        return NULL;
+
+    while (*next && strchr(delim, *next))
+        next++;
+
+    if (*next == '\0') {
+        next = NULL;
+        return NULL;
+    }
+
+    start = next;
+
+    while (*next && !strchr(delim, *next))
+        next++;
+
+    if (*next) {
+        *next = '\0';
+        next++;
+    } else {
+        next = NULL;
+    }
+
+    return start;
+}
