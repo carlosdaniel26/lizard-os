@@ -1,4 +1,5 @@
 #include <helpers.h>
+#include <string.h>
 #include <kmalloc.h>
 #include <vmm.h>
 
@@ -114,6 +115,26 @@ void *kmalloc(size_t n_bytes)
     }
 
     return NULL;
+}
+
+void *krealloc(void *ptr, size_t n_bytes)
+{
+    if (!ptr)
+        return kmalloc(n_bytes);
+
+    KMemoryHeader *block = (KMemoryHeader *)((char *)ptr - sizeof(KMemoryHeader));
+
+    if (block->size >= n_bytes)
+        return ptr;
+
+    void *new_ptr = kmalloc(n_bytes);
+    if (!new_ptr)
+        return NULL;
+
+    memcpy(new_ptr, ptr, block->size);
+    kfree(ptr);
+
+    return new_ptr;
 }
 
 void kfree(void *ptr)
