@@ -64,7 +64,7 @@ typedef struct ATADevice {
 void ata_detect_devices();
 int ata_identify(ATADevice *dev);
 int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer);
-int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer);
+int atapio_read_sector(ATADevice *dev, uint32_t lba, const char *buffer);
 
 ATADevice *ata_get(uint8_t drive_id);
 void isr_ata_primary();

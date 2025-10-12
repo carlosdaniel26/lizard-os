@@ -158,7 +158,7 @@ int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer)
     return 0;
 }
 
-int atapio_read_sector(ATADevice *dev, uint32_t lba, char *buffer)
+int atapio_read_sector(ATADevice *dev, uint32_t lba, const char *buffer)
 {
     uint16_t ata = dev->io_base;
 
