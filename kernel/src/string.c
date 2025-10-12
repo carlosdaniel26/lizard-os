@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 int memcmp(const void *aptr, const void *bptr, size_t size)
 {
@@ -81,6 +82,14 @@ char *strchr(const char *str, int ch)
     } while (*str++);
 
     return NULL;
+}
+
+char *strcpy(char *dest, const char *src)
+{
+    char *ret = dest;
+    while ((*dest++ = *src++) != '\0')
+        ;
+    return ret;
 }
 
 bool strsIsEqual(const char *str1, const char *str2, size_t size)
@@ -244,4 +253,89 @@ char *strtok(char *str, const char *delim)
     }
 
     return start;
+}
+
+char *strtok_r(char *str, const char *delim, char **saveptr)
+{
+    char *start;
+
+    if (str)
+        *saveptr = str;
+    if (!*saveptr)
+        return NULL;
+
+    while (**saveptr && strchr(delim, **saveptr))
+        (*saveptr)++;
+
+    if (**saveptr == '\0') {
+        *saveptr = NULL;
+        return NULL;
+    }
+
+    start = *saveptr;
+
+    while (**saveptr && !strchr(delim, **saveptr))
+        (*saveptr)++;
+
+    if (**saveptr) {
+        **saveptr = '\0';
+        (*saveptr)++;
+    } else {
+        *saveptr = NULL;
+    }
+
+    return start;
+}
+
+int sprintf(char *buffer, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    char *buf_ptr = buffer;
+    const char *fmt_ptr = format;
+
+    while (*fmt_ptr) {
+        if (*fmt_ptr == '%') {
+            fmt_ptr++;
+            if (*fmt_ptr == 's') {
+                char *str = va_arg(args, char *);
+                while (*str) {
+                    *buf_ptr++ = *str++;
+                }
+            } else if (*fmt_ptr == 'd') {
+                int val = va_arg(args, int);
+                char num_buffer[20];
+                unsigned_to_string((val < 0) ? -val : val, num_buffer);
+                if (val < 0) {
+                    *buf_ptr++ = '-';
+                }
+                char *num_ptr = num_buffer;
+                while (*num_ptr) {
+                    *buf_ptr++ = *num_ptr++;
+                }
+            } else if (*fmt_ptr == 'x') {
+                unsigned int val = va_arg(args, unsigned int);
+                char hex_buffer[20];
+                unsigned_to_hexstring(val, hex_buffer);
+                char *hex_ptr = hex_buffer;
+                while (*hex_ptr) {
+                    *buf_ptr++ = *hex_ptr++;
+                }
+            } else if (*fmt_ptr == 'c') {
+                char ch = (char)va_arg(args, int);
+                *buf_ptr++ = ch;
+            } else {
+                *buf_ptr++ = '%';
+                *buf_ptr++ = *fmt_ptr;
+            }
+        } else {
+            *buf_ptr++ = *fmt_ptr;
+        }
+        fmt_ptr++;
+    }
+
+    *buf_ptr = '\0';
+    va_end(args);
+    return buf_ptr - buffer;
 }
