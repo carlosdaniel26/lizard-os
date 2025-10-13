@@ -74,6 +74,72 @@ static uint8_t rtc_read_b(uint8_t reg)
     return bcd_to_binary(result);
 }
 
+static inline void utc_to_local()
+{
+    /* Convert to UTC - 3 */
+    if (RTC_clock.hours >= 3)
+    {
+        RTC_clock.hours -= 3;
+    }
+    else
+    {
+        RTC_clock.hours = (RTC_clock.hours + 24) - 3;
+        /* Previous day */
+        if (RTC_clock.date_of_month > 1)
+        {
+            RTC_clock.date_of_month--;
+        }
+        else
+        {
+            /* Move to previous month */
+            if (RTC_clock.month == 1)
+            {
+                RTC_clock.month = 12;
+                RTC_clock.year--;
+            }
+            else
+            {
+                RTC_clock.month--;
+            }
+
+            /* Set the correct date_of_month */
+            switch (RTC_clock.month)
+            {
+            case 1: /* January */
+            case 3: /* March */
+            case 5: /* May */
+            case 7: /* July */
+            case 8: /* August */
+            case 10: /* October */
+            case 12: /* December */
+                RTC_clock.date_of_month = 31;
+                break;
+            case 4: /* April */
+            case 6: /* June */
+            case 9: /* September */
+            case 11: /* November */
+                RTC_clock.date_of_month = 30;
+                break;
+            case 2: /* February */
+                /* Check for leap year*/
+                if ((RTC_clock.year % 4 == 0 && RTC_clock.year % 100 != 0) ||
+                    (RTC_clock.year % 400 == 0))
+                {
+                    RTC_clock.date_of_month = 29;
+                }
+                else
+                {
+                    RTC_clock.date_of_month = 28;
+                }
+                break;
+            default:
+                RTC_clock.date_of_month = 31; /* Fallback, should not happen*/
+                break;
+            }
+        }
+    }
+}
+
 void get_rtc_time()
 {
     uint8_t *RTC_array = (uint8_t *)&RTC_clock;
@@ -84,6 +150,8 @@ void get_rtc_time()
 
         RTC_array[reg] = rtc_read_b(reg);
     }
+    
+    utc_to_local();
 }
 
 const char *get_month_string(uint8_t month_id)
