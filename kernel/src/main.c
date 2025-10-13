@@ -67,11 +67,8 @@ void kmain()
     task_init();
     ata_detect_devices();
     // start_interrupts();
-    ATADevice *disk = ata_get(0);
-    Fat16 fs;
 
-    fat16_mount(&fs, disk);
-    read_and_print_file(&fs, "carlos.txt");
+    test_vfs();
 
     hlt();
 }

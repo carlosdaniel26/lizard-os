@@ -20,7 +20,7 @@
  *
  *
  */
-typedef struct Fat16Bpb {
+typedef struct FatHeader {
     uint8_t jump_boot[3];
     uint8_t oem_name[8];
     uint16_t bytes_per_sector;
@@ -41,7 +41,7 @@ typedef struct Fat16Bpb {
     uint32_t volume_id;
     uint8_t volume_label[11];
     uint8_t fs_type[8];
-} __attribute__((packed)) Fat16Bpb;
+} __attribute__((packed)) FatHeader;
 
 typedef struct Fat16Directory {
     uint8_t name[8];
@@ -60,9 +60,8 @@ typedef struct Fat16Directory {
 } __attribute__((packed)) Fat16Directory;
 
 typedef struct Fat16 {
+    FatHeader header;
     ATADevice *disk;
-
-    Fat16Bpb bpb;
 
     uint32_t fat_start_lba;
     uint32_t root_dir_lba;
@@ -73,6 +72,4 @@ typedef struct Fat16 {
 } Fat16;
 
 int fat16_mount(Fat16 *fs, ATADevice *disk);
-void read_and_print_file(Fat16 *fs, const char *filename);
-
 #endif
