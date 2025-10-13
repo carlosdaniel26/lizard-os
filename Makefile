@@ -72,6 +72,8 @@ hdd:
 	
 	sudo mount -o loop hda.img /mnt/lzos-fs
 	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'
+	sudo sh -c 'mkdir /mnt/lzos-fs/folder'
+	sudo sh -c 'echo "MY SECRETS"' > /mnt/lzos-fs/folder/file.txt'
 	sudo umount /mnt/lzos-fs
 	
 
