@@ -71,5 +71,5 @@ typedef struct Fat16 {
     uint32_t total_clusters;
 } Fat16;
 
-int fat16_mount(Fat16 *fs, ATADevice *disk);
+int fat16_mount(ATADevice *disk, Fat16 *fs);
 #endif

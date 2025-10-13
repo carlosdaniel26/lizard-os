@@ -334,6 +334,28 @@ int find_in_path(Fat16 *fs, const char *path, Fat16Directory *out)
     return 0;
 }
 
+int fat16_mount(ATADevice *disk, Fat16 *fs)
+{
+    if (!disk || !fs)
+        return -1;
+
+    fs->disk = disk;
+    char buffer[512] = {0};
+    if (atapio_read_sector(disk, 0, &buffer) != 0) {
+        kprintf("Error reading boot sector\n");
+        return;
+    }
+    memcpy(&fs->header, buffer, sizeof(FatHeader));
+    
+    /* Calculate LBA values */
+    fs->fat_start_lba = fs->header.reserved_sector_count;
+    fs->root_dir_lba = fs->fat_start_lba + (fs->header.num_fats * fs->header.fat_size_16);
+    fs->data_region_lba = fs->root_dir_lba + 
+                         (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
+    fs->root_dir_sectors = (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
+    
+}
+
 void test_vfs()
 {
     ATADevice *dev = ata_get(0);
@@ -346,20 +368,8 @@ void test_vfs()
 
     /* Read FAT16 Reader */
     Fat16 fs = {0};
-    fs.disk = dev;
-    char buffer[512] = {0};
-    if (atapio_read_sector(dev, 0, &buffer) != 0) {
-        kprintf("Error reading boot sector\n");
-        return;
-    }
-    memcpy(&fs.header, buffer, sizeof(FatHeader));
-    
-    /* Calculate root directory position */
-    fs.fat_start_lba = fs.header.reserved_sector_count;
-    fs.root_dir_lba = fs.fat_start_lba + (fs.header.num_fats * fs.header.fat_size_16);
-    fs.data_region_lba = fs.root_dir_lba + 
-                         (fs.header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs.header.bytes_per_sector - 1) / fs.header.bytes_per_sector;
-    fs.root_dir_sectors = (fs.header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs.header.bytes_per_sector - 1) / fs.header.bytes_per_sector;
+
+    fat16_mount(dev, &fs);
 
     kprintf("FAT16 Info: Root LBA=%u, FAT LBA=%u, DATA LBA=%u\n", fs.root_dir_lba, fs.fat_start_lba, fs.data_region_lba);
 
