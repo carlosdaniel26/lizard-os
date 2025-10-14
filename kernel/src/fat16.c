@@ -97,7 +97,7 @@ static int compare_filenames(const char *filename, const Fat16Directory *entry)
     char filename_copy[strlen(filename) + 1];
     strcpy(filename_copy, filename);
 
-    for(int i = 0; i < strlen(filename_copy); i++)
+    for(size_t i = 0; i < strlen(filename_copy); i++)
        filename_copy[i] = toupper(filename_copy[i]);
 
     char entry_name[13];
@@ -118,7 +118,6 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
     uint32_t bytes_read = 0;
     
     uint8_t sectors_per_cluster = fs->header.sectors_per_cluster;
-    uint32_t bytes_per_cluster = sectors_per_cluster * 512;
     
     uint32_t data_start_lba = fs->root_dir_lba + 
                              (fs->header.root_entry_count * 32 + 511) / 512;
@@ -446,7 +445,7 @@ int fat16_mount(ATADevice *disk, Fat16 *fs)
 
     fs->disk = disk;
     char buffer[512] = {0};
-    if (atapio_read_sector(disk, 0, &buffer) != 0) {
+    if (atapio_read_sector(disk, 0, buffer) != 0) {
         kprintf("Error reading boot sector\n");
         return -1;
     }
@@ -471,7 +470,7 @@ int fat16_detect(ATADevice *disk)
 
 	memset(&boot_sector, 0, 512);
 	
-	if (atapio_read_sector(disk, 0, &boot_sector) != 0)
+	if (atapio_read_sector(disk, 0, boot_sector) != 0)
 		return -1; /* Read error */
 
 	memcpy(&fs, &boot_sector, sizeof(Fat16));
@@ -482,7 +481,7 @@ int fat16_detect(ATADevice *disk)
 	return -1;
 }
 
-void test_vfs()
+void test_fat16()
 {
     ATADevice *dev = ata_get(0);
     

@@ -68,7 +68,7 @@ void kmain()
     ata_detect_devices();
     // start_interrupts();
 
-    test_vfs();
+    test_fat16();
 
     hlt();
 }

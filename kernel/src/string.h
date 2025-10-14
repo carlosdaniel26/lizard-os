@@ -18,7 +18,7 @@ unsigned get_unsigned2string_final_size(uint64_t value);
 unsigned get_u64tostring_final_size(uint64_t value);
 unsigned get_unsigned2hex_final_size(uint64_t value);
 void unsigned_to_hexstring(uint64_t value, char *str);
-char *strncpy(char *dest, const char *src, size_t n);
+char *strcpy(char *dest, const char *src);
 int sprintf(char *buffer, const char *format, ...);
 
 #endif
