@@ -20,6 +20,15 @@
  *
  *
  */
+
+ /* Attributes */
+#define FAT16_ATTR_READ_ONLY 0x01
+#define FAT16_ATTR_HIDDEN 0x02
+#define FAT16_ATTR_SYSTEM 0x04
+#define FAT16_ATTR_VOLUME_ID 0x08
+#define FAT16_ATTR_DIRECTORY 0x10
+#define FAT16_ATTR_ARCHIVE 0x20
+
 typedef struct FatHeader {
     uint8_t jump_boot[3];
     uint8_t oem_name[8];
@@ -71,5 +80,6 @@ typedef struct Fat16 {
     uint32_t total_clusters;
 } Fat16;
 
+int fat16_detect(ATADevice *disk);
 int fat16_mount(ATADevice *disk, Fat16 *fs);
 #endif

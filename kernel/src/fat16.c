@@ -5,22 +5,21 @@
 #include <string.h>
 #include <kmalloc.h>
 #include <stdbool.h>
+#include <i_node.h>
 
 /* ===== CONSTANTS ===== */
+
+/* FAT16 Boot Sector Signatures */
+
+#define FAT16_BOOT_SIGNATURE	0x29
+/* Sizes */
 #define FAT16_FAT_ENTRY_SIZE 2
 #define FAT16_DIR_ENTRY_SIZE 32
 #define FILE_NAME_SIZE 11
 
+/* Special directory entry values */
 #define FAT16_DIR_ENTRY_DELETED 0xE5
 #define FAT16_DIR_ENTRY_END 0x00
-
-/* Attributes */
-#define FAT16_ATTR_READ_ONLY 0x01
-#define FAT16_ATTR_HIDDEN 0x02
-#define FAT16_ATTR_SYSTEM 0x04
-#define FAT16_ATTR_VOLUME_ID 0x08
-#define FAT16_ATTR_DIRECTORY 0x10
-#define FAT16_ATTR_ARCHIVE 0x20
 
 /* Cluster values */
 #define FAT16_FREE_CLUSTER      0x0000
@@ -229,12 +228,99 @@ int find_in_dir(Fat16 *fs, uint16_t start_cluster, const char *filename, Fat16Di
     return -1; /* Not found */
 }
 
-int find_in_path(Fat16 *fs, const char *path, Fat16Directory *out)
+int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, size_t max_entries)
 {
-    Fat16Directory current_entry;
-    current_entry.first_cluster_low = 0; /* root dir */
+	Fat16Directory dir = {0};
 
-    /** Count slashes in path */
+	find_in_dir(fs, 0, path, &dir);
+
+	size_t entries = 0;
+
+	/* Is in Root*/
+	if (strcmp(path, "/") == 0)
+	{
+		char buffer[512];
+
+		uint32_t root_dir_entries = fs->header.root_entry_count;
+		uint32_t root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
+		uint32_t root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
+		
+
+		for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
+		{
+			if (atapio_read_sector(fs->disk, fs->root_dir_lba + sector, buffer) != 0)
+				return -1;
+
+			for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+			{
+				Fat16Directory entry;
+				memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
+				
+				if (! is_valid_entry(&entry))
+					continue;
+				
+				/* Yeah that one is good */
+				if (entries < max_entries)
+				{
+					memcpy(&out_entries[entries], &entry, sizeof(Fat16Directory));
+					entries++;
+				}
+				else
+				{
+					return entries; /* Max entries reached */
+				}
+			}
+		}
+	}
+	/* Not in root */
+	else
+	{
+		if (!(dir.attributes & FAT16_ATTR_DIRECTORY))
+			return -1; /* Not a directory */
+
+		uint16_t current_cluster = dir.first_cluster_low;
+		char buffer[512];
+
+		do {
+			uint32_t lba = cluster_to_lba(fs, current_cluster);
+
+			for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
+			{
+				if (atapio_read_sector(fs->disk, lba + sector, buffer) != 0)
+					return -1;
+
+				for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+				{
+					Fat16Directory entry;
+					memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
+					
+					if(!is_valid_entry(&entry))
+						continue;
+
+					/* Yeah that one is good */
+
+					if (entries < max_entries)
+					{
+						memcpy(&out_entries[entries], &entry, sizeof(Fat16Directory));
+						entries++;
+					}
+					else
+					{
+						return entries; /* Max entries reached */
+					}
+				}
+			}
+			
+			current_cluster = get_next_cluster(fs, current_cluster);
+		} while (current_cluster < FAT16_EOC);
+	}
+
+    return -1; /* Not found */
+}
+
+char** tokenize_path(const char *path, int *token_count)
+{
+    /* Count slashes in path */
     int count_slash = 0;
     for (const char* p = path; *p; p++) {
         if (*p == '/') count_slash++;
@@ -242,60 +328,79 @@ int find_in_path(Fat16 *fs, const char *path, Fat16Directory *out)
 
     int N = count_slash + 1;
     
-    /** Allocate token matrix: N tokens x 64 characters each */
+    /* Allocate token matrix: N tokens x 64 characters each */
     char **tokens = (char **)kmalloc(N * sizeof(char *));
-    if (!tokens) {
+    if (!tokens)
+	{
         kprintf("Error: Failed to allocate token array\n");
-        return -1;
+        return NULL;
     }
     
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++)
+	{
         tokens[i] = (char *)kmalloc(64 * sizeof(char));
         if (!tokens[i]) {
             kprintf("Error: Failed to allocate token %u\n", i);
-            /** Cleanup previously allocated tokens */
+            /* Cleanup previously allocated tokens */
             for (int j = 0; j < i; j++) {
                 kfree(tokens[j]);
             }
             kfree(tokens);
-            return -1;
+            return NULL;
         }
-        tokens[i][0] = '\0'; /** Initialize as empty string */
+        tokens[i][0] = '\0'; /* Initialize as empty string */
     }
 
-    /** Tokenize path */
+    /* Tokenize path */
     const char *p = path;
     int token_index = 0;
     int char_index = 0;
 
-    /** Skip leading slashes */
+    /* Skip leading slashes */
     while (*p == '/')
         p++;
 
-    while (*p && token_index < N) {
+    while (*p && token_index < N)
+	{
         char_index = 0;
 
-        /** Extract token until next slash or end of string */
-        while (*p && *p != '/' && char_index < 63) {
+        /* Extract token until next slash or end of string */
+        while (*p && *p != '/' && char_index < 63)
+		{
             tokens[token_index][char_index] = *p;
             char_index++;
             p++;
         }
 
-        /** Terminate token string */
+        /* Terminate token string */
         tokens[token_index][char_index] = '\0';
         token_index++;
 
-        /** Skip consecutive slashes */
+        /* Skip consecutive slashes */
         while (*p == '/')
             p++;
     }
 
-    /** Search for each token in filesystem */
+    *token_count = token_index;
+    return tokens;
+}
+
+int fat16_open(Fat16 *fs, const char *path, Fat16Directory *out)
+{
+    Fat16Directory current_entry;
+    current_entry.first_cluster_low = 0; /* root dir */
+
+    int token_count;
+    char **tokens = tokenize_path(path, &token_count);
+    if (! tokens)
+        return -1;
+
+    /* Search for each token in filesystem */
     int is_root = 1;
 
-    for (int i = 0; i < token_index; i++) {
-        /** Skip empty tokens */
+    for (int i = 0; i < token_count; i++)
+	{
+        /* Skip empty tokens */
         if (tokens[i][0] == '\0')
             continue;
 
@@ -306,17 +411,18 @@ int find_in_path(Fat16 *fs, const char *path, Fat16Directory *out)
 		{
             result = find_in_root(fs, tokens[i], &entry);
             is_root = 0;
-        } else 
-        {
+        }
+		else
+		{
             result = find_in_dir(fs, current_entry.first_cluster_low, tokens[i], &entry);
         }
 
-        if (result != 0) 
+        if (result != 0)
 		{
-            /** Cleanup tokens before returning */
-            for (int j = 0; j < N; j++) {
+            /* Cleanup tokens before returning */
+            for (int j = 0; j < token_count; j++)
                 kfree(tokens[j]);
-            }
+        
             kfree(tokens);
             return -1;
         }
@@ -324,10 +430,10 @@ int find_in_path(Fat16 *fs, const char *path, Fat16Directory *out)
         memcpy(&current_entry, &entry, sizeof(Fat16Directory));
     }
 
-    /** Cleanup tokens */
-    for (int i = 0; i < N; i++) {
+    /* Cleanup tokens */
+    for (int i = 0; i < token_count; i++)
         kfree(tokens[i]);
-    }
+
     kfree(tokens);
 
     memcpy(out, &current_entry, sizeof(Fat16Directory));
@@ -343,7 +449,7 @@ int fat16_mount(ATADevice *disk, Fat16 *fs)
     char buffer[512] = {0};
     if (atapio_read_sector(disk, 0, &buffer) != 0) {
         kprintf("Error reading boot sector\n");
-        return;
+        return -1;
     }
     memcpy(&fs->header, buffer, sizeof(FatHeader));
     
@@ -353,59 +459,98 @@ int fat16_mount(ATADevice *disk, Fat16 *fs)
     fs->data_region_lba = fs->root_dir_lba + 
                          (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
     fs->root_dir_sectors = (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
-    
+	return 0;
 }
 
-void test_vfs()
+int fat16_detect(ATADevice *disk)
 {
-    ATADevice *dev = ata_get(0);
-    
-    if (!dev || !dev->present)
-    {
-        kprintf("No ATA device found\n");
-        return;
-    }
+	if (!disk || !disk->present)
+		return -1;
 
-    /* Read FAT16 Reader */
-    Fat16 fs = {0};
+	char boot_sector[512];
+	FatHeader fs = {0};
 
-    fat16_mount(dev, &fs);
+	memset(&boot_sector, 0, 512);
+	
+	if (atapio_read_sector(disk, 0, &boot_sector) != 0)
+		return -1; /* Read error */
 
-    kprintf("FAT16 Info: Root LBA=%u, FAT LBA=%u, DATA LBA=%u\n", fs.root_dir_lba, fs.fat_start_lba, fs.data_region_lba);
+	memcpy(&fs, &boot_sector, sizeof(Fat16));
 
-    Fat16Directory entry;
+	if (fs.boot_signature == FAT16_BOOT_SIGNATURE)
+		return 1;
 
-    char file_name[64] = "/FOLDER/FILE.TXT";
-    
-    /* Test simple file first */
-    kprintf("\n=== Testing %s ===\n", file_name);
-    if(find_in_path(&fs, file_name, &entry) != 0)
-    {
-        kprintf("File %s not found\n", file_name);
-    }
-    else
-    {
-        kprintf("\n\n==========================");
-        kprintf("\nSUCCESS: FILE NAME: %s, SIZE: %u bytes, CLUSTER: %u\n", 
-                entry.name, entry.file_size_bytes, entry.first_cluster_low);
-        
-        char *file_content = (char*)kmalloc(entry.file_size_bytes + 1);
-        if (!file_content) {
-            kprintf("ERROR: Failed to allocate memory for file content\n");
-            return;
-        }
-        
-        if (fat16_read_file(&fs, &entry, file_content) == 0) 
-        {
-            file_content[entry.file_size_bytes] = '\0';
-            
-            kprintf("\n=== FILE CONTENT ===\n");
-            kprintf("%s\n", file_content);
-            kprintf("=== END OF FILE CONTENT ===\n");
-        } else {
-            kprintf("ERROR: Failed to read file content\n");
-        }
-        
-        kfree(file_content);
-    }
+	return -1;
 }
+
+// void test_vfs()
+// {
+//     ATADevice *dev = ata_get(0);
+    
+//     if (!dev || !dev->present)
+//     {
+//         kprintf("No ATA device found\n");
+//         return;
+//     }
+
+//     /* Read FAT16 Reader */
+//     Fat16 fs = {0};
+
+//     fat16_mount(dev, &fs);
+
+//     kprintf("FAT16 Info: Root LBA=%u, FAT LBA=%u, DATA LBA=%u\n", fs.root_dir_lba, fs.fat_start_lba, fs.data_region_lba);
+
+//     Fat16Directory entry;
+
+//     char file_name[64] = "/FOLDER/FILE.TXT";
+    
+//     /* Test simple file first */
+//     kprintf("\n=== Testing %s ===\n", file_name);
+//     if(fat16_open(&fs, file_name, &entry) != 0)
+//     {
+//         kprintf("File %s not found\n", file_name);
+//     }
+//     else
+//     {
+//         kprintf("\n\n==========================");
+//         kprintf("\nSUCCESS: FILE NAME: %s, SIZE: %u bytes, CLUSTER: %u\n", 
+//                 entry.name, entry.file_size_bytes, entry.first_cluster_low);
+        
+//         char *file_content = (char*)kmalloc(entry.file_size_bytes + 1);
+//         if (!file_content) {
+//             kprintf("ERROR: Failed to allocate memory for file content\n");
+//             return;
+//         }
+        
+//         if (fat16_read_file(&fs, &entry, file_content) == 0) 
+//         {
+//             file_content[entry.file_size_bytes] = '\0';
+            
+//             kprintf("\n=== FILE CONTENT ===\n");
+//             kprintf("%s\n", file_content);
+//             kprintf("=== END OF FILE CONTENT ===\n");
+//         } else {
+//             kprintf("ERROR: Failed to read file content\n");
+//         }
+        
+//         kfree(file_content);
+//     }
+
+// 	Fat16Directory dir_entries[32];
+// 	list_directory(&fs, "/", dir_entries, 32);
+
+// 	kprintf("\n=== ROOT DIRECTORY ENTRIES:\n");
+// 	for (size_t i = 0; i < 32; i++) 
+// 	{
+// 		if (dir_entries[i].name[0] == 0)
+// 			break; /* No more entries */
+
+// 		char entry_name[13];
+// 		convert_83_to_string(dir_entries[i].name, dir_entries[i].extension, entry_name);
+
+// 		kprintf("Entry: %s, Size: %u bytes, Attr: 0x%x\n", 
+// 				entry_name, dir_entries[i].file_size_bytes, dir_entries[i].attributes);
+// 	}
+	
+// 	kprintf("\n=== END OF ROOT DIRECTORY ENTRIES ===\n");
+// }
