@@ -482,74 +482,74 @@ int fat16_detect(ATADevice *disk)
 	return -1;
 }
 
-// void test_vfs()
-// {
-//     ATADevice *dev = ata_get(0);
+void test_vfs()
+{
+    ATADevice *dev = ata_get(0);
     
-//     if (!dev || !dev->present)
-//     {
-//         kprintf("No ATA device found\n");
-//         return;
-//     }
+    if (!dev || !dev->present)
+    {
+        kprintf("No ATA device found\n");
+        return;
+    }
 
-//     /* Read FAT16 Reader */
-//     Fat16 fs = {0};
+    /* Read FAT16 Reader */
+    Fat16 fs = {0};
 
-//     fat16_mount(dev, &fs);
+    fat16_mount(dev, &fs);
 
-//     kprintf("FAT16 Info: Root LBA=%u, FAT LBA=%u, DATA LBA=%u\n", fs.root_dir_lba, fs.fat_start_lba, fs.data_region_lba);
+    kprintf("FAT16 Info: Root LBA=%u, FAT LBA=%u, DATA LBA=%u\n", fs.root_dir_lba, fs.fat_start_lba, fs.data_region_lba);
 
-//     Fat16Directory entry;
+    Fat16Directory entry;
 
-//     char file_name[64] = "/FOLDER/FILE.TXT";
+    char file_name[64] = "/FOLDER/FILE.TXT";
     
-//     /* Test simple file first */
-//     kprintf("\n=== Testing %s ===\n", file_name);
-//     if(fat16_open(&fs, file_name, &entry) != 0)
-//     {
-//         kprintf("File %s not found\n", file_name);
-//     }
-//     else
-//     {
-//         kprintf("\n\n==========================");
-//         kprintf("\nSUCCESS: FILE NAME: %s, SIZE: %u bytes, CLUSTER: %u\n", 
-//                 entry.name, entry.file_size_bytes, entry.first_cluster_low);
+    /* Test simple file first */
+    kprintf("\n=== Testing %s ===\n", file_name);
+    if(fat16_open(&fs, file_name, &entry) != 0)
+    {
+        kprintf("File %s not found\n", file_name);
+    }
+    else
+    {
+        kprintf("\n\n==========================");
+        kprintf("\nSUCCESS: FILE NAME: %s, SIZE: %u bytes, CLUSTER: %u\n", 
+                entry.name, entry.file_size_bytes, entry.first_cluster_low);
         
-//         char *file_content = (char*)kmalloc(entry.file_size_bytes + 1);
-//         if (!file_content) {
-//             kprintf("ERROR: Failed to allocate memory for file content\n");
-//             return;
-//         }
+        char *file_content = (char*)kmalloc(entry.file_size_bytes + 1);
+        if (!file_content) {
+            kprintf("ERROR: Failed to allocate memory for file content\n");
+            return;
+        }
         
-//         if (fat16_read_file(&fs, &entry, file_content) == 0) 
-//         {
-//             file_content[entry.file_size_bytes] = '\0';
+        if (fat16_read_file(&fs, &entry, file_content) == 0) 
+        {
+            file_content[entry.file_size_bytes] = '\0';
             
-//             kprintf("\n=== FILE CONTENT ===\n");
-//             kprintf("%s\n", file_content);
-//             kprintf("=== END OF FILE CONTENT ===\n");
-//         } else {
-//             kprintf("ERROR: Failed to read file content\n");
-//         }
+            kprintf("\n=== FILE CONTENT ===\n");
+            kprintf("%s\n", file_content);
+            kprintf("=== END OF FILE CONTENT ===\n");
+        } else {
+            kprintf("ERROR: Failed to read file content\n");
+        }
         
-//         kfree(file_content);
-//     }
+        kfree(file_content);
+    }
 
-// 	Fat16Directory dir_entries[32];
-// 	list_directory(&fs, "/", dir_entries, 32);
+	Fat16Directory dir_entries[32];
+	list_directory(&fs, "/", dir_entries, 32);
 
-// 	kprintf("\n=== ROOT DIRECTORY ENTRIES:\n");
-// 	for (size_t i = 0; i < 32; i++) 
-// 	{
-// 		if (dir_entries[i].name[0] == 0)
-// 			break; /* No more entries */
+	kprintf("\n=== ROOT DIRECTORY ENTRIES:\n");
+	for (size_t i = 0; i < 32; i++) 
+	{
+		if (dir_entries[i].name[0] == 0)
+			break; /* No more entries */
 
-// 		char entry_name[13];
-// 		convert_83_to_string(dir_entries[i].name, dir_entries[i].extension, entry_name);
+		char entry_name[13];
+		convert_83_to_string(dir_entries[i].name, dir_entries[i].extension, entry_name);
 
-// 		kprintf("Entry: %s, Size: %u bytes, Attr: 0x%x\n", 
-// 				entry_name, dir_entries[i].file_size_bytes, dir_entries[i].attributes);
-// 	}
+		kprintf("Entry: %s, Size: %u bytes, Attr: 0x%x\n", 
+				entry_name, dir_entries[i].file_size_bytes, dir_entries[i].attributes);
+	}
 	
-// 	kprintf("\n=== END OF ROOT DIRECTORY ENTRIES ===\n");
-// }
+	kprintf("\n=== END OF ROOT DIRECTORY ENTRIES ===\n");
+}
