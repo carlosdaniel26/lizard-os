@@ -107,6 +107,119 @@ static int compare_filenames(const char *filename, const Fat16Directory *entry)
     return (strcmp(filename_copy, entry_name));
 }
 
+int fat16_detect(ATADevice *disk)
+{
+	if (!disk || !disk->present)
+		return -1;
+
+	char boot_sector[512];
+	FatHeader fs = {0};
+
+	memset(&boot_sector, 0, 512);
+	
+	if (atapio_read_sector(disk, 0, boot_sector) != 0)
+		return -1; /* Read error */
+
+	memcpy(&fs, &boot_sector, sizeof(Fat16));
+
+	if (fs.boot_signature == FAT16_BOOT_SIGNATURE)
+		return 1;
+
+	return -1;
+}
+
+static inline int find_in_root(Fat16 *fs, const char *filename, Fat16Directory *out)
+{
+	char buffer[512];
+
+	uint32_t root_dir_entries = fs->header.root_entry_count;
+	uint32_t root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
+	uint32_t root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
+	
+
+	for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
+	{
+		if (atapio_read_sector(fs->disk, fs->root_dir_lba + sector, buffer) != 0)
+			return -1;
+
+		for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+		{
+			Fat16Directory entry;
+			memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
+            
+			if (! is_valid_entry(&entry))
+				continue;
+
+			if (compare_filenames(filename, &entry) == 0)
+			{
+				memcpy(out, &entry, sizeof(Fat16Directory));
+				return 0; /* Found */
+			}
+		}
+	}
+
+	return -1; /* Not found */
+}
+
+static inline int find_in_dir(Fat16 *fs, uint16_t start_cluster, const char *filename, Fat16Directory *out)
+{
+    uint16_t current_cluster = start_cluster;
+    char buffer[512];
+    size_t total_entries_checked = 0;
+
+    do {
+        uint32_t lba = cluster_to_lba(fs, current_cluster);
+
+        for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
+        {
+            if (atapio_read_sector(fs->disk, lba + sector, buffer) != 0)
+                return -1;
+
+            for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+            {
+                Fat16Directory entry;
+                memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
+                
+                if(!is_valid_entry(&entry))
+                    continue;
+
+                total_entries_checked++;
+
+                if (compare_filenames(filename, &entry) == 0) {
+                    memcpy(out, &entry, sizeof(Fat16Directory));
+                    return 0; /* Found */
+                }
+            }
+        }
+        
+        current_cluster = get_next_cluster(fs, current_cluster);
+    } while (current_cluster < FAT16_EOC);
+
+    return -1; /* Not found */
+}
+
+int fat16_mount(ATADevice *disk, Fat16 *fs)
+{
+    if (!disk || !fs)
+        return -1;
+
+    fs->disk = disk;
+    char buffer[512] = {0};
+    if (atapio_read_sector(disk, 0, buffer) != 0) {
+        kprintf("Error reading boot sector\n");
+        return -1;
+    }
+    memcpy(&fs->header, buffer, sizeof(FatHeader));
+    
+    /* Calculate LBA values */
+    fs->fat_start_lba = fs->header.reserved_sector_count;
+    fs->root_dir_lba = fs->fat_start_lba + (fs->header.num_fats * fs->header.fat_size_16);
+    fs->data_region_lba = fs->root_dir_lba + 
+                         (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
+    fs->root_dir_sectors = (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
+	return 0;
+}
+
 int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
 {
     if (!fs || !entry || !buffer) {
@@ -154,76 +267,6 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
     }
     
     return 0;
-}
-
-int find_in_root(Fat16 *fs, const char *filename, Fat16Directory *out)
-{
-	char buffer[512];
-
-	uint32_t root_dir_entries = fs->header.root_entry_count;
-	uint32_t root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
-	uint32_t root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
-	
-
-	for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
-	{
-		if (atapio_read_sector(fs->disk, fs->root_dir_lba + sector, buffer) != 0)
-			return -1;
-
-		for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
-		{
-			Fat16Directory entry;
-			memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
-            
-			if (! is_valid_entry(&entry))
-				continue;
-
-			if (compare_filenames(filename, &entry) == 0)
-			{
-				memcpy(out, &entry, sizeof(Fat16Directory));
-				return 0; /* Found */
-			}
-		}
-	}
-
-	return -1; /* Not found */
-}
-
-int find_in_dir(Fat16 *fs, uint16_t start_cluster, const char *filename, Fat16Directory *out)
-{
-    uint16_t current_cluster = start_cluster;
-    char buffer[512];
-    size_t total_entries_checked = 0;
-
-    do {
-        uint32_t lba = cluster_to_lba(fs, current_cluster);
-
-        for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
-        {
-            if (atapio_read_sector(fs->disk, lba + sector, buffer) != 0)
-                return -1;
-
-            for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
-            {
-                Fat16Directory entry;
-                memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
-                
-                if(!is_valid_entry(&entry))
-                    continue;
-
-                total_entries_checked++;
-
-                if (compare_filenames(filename, &entry) == 0) {
-                    memcpy(out, &entry, sizeof(Fat16Directory));
-                    return 0; /* Found */
-                }
-            }
-        }
-        
-        current_cluster = get_next_cluster(fs, current_cluster);
-    } while (current_cluster < FAT16_EOC);
-
-    return -1; /* Not found */
 }
 
 int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, size_t max_entries)
@@ -436,49 +479,6 @@ int fat16_open(Fat16 *fs, const char *path, Fat16Directory *out)
 
     memcpy(out, &current_entry, sizeof(Fat16Directory));
     return 0;
-}
-
-int fat16_mount(ATADevice *disk, Fat16 *fs)
-{
-    if (!disk || !fs)
-        return -1;
-
-    fs->disk = disk;
-    char buffer[512] = {0};
-    if (atapio_read_sector(disk, 0, buffer) != 0) {
-        kprintf("Error reading boot sector\n");
-        return -1;
-    }
-    memcpy(&fs->header, buffer, sizeof(FatHeader));
-    
-    /* Calculate LBA values */
-    fs->fat_start_lba = fs->header.reserved_sector_count;
-    fs->root_dir_lba = fs->fat_start_lba + (fs->header.num_fats * fs->header.fat_size_16);
-    fs->data_region_lba = fs->root_dir_lba + 
-                         (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
-    fs->root_dir_sectors = (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
-	return 0;
-}
-
-int fat16_detect(ATADevice *disk)
-{
-	if (!disk || !disk->present)
-		return -1;
-
-	char boot_sector[512];
-	FatHeader fs = {0};
-
-	memset(&boot_sector, 0, 512);
-	
-	if (atapio_read_sector(disk, 0, boot_sector) != 0)
-		return -1; /* Read error */
-
-	memcpy(&fs, &boot_sector, sizeof(Fat16));
-
-	if (fs.boot_signature == FAT16_BOOT_SIGNATURE)
-		return 1;
-
-	return -1;
 }
 
 void test_fat16()
