@@ -117,6 +117,14 @@ void *kmalloc(size_t n_bytes)
     return NULL;
 }
 
+void *kcalloc(size_t n_bytes)
+{
+    void *ptr = kmalloc(n_bytes);
+    memset(ptr, 0, n_bytes);
+    
+    return ptr;
+}
+
 void *krealloc(void *ptr, size_t n_bytes)
 {
     if (!ptr)

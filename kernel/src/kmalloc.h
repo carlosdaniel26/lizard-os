@@ -13,6 +13,7 @@ typedef struct __attribute__((packed)) KMemoryHeader {
 } KMemoryHeader;
 
 void *kmalloc(size_t n_bytes);
+void *kcalloc(size_t n_bytes);
 void *krealloc(void *ptr, size_t n_bytes);
 void kfree(void *ptr);
 
