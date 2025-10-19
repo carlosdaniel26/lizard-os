@@ -116,7 +116,7 @@ void vmm_init()
 
     /* Map pmm bitmap */
     extern uint8_t *bitmap;
-    extern uint32_t total_blocks;
+    extern uint64_t total_blocks;
 
     vmm_maprange(kernel_pml4, (uint64_t)bitmap, (uint64_t)bitmap - hhdm_offset, total_blocks,
                  PAGE_PRESENT | PAGE_WRITABLE);

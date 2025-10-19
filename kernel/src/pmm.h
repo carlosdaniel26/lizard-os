@@ -14,12 +14,5 @@ uint64_t pmm_free_block_count();
 
 extern uint64_t hhdm_offset;
 extern uint64_t mem_ammount_b;
-extern uint64_t mem_ammount_b;
-extern uint64_t mem_usable_ammount_b;
-extern uint64_t mem_unusable_ammount_b;
-
-extern uint32_t total_blocks;
-extern uint32_t usable_blocks;
-extern uint32_t unusable_blocks;
 
 #endif
