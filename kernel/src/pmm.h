@@ -10,7 +10,7 @@ void pmm_init();
 void *pmm_alloc_block();
 void *pmm_alloc_block_row(uint64_t ammount);
 void pmm_free_block(void *ptr);
-block_id_t pmm_free_block_count();
+uint64_t pmm_free_block_count();
 
 extern uint64_t hhdm_offset;
 extern uint64_t mem_ammount_b;

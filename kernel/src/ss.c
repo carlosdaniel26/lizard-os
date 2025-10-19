@@ -94,8 +94,8 @@ void free()
 {
 #define BLOCK_SIZE_KB 4096
 
-    uint32_t free_blocks = 0;
-    uint32_t used_blocks = free_blocks - free_blocks;
+    uint32_t free_blocks = pmm_free_block_count();
+    uint32_t used_blocks = total_blocks - free_blocks;
 
     uint32_t free_kb = free_blocks * BLOCK_SIZE_KB;
     uint32_t used_kb = used_blocks * BLOCK_SIZE_KB;

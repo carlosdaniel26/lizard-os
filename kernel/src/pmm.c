@@ -157,6 +157,20 @@ void *pmm_alloc_block_row(uint64_t ammount)
     return NULL;
 }
 
+uint64_t pmm_free_block_count()
+{
+    uint64_t free = 0;
+
+    for (block_id_t i = 0; i < total_blocks; i++)
+    {
+        if (! pmm_test_block(i))
+        {
+            free++;
+        }
+    }
+    return free;
+}
+
 void pmm_test_all()
 {
     kprintf("PMM: Testing all blocks...\n");
