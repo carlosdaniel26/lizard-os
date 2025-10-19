@@ -27,6 +27,7 @@ static uint64_t *vmm_alloc_table()
 {
     void *page = pmm_alloc_block() + hhdm_offset;
     memset(page, 0, PAGE_SIZE);
+
     return (uint64_t *)page;
 }
 
@@ -72,7 +73,7 @@ void vmm_map(uint64_t *pml4, uint64_t virt, uint64_t phys, uint64_t flags)
     } else
     {
         pt = (uint64_t *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
-    }
+    }   
 
     pt[pt_i] = phys | flags;
     invlpg((void *)virt);
@@ -104,12 +105,13 @@ void vmm_init()
     /* Kernel */
     uint64_t vir = kernel_address_request.response->virtual_base;
     uint64_t phys = kernel_address_request.response->physical_base;
-    vmm_maprange(kernel_pml4, vir, phys, (uint64_t)(&kernel_end - &kernel_start),
+    uint64_t kernel_blocks = (uint64_t)(&kernel_end - &kernel_start);
+    vmm_maprange(kernel_pml4, vir, phys, kernel_blocks,
                  PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Framebuffer */
-    vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
-                 framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+    // vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
+    //              framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map Stack */
     vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1, PAGE_PRESENT | PAGE_WRITABLE);
@@ -118,8 +120,14 @@ void vmm_init()
     extern uint8_t *bitmap;
     extern uint32_t total_blocks;
 
-    vmm_maprange(kernel_pml4, (uint64_t)bitmap, (uint64_t)bitmap - hhdm_offset, total_blocks,
-                 PAGE_PRESENT | PAGE_WRITABLE);
+    uint64_t bitmap_size = (total_blocks + 7) / 8;
+    uint64_t bitmap_pages = (bitmap_size + PAGE_SIZE - 1) / PAGE_SIZE;
+    vmm_maprange(kernel_pml4, (uint64_t)bitmap, (uint64_t)bitmap - hhdm_offset, bitmap_pages,
+                PAGE_PRESENT | PAGE_WRITABLE);
+                
+    /* Map pml4 just to test */
+
+    //vmm_map(kernel_pml4, (uint64_t)kernel_pml4, (uint64_t)kernel_pml4 - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
 
     vmm_load_pml4();
 }

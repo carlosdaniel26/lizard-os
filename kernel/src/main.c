@@ -61,14 +61,15 @@ void kmain()
     PIC_remap();
     init_keyboard();
     shit_shell_init();
-    stop_interrupts();
     vmm_init();
     pit_init();
-    task_init();
+    //task_init();
     ata_detect_devices();
-    // start_interrupts();
+    
+    static uint64_t *kernel_pml4;
 
-    test_fat16();
+    //kprintf("test %u", kernel_pml4[0]);
+    //test_vfs();
 
     hlt();
 }
