@@ -42,11 +42,11 @@ void pit_init()
     outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
 
     isr_table[32] = &isr_pit;
-    pit_unmask();
+    //pit_unmask();
 }
 
 void isr_pit(CpuState *regs)
 {
-    scheduler(regs);
+    //scheduler(regs);
     PIC_sendEOI(32);
 }
