@@ -187,15 +187,14 @@ int vmm_free_page(uintptr_t ptr)
     if (!(pd[pd_i] & PAGE_PRESENT))
         return -1;
 
-    /* Extract physical address and clear entry (preserve other flags) */
-    uint64_t phys_addr = pt[pt_i] & ~0xFFFUL;
+    /* Clear entry (preserve other flags) */
     pt[pt_i] &= ~(PAGE_PRESENT | PAGE_WRITABLE);
     
     /* Invalidate TLB entry */
     invlpg((void *)ptr);
 
     /* Free the physical block */
-    pmm_free_block((void *)phys_addr);
+    pmm_free_block((void *)(ptr - hhdm_offset));
 
     return 0;
 }
