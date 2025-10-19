@@ -169,10 +169,9 @@ void *pmm_alloc_block_row(uint64_t ammount)
         {
             for (uint64_t j = 0; j < ammount; j++)
                 pmm_reserve_block(i + j);
+            
+            return (void *)(i * BLOCK_SIZE);
         }
-
-        return (void *)(i * BLOCK_SIZE);
-
     }
     return NULL;
 }

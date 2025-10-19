@@ -187,10 +187,14 @@ int vmm_free_page(uintptr_t ptr)
     if (!(pd[pd_i] & PAGE_PRESENT))
         return -1;
 
-    /* Not present anymore */
-    pt[pt_i] &= (~PAGE_PRESENT | ~PAGE_WRITABLE);
+    /* Clear entry (preserve other flags) */
+    pt[pt_i] &= ~(PAGE_PRESENT | PAGE_WRITABLE);
+    
+    /* Invalidate TLB entry */
+    invlpg((void *)ptr);
 
-    pmm_free_block((void *)ptr);
+    /* Free the physical block */
+    pmm_free_block((void *)(ptr - hhdm_offset));
 
     return 0;
 }
