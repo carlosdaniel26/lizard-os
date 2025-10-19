@@ -58,7 +58,7 @@ void pmm_init()
         struct limine_memmap_entry *e = memmap_request.response->entries[i];
         if (e->type == LIMINE_MEMMAP_USABLE && e->length >= (total_blocks / 8 + 1))
         {
-            bitmap = (uint8_t *)(e->base + hhdm_offset);
+            bitmap = (uint8_t *)ALIGN_UP(e->base + hhdm_offset, BLOCK_SIZE);
             memset(bitmap, 0xFF, total_blocks / 8 + 1);
             break;
         }
@@ -91,7 +91,7 @@ void pmm_init()
     uint64_t size = (total_blocks / 8) + 1;
     uintptr_t end = ALIGN_UP(phys_bitmap + size, BLOCK_SIZE);
 
-    for (uintptr_t addr = ALIGN_UP(phys_bitmap, BLOCK_SIZE); addr < end; addr += BLOCK_SIZE)
+    for (uintptr_t addr = align_down(phys_bitmap, BLOCK_SIZE); addr < end; addr += BLOCK_SIZE)
     {
         uint64_t bid = addr / BLOCK_SIZE;
         if (bid < total_blocks)
