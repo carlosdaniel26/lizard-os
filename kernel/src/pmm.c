@@ -79,7 +79,7 @@ void pmm_init()
             unusable_blocks += bitmap_blocks;
 
             mem_unusable_ammount_b += bitmap_size;
-            mem_usable_ammount_b += bitmap_size;
+            mem_usable_ammount_b -= bitmap_size;
 
             break;
         }
