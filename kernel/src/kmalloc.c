@@ -97,8 +97,8 @@ void *kmalloc(size_t n_bytes)
                 current->size = n_bytes;
             }
 
+            check_magic_number(current);
             current->is_free = false;
-            current->magic = KMALLOC_MAGIC;
             return (void *)(current + sizeof(KMemoryHeader));
         }
 
