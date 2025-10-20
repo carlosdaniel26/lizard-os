@@ -56,7 +56,7 @@ void pmm_init()
             */
 
             uint64_t start = align_up(e->base, 4096); /* - Align the start of each region up to the next 4 KB boundary. */
-            uint64_t end = align_down(e->base, 4096); /* - Align the end of each region down to the previous 4 KB boundary. */
+            uint64_t end = align_down(e->base + e->length, 4096); /* - Align the end of each region down to the previous 4 KB boundary. */
 
             if (end > start) /* Contains at least one complete block? */
                 total_blocks += (end - start) / 4096;
@@ -64,7 +64,7 @@ void pmm_init()
         }
     }
 
-    total_blocks = mem_ammount_b / BLOCK_SIZE;
+    mem_ammount_b = total_blocks * BLOCK_SIZE;
 
     /* Init memory as reserved */
     for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
