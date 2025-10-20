@@ -14,8 +14,10 @@ uint64_t pmm_free_block_count();
 
 extern uint64_t hhdm_offset;
 extern uint64_t mem_ammount_b;
+extern uint64_t usable_memory;
 
 extern uint8_t *bitmap;
 extern uint64_t total_blocks;
+extern uint64_t usable_blocks;
 
 #endif

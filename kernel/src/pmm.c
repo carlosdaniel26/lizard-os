@@ -21,8 +21,10 @@ __attribute__((
 
 
 uint64_t mem_ammount_b = 0;
+uint64_t usable_memory = 0;
 uint8_t *bitmap = NULL;
 uint64_t total_blocks = 0;
+uint64_t usable_blocks = 0;
 uint64_t hhdm_offset = 0;
 
 static inline void pmm_reserve_block(uint64_t i)
@@ -46,25 +48,10 @@ void pmm_init()
     for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
     {
         struct limine_memmap_entry *e = memmap_request.response->entries[i];
-        if (e->type == LIMINE_MEMMAP_USABLE)
-        {
-            /* 
-            * - *** Count only fully usable 4 KB blocks to avoid partially usable memory. *** - *
-            * 
-            * This ensures that each block in the physical memory manager bitmap
-            * corresponds to a REAL, fully USABLE 4 KB physical page.
-            */
-
-            uint64_t start = align_up(e->base, 4096); /* - Align the start of each region up to the next 4 KB boundary. */
-            uint64_t end = align_down(e->base + e->length, 4096); /* - Align the end of each region down to the previous 4 KB boundary. */
-
-            if (end > start) /* Contains at least one complete block? */
-                total_blocks += (end - start) / 4096;
-
-        }
+        mem_ammount_b += e->length;
     }
 
-    mem_ammount_b = total_blocks * BLOCK_SIZE;
+    total_blocks = mem_ammount_b / BLOCK_SIZE;
 
     /* Init memory as reserved */
     for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
@@ -89,7 +76,7 @@ void pmm_init()
             continue;
 
         uintptr_t start = ALIGN_UP((uintptr_t)e->base, BLOCK_SIZE);
-        uintptr_t end = (uintptr_t)(e->base + e->length);
+        uintptr_t end = align_down((uintptr_t)e->base + e->length, BLOCK_SIZE);
 
         for (uintptr_t addr = start; addr < end; addr += BLOCK_SIZE)
         {
@@ -97,7 +84,10 @@ void pmm_init()
             if (bid >= total_blocks)
                 continue;
             pmm_unreserve_block(bid);
+            usable_blocks++;
         }
+
+        usable_memory = usable_blocks * BLOCK_SIZE;
     }
 
     /* Protect Bitmap Area*/
