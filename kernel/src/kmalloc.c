@@ -157,4 +157,23 @@ void kfree(void *ptr)
         if (block == ptr_free)
             ptr_free = block->prev;
     }
+
+    /* Now, is that free memory area able to be really freed?*/
+
+    uintptr_t block_start = (uintptr_t)block;
+    uintptr_t block_end = block_start + sizeof(KMemoryHeader) + block->size;
+
+    /* Align */
+    block_start = align_up(block_start, BLOCK_SIZE);
+    block_end = align_down(block_end, BLOCK_SIZE);
+
+    /* Lets check */
+    if (block_end > block_start)
+    {
+        for (uintptr_t addr = block_start; addr < block_end; addr += BLOCK_SIZE)
+        {
+            uintptr_t phys = addr - hhdm_offset;
+            pmm_free_block((void*)phys);
+        }
+    }
 }
