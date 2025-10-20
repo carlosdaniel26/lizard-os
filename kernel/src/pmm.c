@@ -47,7 +47,21 @@ void pmm_init()
     {
         struct limine_memmap_entry *e = memmap_request.response->entries[i];
         if (e->type == LIMINE_MEMMAP_USABLE)
-            mem_ammount_b += e->length;
+        {
+            /* 
+            * - *** Count only fully usable 4 KB blocks to avoid partially usable memory. *** - *
+            * 
+            * This ensures that each block in the physical memory manager bitmap
+            * corresponds to a REAL, fully USABLE 4 KB physical page.
+            */
+
+            uint64_t start = align_up(e->base, 4096); /* - Align the start of each region up to the next 4 KB boundary. */
+            uint64_t end = align_down(e->base, 4096); /* - Align the end of each region down to the previous 4 KB boundary. */
+
+            if (end > start) /* Contains at least one complete block? */
+                total_blocks += (end - start) / 4096;
+
+        }
     }
 
     total_blocks = mem_ammount_b / BLOCK_SIZE;
