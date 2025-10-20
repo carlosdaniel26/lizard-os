@@ -12,21 +12,6 @@
 static KMemoryHeader *ptr_free = NULL;
 static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allocated*/
 
-static inline void kmalloc_init()
-{
-    void *heap_base = pmm_alloc_block_row(START_BLOCKS) + hhdm_offset;
-    if (!heap_base)
-        return;
-
-    ptr_free = (KMemoryHeader *)heap_base;
-    ptr_free->size = START_HEAP_SIZE - sizeof(KMemoryHeader);
-    ptr_free->next = NULL;
-    ptr_free->prev = NULL;
-    ptr_free->is_free = true;
-
-    ptr_heap_end = (KMemoryHeader *)((char *)heap_base + START_HEAP_SIZE - sizeof(KMemoryHeader));
-}
-
 static bool kmalloc_extend_heap(size_t size)
 {
     uint64_t blocks = (uint64_t)DIV_ROUND_UP(size, 4096);
@@ -62,7 +47,7 @@ static bool kmalloc_extend_heap(size_t size)
 void *kmalloc(size_t n_bytes)
 {
     if (!ptr_free)
-        kmalloc_init();
+        kmalloc_extend_heap(n_bytes);
 
     size_t total_needed = 0;
 
