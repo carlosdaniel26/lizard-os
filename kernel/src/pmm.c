@@ -180,6 +180,11 @@ uint64_t pmm_free_block_count()
     return free;
 }
 
+uint64_t pmm_used_block_count()
+{
+    return usable_blocks - pmm_free_block_count();
+}
+
 void pmm_test_all()
 {
     kprintf("PMM: Testing all blocks...\n");
