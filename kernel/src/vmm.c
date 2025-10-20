@@ -11,6 +11,28 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
     kernel_address_request
     = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
+/* 
+
+x86-64 VIRTUAL ADDRESS LAYOUT
+
+16 bits    9 bits    9 bits    9 bits    9 bits    12 bits
+┌─────────┬─────────┬─────────┬─────────┬─────────┬────────────┐
+│ SIGN    │ PML4    │ PDP     │ PD      │ PT      │ OFFSET     │
+│ EXTEND  │ INDEX   │ INDEX   │ INDEX   │ INDEX   │ (4K PAGE)  │
+├─────────┼─────────┼─────────┼─────────┼─────────┼────────────┤
+│ 0xFFFF  │ 0x1FF   │ 0x1FF   │ 0x1FF   │ 0x1FF   │ 0xFFF      │
+│ (SIGN)  │ (511)   │ (511)   │ (511)   │ (511)   │ (4095)     │
+└─────────┴─────────┴─────────┴─────────┴─────────┴────────────┘
+
+CANONICAL ADDRESS RANGES:
+┌──────────────────────────────────────────────────────────────┐
+│ 0x0000000000000000 - 0x00007FFFFFFFFFFF  │ User Space        │
+├──────────────────────────────────────────────────────────────┤
+│ 0xFFFF800000000000 - 0xFFFFFFFFFFFFFFFF  │ Kernel Space      │
+└──────────────────────────────────────────────────────────────┘
+
+*/
+
 extern uint64_t stack_start;
 
 extern uint32_t kernel_start;
