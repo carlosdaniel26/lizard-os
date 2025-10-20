@@ -90,21 +90,21 @@ static inline void lzfetch()
 
 void free()
 {
-#define BLOCK_SIZE_KB 4096
+    #define BLOCK_SIZE 4096
 
     uint32_t free_blocks = pmm_free_block_count();
     uint32_t used_blocks = total_blocks - free_blocks;
 
-    uint32_t free_kb = free_blocks * BLOCK_SIZE_KB;
-    uint32_t used_kb = used_blocks * BLOCK_SIZE_KB;
-    uint32_t total_kb = total_blocks * BLOCK_SIZE_KB;
+    uint32_t free_kb = (free_blocks * BLOCK_SIZE) / 1024;
+    uint32_t used_kb = (used_blocks * BLOCK_SIZE) / 1024;
+    uint32_t total_kb = (total_blocks * BLOCK_SIZE) / 1024;
 
     uint32_t free_mb = (free_kb + 512) / 1024;
     uint32_t used_mb = (used_kb + 512) / 1024;
     uint32_t total_mb = (total_kb + 512) / 1024;
 
-#define print_mem(value_kb, value_mb)                                                              \
-    ((value_mb > 0) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
+    #define print_mem(value_kb, value_mb)                                                              \
+        ((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
 
     kprintf("Memory Available: ");
     print_mem(free_kb, free_mb);
@@ -118,7 +118,7 @@ void free()
     print_mem(total_kb, total_mb);
     kprintf(" (%u blocos)\n", total_blocks);
 
-#undef print_mem
+    #undef print_mem
 }
 
 extern struct RTC_timer RTC_clock;
