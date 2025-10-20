@@ -145,6 +145,9 @@ void *krealloc(void *ptr, size_t n_bytes)
 
 void kfree(void *ptr)
 {
+    if (! ptr)
+        return;
+
     KMemoryHeader *block = (KMemoryHeader *)((char *)ptr - sizeof(KMemoryHeader));
     check_magic_number(block);
     block->is_free = true;
