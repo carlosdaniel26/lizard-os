@@ -12,6 +12,12 @@
 static KMemoryHeader *ptr_free = NULL;
 static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allocated*/
 
+static inline void check_magic_number(KMemoryHeader *header)
+{
+    if (header->magic != KMALLOC_MAGIC)
+        kpanic("MAGIC NUMBER CORRUPTED!!!");
+}
+
 static bool kmalloc_extend_heap(size_t size)
 {
     uint64_t blocks = (uint64_t)DIV_ROUND_UP(size, 4096);
@@ -25,6 +31,7 @@ static bool kmalloc_extend_heap(size_t size)
     new_block->is_free = true;
     new_block->next = NULL;
     new_block->prev = NULL;
+    new_block->magic = KMALLOC_MAGIC;
 
     /* Insert new block at the end of free list */
     KMemoryHeader *last = ptr_free;
@@ -57,6 +64,8 @@ void *kmalloc(size_t n_bytes)
 
         while (current)
         {
+
+            check_magic_number(current);
             if (!current->is_free || current->size < n_bytes)
             {
                 current = current->next;
@@ -79,6 +88,7 @@ void *kmalloc(size_t n_bytes)
                 new_block->is_free = true;
                 new_block->next = current->next;
                 new_block->prev = current;
+                new_block->magic = KMALLOC_MAGIC;
 
                 if (new_block->next)
                     new_block->next->prev = new_block;
@@ -88,6 +98,7 @@ void *kmalloc(size_t n_bytes)
             }
 
             current->is_free = false;
+            current->magic = KMALLOC_MAGIC;
             return (void *)(current + sizeof(KMemoryHeader));
         }
 
@@ -95,6 +106,7 @@ void *kmalloc(size_t n_bytes)
         if (!kmalloc_extend_heap(total_needed))
         {
             /* Out of memory: can't extend heap further*/
+            kpanic("NO MEMORY ON HEEP");
             break;
         }
     }
@@ -112,6 +124,7 @@ void *kcalloc(size_t n_bytes)
 
 void *krealloc(void *ptr, size_t n_bytes)
 {
+    /* TODO: THIS CORRUPTS THE CHAIN OF FREE BLOCKS, SOLVE IT LATER*/
     if (!ptr)
         return kmalloc(n_bytes);
 
@@ -133,12 +146,13 @@ void *krealloc(void *ptr, size_t n_bytes)
 void kfree(void *ptr)
 {
     KMemoryHeader *block = (KMemoryHeader *)((char *)ptr - sizeof(KMemoryHeader));
-
+    check_magic_number(block);
     block->is_free = true;
 
     /* Merge with next if free*/
     if (block->next != NULL && block->next->is_free)
     {
+        check_magic_number(block->next);
         block->size += block->next->size + sizeof(KMemoryHeader);
         block->next = block->next->next;
 
@@ -149,6 +163,7 @@ void kfree(void *ptr)
     /* Merge with previous if free */
     if (block->prev != NULL && block->prev->is_free)
     {
+        check_magic_number(block->prev);
         block->prev->size += block->size + sizeof(KMemoryHeader);
         block->prev->next = block->next;
         if (block->next)
