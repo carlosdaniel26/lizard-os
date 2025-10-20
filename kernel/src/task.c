@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <task.h>
-#include <vmm.h>
+#include <pmm.h>
 
 Task *current_task;
 Task proc1;
@@ -26,7 +26,7 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
     task->priority = priority;
     task->regs.rip = (uint64_t)entry_point;
 
-    uint64_t ptr = (uint64_t)vmm_alloc_page();
+    uint64_t ptr = (uint64_t)pmm_alloc_block();
     memset((void *)ptr, 0, 4096);
 
     task->regs.rsp = ptr + 4096;

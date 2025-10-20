@@ -143,18 +143,19 @@ void vmm_init()
 
     vmm_maprange(kernel_pml4, (uint64_t)bitmap, (uint64_t)bitmap - hhdm_offset, size_pages,
                  PAGE_PRESENT | PAGE_WRITABLE);
+
     vmm_load_pml4();
 }
 
-void *vmm_alloc_page()
+void *vmm_alloc_page(void *pml4)
 {
     uintptr_t ptr = (uintptr_t)pmm_alloc_block();
-    vmm_map(kernel_pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_map(pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
 
     return (void *)ptr + hhdm_offset;
 }
 
-void *vmm_alloc_block_row(uint64_t ammount)
+void *vmm_alloc_block_row(void *pml4, uint64_t ammount)
 {
     if (ammount == 0)
         return NULL;
@@ -163,14 +164,14 @@ void *vmm_alloc_block_row(uint64_t ammount)
 
     for (uint64_t i = 0; i < ammount; i++)
     {
-        vmm_map(kernel_pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE),
+        vmm_map(pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE),
                 PAGE_PRESENT | PAGE_WRITABLE);
     }
 
     return (void *)ptr + hhdm_offset;
 }
 
-int vmm_free_page(uintptr_t ptr)
+int vmm_free_page(uint64_t *pml4, uintptr_t ptr)
 {
     ptr = (uintptr_t)align_ptr_down(ptr, PAGE_SIZE);
 
@@ -183,14 +184,14 @@ int vmm_free_page(uintptr_t ptr)
     uint64_t *pdpt, *pd, *pt;
 
     /* Get the table */
-    pdpt = (uint64_t *)((kernel_pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+    pdpt = (uint64_t *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
 
     pd = (uint64_t *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
 
     pt = (uint64_t *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
 
     /* PDPT */
-    if (!(kernel_pml4[pml4_i] & PAGE_PRESENT))
+    if (!(pml4[pml4_i] & PAGE_PRESENT))
         return -1;
 
     /* PD */

@@ -8,8 +8,8 @@
 #define PAGE_SIZE 4096
 
 void vmm_init();
-void *vmm_alloc_page();
-void *vmm_alloc_block_row(uint64_t ammount);
-int vmm_free_page(uintptr_t ptr);
+void *vmm_alloc_page(void *pml4);
+void *vmm_alloc_block_row(void *pml4, uint64_t ammount);
+int vmm_free_page(uint64_t *pml4, uintptr_t ptr);
 
 #endif

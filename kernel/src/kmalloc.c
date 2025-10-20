@@ -1,7 +1,7 @@
 #include <helpers.h>
 #include <string.h>
 #include <kmalloc.h>
-#include <vmm.h>
+#include <pmm.h>
 
 #define BLOCK_SIZE 4096
 #define START_BLOCKS 10
@@ -14,7 +14,7 @@ static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allo
 
 static inline void kmalloc_init()
 {
-    void *heap_base = vmm_alloc_block_row(START_BLOCKS);
+    void *heap_base = pmm_alloc_block_row(START_BLOCKS);
     if (!heap_base)
         return;
 
@@ -31,7 +31,7 @@ static bool kmalloc_extend_heap(size_t size)
 {
     uint64_t blocks = (uint64_t)DIV_ROUND_UP(size, 4096);
 
-    void *new_block_addr = vmm_alloc_block_row(blocks);
+    void *new_block_addr = pmm_alloc_block_row(blocks);
     if (!new_block_addr)
         return false;
 
