@@ -48,7 +48,7 @@ static uint8_t days_in_month(uint8_t month, uint8_t year)
 
 void save_boot_time()
 {
-    get_rtc_time();
+    rtc_refresh_time();
     boot_time = RTC_clock;
 }
 
@@ -56,7 +56,7 @@ struct Uptime calculate_uptime()
 {
     struct Uptime up = {0};
 
-    get_rtc_time();
+    rtc_refresh_time();
 
     int sec = RTC_clock.seconds - boot_time.seconds;
     int min = RTC_clock.minutes - boot_time.minutes;

@@ -140,7 +140,7 @@ static inline void utc_to_local()
     }
 }
 
-void get_rtc_time()
+void rtc_refresh_time()
 {
     uint8_t *RTC_array = (uint8_t *)&RTC_clock;
 
