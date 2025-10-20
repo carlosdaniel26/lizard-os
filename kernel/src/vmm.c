@@ -137,8 +137,6 @@ void vmm_init()
     vmm_maprange(kernel_pml4, stack_start, stack_start - hhdm_offset, 1, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* Map pmm bitmap */
-    extern uint8_t *bitmap;
-    extern uint64_t total_blocks;
 
     uint64_t size_bytes = (total_blocks / 8) + 1;
     uint64_t size_pages = align_up(size_bytes, PAGE_SIZE) / PAGE_SIZE;
