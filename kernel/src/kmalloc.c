@@ -14,7 +14,7 @@ static KMemoryHeader *ptr_heap_end = NULL; /* points to the last heap block allo
 
 static inline void kmalloc_init()
 {
-    void *heap_base = pmm_alloc_block_row(START_BLOCKS);
+    void *heap_base = pmm_alloc_block_row(START_BLOCKS) + hhdm_offset;
     if (!heap_base)
         return;
 
@@ -31,7 +31,7 @@ static bool kmalloc_extend_heap(size_t size)
 {
     uint64_t blocks = (uint64_t)DIV_ROUND_UP(size, 4096);
 
-    void *new_block_addr = pmm_alloc_block_row(blocks);
+    void *new_block_addr = pmm_alloc_block_row(blocks) + hhdm_offset;
     if (!new_block_addr)
         return false;
 

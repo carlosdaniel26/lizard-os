@@ -26,7 +26,7 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
     task->priority = priority;
     task->regs.rip = (uint64_t)entry_point;
 
-    uint64_t ptr = (uint64_t)pmm_alloc_block();
+    uint64_t ptr = (uint64_t)pmm_alloc_block() + hhdm_offset;
     memset((void *)ptr, 0, 4096);
 
     task->regs.rsp = ptr + 4096;
