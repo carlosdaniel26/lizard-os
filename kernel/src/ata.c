@@ -151,9 +151,9 @@ void ata_detect_devices()
 /* Block Device */
 int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
-    uint64_t end_sector = sector + count;
-
     ATADevice *ata_dev = (ATADevice*)dev->private_data;
+
+    uint64_t end_sector = sector + count;
 
     uint16_t ata = ata_dev->io_base;
 
@@ -191,9 +191,9 @@ int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 
 int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
-    uint64_t end_sector = sector + count;
-
     ATADevice *ata_dev = (ATADevice*)dev->private_data;
+
+    uint64_t end_sector = sector + count;
 
     uint16_t ata = ata_dev->io_base;
 
