@@ -12,9 +12,9 @@ uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
 
-int block_read(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count);
-int block_write(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count);
-int block_flush(BlockDevice *block_dev);
+int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
+int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
+int block_flush(BlockDevice *dev);
 
 BlockDeviceOps ata_block_ops = {
     .read = block_read,
@@ -133,27 +133,27 @@ void ata_detect_devices()
         }
         ata_dev->model[40] = '\0';
         
-        BlockDevice *block_dev = kcalloc(sizeof(BlockDevice));
-        strcpy(block_dev->name, ata_dev->model);
-        block_dev->id = i;
-        block_dev->total_sectors = ata_dev->total_sectors;
-        block_dev->sector_size = ata_dev->sector_size;
-        block_dev->ops = &ata_block_ops;
-        block_dev->private_data = (void*)ata_dev;
-        block_dev->initialized = true;
-        block_dev->read_only = false;
-        block_dev->present = true;
+        BlockDevice *dev = kcalloc(sizeof(BlockDevice));
+        strcpy(dev->name, ata_dev->model);
+        dev->id = i;
+        dev->total_sectors = ata_dev->total_sectors;
+        dev->sector_size = ata_dev->sector_size;
+        dev->ops = &ata_block_ops;
+        dev->private_data = (void*)ata_dev;
+        dev->initialized = true;
+        dev->read_only = false;
+        dev->present = true;
 
-        block_device_register(block_dev);
+        block_device_register(dev);
     }
 }
 
 /* Block Device */
-int block_read(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count)
+int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
     uint64_t end_sector = sector + count;
 
-    ATADevice *ata_dev = (ATADevice*)block_dev->private_data;
+    ATADevice *ata_dev = (ATADevice*)dev->private_data;
 
     uint16_t ata = ata_dev->io_base;
 
@@ -189,11 +189,11 @@ int block_read(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t cou
     return 0;
 }
 
-int block_write(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count)
+int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
     uint64_t end_sector = sector + count;
 
-    ATADevice *ata_dev = (ATADevice*)block_dev->private_data;
+    ATADevice *ata_dev = (ATADevice*)dev->private_data;
 
     uint16_t ata = ata_dev->io_base;
 
@@ -229,9 +229,9 @@ int block_write(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t co
     return 0;
 }
 
-int block_flush(BlockDevice *block_dev)
+int block_flush(BlockDevice *dev)
 {
-    (void)block_dev;
+    (void)dev;
     return 0;
 }
 

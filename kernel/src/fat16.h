@@ -70,7 +70,7 @@ typedef struct Fat16Directory {
 
 typedef struct Fat16 {
     FatHeader header;
-    BlockDevice *device;
+    BlockDevice *dev;
 
     uint32_t fat_start_lba;
     uint32_t root_dir_lba;
