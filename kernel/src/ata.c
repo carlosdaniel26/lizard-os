@@ -12,6 +12,10 @@ uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
 
+int block_read(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count);
+int block_write(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count);
+int block_flush(BlockDevice *block_dev);
+
 BlockDeviceOps ata_block_ops = {
     .read = block_read,
     .write = block_write,
@@ -103,7 +107,7 @@ void ata_detect_devices()
 
         if (identify_data[83] & (1 << 10)) 
 		{
-            ata_dev->total_sectors = *(uint32_t*)&identify_data[60];
+            ata_dev->total_sectors = (uint16_t)identify_data[60];
         } 
 		else 
 		{
@@ -111,6 +115,16 @@ void ata_detect_devices()
         }
         
         ata_dev->total_bytes = (uint64_t)ata_dev->total_sectors * 512;
+
+        /* Get Sector Size */
+        if (identify_data[106] & (1 << 14))
+        {
+            ata_dev->sector_size = *(uint16_t*)&identify_data[117];
+        }
+        else
+        {
+            ata_dev->sector_size = ATA_DEFAULT_SECTOR_SIZE;
+        }
 
         for (int i = 0; i < 20; i++) 
 		{
@@ -123,9 +137,9 @@ void ata_detect_devices()
         strcpy(block_dev->name, ata_dev->model);
         block_dev->id = i;
         block_dev->total_sectors = ata_dev->total_sectors;
-        block_dev->sector_size = SECTOR_SIZE;
+        block_dev->sector_size = ata_dev->sector_size;
         block_dev->ops = &ata_block_ops;
-        block_dev->private_data = (uintptr_t)ata_dev;
+        block_dev->private_data = (void*)ata_dev;
         block_dev->initialized = true;
         block_dev->read_only = false;
         block_dev->present = true;
@@ -137,69 +151,80 @@ void ata_detect_devices()
 /* Block Device */
 int block_read(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count)
 {
+    uint64_t end_sector = sector + count;
+
     ATADevice *ata_dev = (ATADevice*)block_dev->private_data;
 
     uint16_t ata = ata_dev->io_base;
 
-    uint8_t lba_high = (sector >> 24) & 0x0F; /* First 4 bits */
+    for (uint64_t s = sector; s < end_sector; s++, buffer += ata_dev->sector_size)
+    {
+        uint8_t lba_high = (sector >> 24) & 0x0F; /* First 4 bits */
 
-    /* Select the drive and set the LBA mode*/
-    outb(ata + ATA_REG_DRIVE, 0xE0 | lba_high);
+        /* Select the drive and set the LBA mode*/
+        outb(ata + ATA_REG_DRIVE, 0xE0 | lba_high);
 
-    /* Set the sector count (1 sector)*/
-    outb(ata + ATA_REG_SECCOUNT0, 1);
+        /* Set the sector count (1 sector)*/
+        outb(ata + ATA_REG_SECCOUNT0, 1);
 
-    /* Send the LBA address (24 bits)*/
-    outb(ata + ATA_REG_LBA0, sector & 0xFF);
-    outb(ata + ATA_REG_LBA1, (sector >> 8) & 0xFF);
-    outb(ata + ATA_REG_LBA2, (sector >> 16) & 0xFF);
+        /* Send the LBA address (24 bits)*/
+        outb(ata + ATA_REG_LBA0, sector & 0xFF);
+        outb(ata + ATA_REG_LBA1, (sector >> 8) & 0xFF);
+        outb(ata + ATA_REG_LBA2, (sector >> 16) & 0xFF);
 
-    /* Send the WRITE SECTOR command*/
-    outb(ata + ATA_REG_COMMAND, ATA_CMD_READ_SECT);
+        /* Send the WRITE SECTOR command*/
+        outb(ata + ATA_REG_COMMAND, ATA_CMD_READ_SECT);
 
-    if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
-        return -1;
+        if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
+            return -1;
 
-    if (ata_wait(ata, ATA_SR_DRQ, 1) != 0)
-        return -1;
+        if (ata_wait(ata, ATA_SR_DRQ, 1) != 0)
+            return -1;
 
-    /* Read 512 bytes as a word(u16) */
-    for (int i = 0; i < 256; ++i)
-        ((uint16_t *)buffer)[i] = inw(ata + ATA_REG_DATA);
+        /* Read 512 bytes as a word(u16) */
+        for (int i = 0; i < 256; ++i)
+            ((uint16_t *)buffer)[i] = inw(ata + ATA_REG_DATA);
+    }
 
     return 0;
 }
 
-int block_write(BlockDevice *block_dev, uint64_t sector, const void *buffer, size_t count)
+int block_write(BlockDevice *block_dev, uint64_t sector, void *buffer, size_t count)
 {
-    ATADevice *dev = (ATADevice*)block_dev->private_data;
-    uint16_t ata = dev->io_base;
-    uint8_t lba_mode = ((sector >> 24) & 0x0F); /* First 4 bits */
+    uint64_t end_sector = sector + count;
 
-    /* Select the drive and set the LBA mode*/
-    outb(ata + ATA_REG_DRIVE, 0xA0 | lba_mode);
+    ATADevice *ata_dev = (ATADevice*)block_dev->private_data;
 
-    /* Set the sector count (1 sector)*/
-    outb(ata + ATA_REG_SECCOUNT0, 1);
+    uint16_t ata = ata_dev->io_base;
 
-    /* Send the LBA address (24 bits)*/
-    outb(ata + ATA_REG_LBA0, sector & 0xFF);
-    outb(ata + ATA_REG_LBA1, (sector >> 8) & 0xFF);
-    outb(ata + ATA_REG_LBA2, (sector >> 16) & 0xFF);
+    for (uint64_t s = sector; s < end_sector; s++, buffer += ata_dev->sector_size)
+    {
+        uint8_t lba_high = (sector >> 24) & 0x0F; /* First 4 bits */
 
-    /* Send the WRITE SECTOR command*/
-    outb(ata + ATA_REG_COMMAND, ATA_CMD_WRITE_SECT);
+        /* Select the drive and set the LBA mode*/
+        outb(ata + ATA_REG_DRIVE, 0xE0 | lba_high);
 
-    if (ata_wait(ata, ATA_SR_DRQ, 1) != 0)
-        return -1;
+        /* Set the sector count (1 sector)*/
+        outb(ata + ATA_REG_SECCOUNT0, 1);
 
-    /* Write 512 bytes as a word(u16) */
-    for (int i = 0; i < 256; ++i)
-        outw(ata + ATA_REG_DATA, ((const uint16_t *)buffer)[i]);
+        /* Send the LBA address (24 bits)*/
+        outb(ata + ATA_REG_LBA0, sector & 0xFF);
+        outb(ata + ATA_REG_LBA1, (sector >> 8) & 0xFF);
+        outb(ata + ATA_REG_LBA2, (sector >> 16) & 0xFF);
 
-    /* Wait for the BSY bit to clear (operation complete)*/
-    if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
-        return -1;
+        /* Send the READ SECTOR command*/
+        outb(ata + ATA_REG_COMMAND, ATA_CMD_WRITE_SECT);
+
+        if (ata_wait(ata, ATA_SR_BSY, 0) != 0)
+            return -1;
+
+        if (ata_wait(ata, ATA_SR_DRQ, 1) != 0)
+            return -1;
+
+        /* Write 512 bytes as a word(u16) */
+        for (int i = 0; i < 256; ++i)
+            outw(ata + ATA_REG_DATA, ((uint16_t *)buffer)[i]);
+    }
 
     return 0;
 }

@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define SECTOR_SIZE 512
 #define MAX_BLOCK_DEVICES 16
 
 typedef struct BlockDeviceOps {
@@ -46,14 +45,8 @@ int block_device_register(BlockDevice *dev);
 int block_device_unregister(BlockDevice *dev);
 BlockDevice *block_device_find(const char *name);
 
-/* Basic I/O operations */
-int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
-int block_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count);
-int block_flush(BlockDevice *dev);
-
 /* Utility functions */
 uint64_t block_device_size(BlockDevice *dev);  /* in bytes */
-int block_device_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
 bool block_device_ready(BlockDevice *dev);
 
 #endif

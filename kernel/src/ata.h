@@ -46,6 +46,8 @@
 /* General Values */
 #define MODEL_NAME_SIZE 41
 
+#define ATA_DEFAULT_SECTOR_SIZE 512
+
 typedef struct ATADevice {
     uint8_t id;
     uint16_t io_base;
@@ -56,16 +58,14 @@ typedef struct ATADevice {
     uint16_t cylinders;
     uint16_t heads;
     uint16_t sectors;
+    uint16_t sector_size;
 
     uint32_t total_sectors;
     uint64_t total_bytes;
 } ATADevice;
 
 void ata_detect_devices();
-int atapio_write_sector(ATADevice *dev, uint32_t lba, const char *buffer);
-int atapio_read_sector(ATADevice *dev, uint32_t lba, const char *buffer);
 
-ATADevice *ata_get(uint8_t drive_id);
 void isr_ata_primary();
 void isr_ata_secondary();
 
