@@ -12,9 +12,9 @@ uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
 
-int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
-int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
-int block_flush(BlockDevice *dev);
+static int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
+static int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
+static int block_flush(BlockDevice *dev);
 
 BlockDeviceOps ata_block_ops = {
 	.read = block_read,
@@ -149,7 +149,7 @@ void ata_detect_devices()
 }
 
 /* Block Device */
-int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
+static int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
 	ATADevice *ata_dev = (ATADevice*)dev->private_data;
 
@@ -189,7 +189,7 @@ int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 	return 0;
 }
 
-int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
+static int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
 	ATADevice *ata_dev = (ATADevice*)dev->private_data;
 
@@ -229,7 +229,7 @@ int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 	return 0;
 }
 
-int block_flush(BlockDevice *dev)
+static int block_flush(BlockDevice *dev)
 {
 	(void)dev;
 	return 0;
