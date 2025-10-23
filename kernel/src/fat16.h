@@ -83,5 +83,6 @@ typedef struct Fat16 {
 int fat16_detect(ATADevice *disk);
 int fat16_mount(ATADevice *disk, Fat16 *fs);
 void test_fat16();
+void fat16_init();
 
 #endif

@@ -5,6 +5,8 @@
 #include <string.h>
 #include <kmalloc.h>
 #include <stdbool.h>
+#include <vfs.h>
+#include <vfs_conf.h>
 
 /* ===== CONSTANTS ===== */
 
@@ -27,6 +29,9 @@
 #define FAT16_EOC         		0xFFF8
 
 #define DIV_ROUND_UP(x, y) (((x) + (y)-1) / (y))
+
+static const char name[] = "fat16";
+VfsConf vfs_conf = {0};
 
 /* ===== INTERNAL HELPERS ===== */
 
@@ -551,4 +556,29 @@ void test_fat16()
 	}
 	
 	kprintf("\n=== END OF ROOT DIRECTORY ENTRIES ===\n");
+}
+
+/* Vfs Interface*/
+
+static int vfs_mount(Vfs *vfs, const char *path, uintptr_t fs_data)
+{
+    (void)fs_data;
+    (void)path;
+
+    vfs->next = NULL;
+    vfs->vnode_covered = NULL;
+    vfs->flags = 0x00;
+    vfs->block_size = 512;
+    vfs->data = (uintptr_t)kcalloc(sizeof(Fat16));
+}
+
+
+void fat16_init()
+{
+    vfs_conf.name = &name;
+    vfs_register(&vfs_conf); /* Config typenum, next */
+    vfs_conf.flags = 0x00;
+
+    /* Operations */
+    vfs_conf.ops.vfs_mount = &vfs_mount;
 }
