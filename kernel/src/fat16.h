@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <ata.h>
+#include <block_dev.h>
 
 /* Map: [Reserved sector][FATs][Root directory][Data region] */
 
@@ -70,7 +70,7 @@ typedef struct Fat16Directory {
 
 typedef struct Fat16 {
     FatHeader header;
-    ATADevice *disk;
+    BlockDevice *device;
 
     uint32_t fat_start_lba;
     uint32_t root_dir_lba;
@@ -80,8 +80,8 @@ typedef struct Fat16 {
     uint32_t total_clusters;
 } Fat16;
 
-int fat16_detect(ATADevice *disk);
-int fat16_mount(ATADevice *disk, Fat16 *fs);
+int fat16_detect(BlockDevice *dev);
+int fat16_mount(BlockDevice *dev, Fat16 *fs);
 void test_fat16();
 void fat16_init();
 

@@ -44,3 +44,23 @@ int block_device_register(BlockDevice *dev)
     
     return 0;
 }
+
+int block_device_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
+{
+    if (!dev || !dev->ops || !dev->ops->read) {
+        kprintf("block_device_read: invalid device or read operation\n");
+        return -1;
+    }
+    
+    return dev->ops->read(dev, sector, buffer, count);
+}
+
+int block_device_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count)
+{
+    if (!dev || !dev->ops || !dev->ops->write) {
+        kprintf("block_device_write: invalid device or write operation\n");
+        return -1;
+    }
+    
+    return dev->ops->write(dev, sector, buffer, count);
+}

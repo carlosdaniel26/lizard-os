@@ -128,6 +128,7 @@ void ata_detect_devices()
         block_dev->private_data = (uintptr_t)ata_dev;
         block_dev->initialized = true;
         block_dev->read_only = false;
+        block_dev->present = true;
 
         block_device_register(block_dev);
     }

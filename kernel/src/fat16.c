@@ -7,6 +7,9 @@
 #include <stdbool.h>
 #include <vfs.h>
 #include <vfs_conf.h>
+#include <block_dev.h>
+
+extern BlockDevice *block_devices[];
 
 /* ===== CONSTANTS ===== */
 
@@ -59,7 +62,7 @@ static int read_fat_entry(Fat16 *fs, uint16_t cluster, uint16_t *next)
     uint32_t entry_offset = fat_offset % fs->header.bytes_per_sector;
 
     char sector[512];
-    if (atapio_read_sector(fs->disk, fat_sector, sector) != 0)
+    if (block_device_read(fs->device, fat_sector, sector, 1) != 0)
         return -1;
 
     memcpy(next, sector + entry_offset, sizeof(uint16_t));
@@ -112,7 +115,7 @@ static int compare_filenames(const char *filename, const Fat16Directory *entry)
     return (strcmp(filename_copy, entry_name));
 }
 
-int fat16_detect(ATADevice *disk)
+int fat16_detect(BlockDevice *disk)
 {
 	if (!disk || !disk->present)
 		return -1;
@@ -122,7 +125,7 @@ int fat16_detect(ATADevice *disk)
 
 	memset(&boot_sector, 0, 512);
 	
-	if (atapio_read_sector(disk, 0, boot_sector) != 0)
+	if (block_device_read(disk, 0, boot_sector, 1) != 0)
 		return -1; /* Read error */
 
 	memcpy(&fs, &boot_sector, sizeof(Fat16));
@@ -144,7 +147,7 @@ static inline int find_in_root(Fat16 *fs, const char *filename, Fat16Directory *
 
 	for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
 	{
-		if (atapio_read_sector(fs->disk, fs->root_dir_lba + sector, buffer) != 0)
+		if (block_device_read(fs->device, fs->root_dir_lba + sector, buffer, 1) != 0)
 			return -1;
 
 		for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -177,7 +180,7 @@ static inline int find_in_dir(Fat16 *fs, uint16_t start_cluster, const char *fil
 
         for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
         {
-            if (atapio_read_sector(fs->disk, lba + sector, buffer) != 0)
+            if (block_device_read(fs->device, lba + sector, buffer, 1) != 0)
                 return -1;
 
             for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -203,14 +206,14 @@ static inline int find_in_dir(Fat16 *fs, uint16_t start_cluster, const char *fil
     return -1; /* Not found */
 }
 
-int fat16_mount(ATADevice *disk, Fat16 *fs)
+int fat16_mount(BlockDevice *disk, Fat16 *fs)
 {
     if (!disk || !fs)
         return -1;
 
-    fs->disk = disk;
+    fs->device = disk;
     char buffer[512] = {0};
-    if (atapio_read_sector(disk, 0, buffer) != 0) {
+    if (block_device_read(disk, 0, buffer, 1) != 0) {
         kprintf("Error reading boot sector\n");
         return -1;
     }
@@ -250,7 +253,7 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
         
         for (int i = 0; i < sectors_per_cluster && bytes_read < file_size; i++) 
         {
-            if (atapio_read_sector(fs->disk, cluster_lba + i, sector_buffer) != 0) {
+            if (block_device_read(fs->device, cluster_lba + i, sector_buffer, 1) != 0) {
                 kprintf("Error reading sector %u\n", cluster_lba + i);
                 return -1;
             }
@@ -294,7 +297,7 @@ int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, siz
 
 		for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
 		{
-			if (atapio_read_sector(fs->disk, fs->root_dir_lba + sector, buffer) != 0)
+			if (block_device_read(fs->device, fs->root_dir_lba + sector, buffer, 1) != 0)
 				return -1;
 
 			for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -332,7 +335,7 @@ int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, siz
 
 			for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
 			{
-				if (atapio_read_sector(fs->disk, lba + sector, buffer) != 0)
+				if (block_device_read(fs->device, lba + sector, buffer, 1) != 0)
 					return -1;
 
 				for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -488,11 +491,11 @@ int fat16_open(Fat16 *fs, const char *path, Fat16Directory *out)
 
 void test_fat16()
 {
-    ATADevice *dev = ata_get(0);
+    BlockDevice *dev = block_devices[0];
     
     if (!dev || !dev->present)
     {
-        kprintf("No ATA device found\n");
+        kprintf("No Block device found\n");
         return;
     }
 

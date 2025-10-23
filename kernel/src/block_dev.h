@@ -32,6 +32,8 @@ typedef struct BlockDevice  {
 
     uint64_t read_count;
     uint64_t write_count;
+
+    bool present;
 } BlockDevice;
 
 typedef struct BlockDeviceLayer {
@@ -51,6 +53,7 @@ int block_flush(BlockDevice *dev);
 
 /* Utility functions */
 uint64_t block_device_size(BlockDevice *dev);  /* in bytes */
+int block_device_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
 bool block_device_ready(BlockDevice *dev);
 
 #endif
