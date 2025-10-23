@@ -51,6 +51,7 @@ void kmain()
 
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
+    stop_interrupts();
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address,
                       framebuffer->pitch);
     init_cpuid();
@@ -58,17 +59,15 @@ void kmain()
     pmm_init();
     init_gdt();
     init_idt();
-    PIC_remap();
-    init_keyboard();
-    shit_shell_init();
-    stop_interrupts();
     vmm_init();
     pit_init();
     task_init();
     ata_detect_devices();
-    // start_interrupts();
-
-    test_fat16();
-
+    //test_fat16();
+    //fat16_init();
+    //vfs_init();
+    PIC_remap();
+    init_keyboard();
+    shit_shell_init();
     hlt();
 }
