@@ -24,54 +24,54 @@
  */
 void PIC_remap()
 {
-    /* Start initialization of PIC */
-    outb(PIC1_COMMAND, PIC_INIT_COMMAND); /* Master PIC*/
-    outb(PIC2_COMMAND, PIC_INIT_COMMAND); /* Slave PIC*/
+	/* Start initialization of PIC */
+	outb(PIC1_COMMAND, PIC_INIT_COMMAND); /* Master PIC*/
+	outb(PIC2_COMMAND, PIC_INIT_COMMAND); /* Slave PIC*/
 
-    /* Interrupt vector offsets */
-    outb(PIC1_DATA, PIC_VECTOR_OFFSET1); /* (IRQ0-7) -> (32-39)*/
-    outb(PIC2_DATA, PIC_VECTOR_OFFSET2); /* (IRQ8-15) -> (40-47)*/
+	/* Interrupt vector offsets */
+	outb(PIC1_DATA, PIC_VECTOR_OFFSET1); /* (IRQ0-7) -> (32-39)*/
+	outb(PIC2_DATA, PIC_VECTOR_OFFSET2); /* (IRQ8-15) -> (40-47)*/
 
-    /* Tell Master PIC there is a slave PIC at IRQ2 (0000 0100) */
-    outb(PIC1_DATA, PIC_CASCADE_CONFIG); /* Master PIC*/
+	/* Tell Master PIC there is a slave PIC at IRQ2 (0000 0100) */
+	outb(PIC1_DATA, PIC_CASCADE_CONFIG); /* Master PIC*/
 
-    /* Tell Slave PIC its cascade identity (0000 0010) */
-    outb(PIC2_DATA, 0x02);
+	/* Tell Slave PIC its cascade identity (0000 0010) */
+	outb(PIC2_DATA, 0x02);
 
-    /* Set PIC to x86 mode */
-    outb(PIC1_DATA, PIC_MODE_CONFIG);
-    outb(PIC2_DATA, PIC_MODE_CONFIG);
+	/* Set PIC to x86 mode */
+	outb(PIC1_DATA, PIC_MODE_CONFIG);
+	outb(PIC2_DATA, PIC_MODE_CONFIG);
 
-    /* mask interrupts on the PIC */
-    outb(PIC1_DATA, 0x00);
-    outb(PIC2_DATA, 0x00);
+	/* mask interrupts on the PIC */
+	outb(PIC1_DATA, 0x00);
+	outb(PIC2_DATA, 0x00);
 }
 
 void PIC_sendEOI(uint8_t irq)
 {
-    if (SLAVE_PIC_HAS_TO_BE_WARNED)
-    {
-        outb(PIC2_COMMAND, PIC_EOI);
-    }
+	if (SLAVE_PIC_HAS_TO_BE_WARNED)
+	{
+		outb(PIC2_COMMAND, PIC_EOI);
+	}
 
-    outb(PIC1_COMMAND, PIC_EOI);
+	outb(PIC1_COMMAND, PIC_EOI);
 }
 
 void PIC_unmaskIRQ(uint8_t irq)
 {
-    uint16_t port;
-    uint8_t value;
+	uint16_t port;
+	uint8_t value;
 
-    if (irq < 8)
-    {
-        port = PIC1_DATA;
-    } else
-    {
-        port = PIC2_DATA;
-        irq -= 8;
-    }
+	if (irq < 8)
+	{
+		port = PIC1_DATA;
+	} else
+	{
+		port = PIC2_DATA;
+		irq -= 8;
+	}
 
-    value = inb(port);
-    value &= ~(1 << irq);
-    outb(value, port);
+	value = inb(port);
+	value &= ~(1 << irq);
+	outb(value, port);
 }

@@ -17,12 +17,12 @@
 char toupper(char c);
 
 struct Uptime {
-    uint8_t years;
-    uint8_t months;
-    uint8_t days;
-    uint8_t hours;
-    uint8_t minutes;
-    uint8_t seconds;
+	uint8_t years;
+	uint8_t months;
+	uint8_t days;
+	uint8_t hours;
+	uint8_t minutes;
+	uint8_t seconds;
 };
 
 void hlt();

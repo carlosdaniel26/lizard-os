@@ -8,36 +8,36 @@
 #define MAX_BLOCK_DEVICES 16
 
 typedef struct BlockDeviceOps {
-    int (*read)();
-    int (*write)();
-    
-    int (*flush)();
-    int (*ioctl)();
+	int (*read)();
+	int (*write)();
+	
+	int (*flush)();
+	int (*ioctl)();
 } BlockDeviceOps;
 
-typedef struct BlockDevice  {
-    char name[32];
-    uint32_t id;
+typedef struct BlockDevice	{
+	char name[32];
+	uint32_t id;
 
-    uint64_t total_sectors;
-    uint32_t sector_size;
-    uint32_t max_transfer_sectors;
+	uint64_t total_sectors;
+	uint32_t sector_size;
+	uint32_t max_transfer_sectors;
 
-    BlockDeviceOps *ops;
-    void *private_data;
+	BlockDeviceOps *ops;
+	void *private_data;
 
-    bool initialized;
-    bool read_only;
+	bool initialized;
+	bool read_only;
 
-    uint64_t read_count;
-    uint64_t write_count;
+	uint64_t read_count;
+	uint64_t write_count;
 
-    bool present;
+	bool present;
 } BlockDevice;
 
 typedef struct BlockDeviceLayer {
-    BlockDevice *devices[MAX_BLOCK_DEVICES];
-    uint32_t device_count;
+	BlockDevice *devices[MAX_BLOCK_DEVICES];
+	uint32_t device_count;
 } BlockDeviceLayer;
 
 /* Block layer management */

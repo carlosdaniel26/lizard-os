@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 typedef struct {
-    volatile bool locked;
+	volatile bool locked;
 } spinlock_t;
 
 void spinlock_init(spinlock_t *lock);

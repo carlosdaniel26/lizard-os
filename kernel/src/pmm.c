@@ -13,11 +13,11 @@
 #define BLOCK_SIZE 4096
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_memmap_request
-    memmap_request = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0};
+	memmap_request = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0};
 
 __attribute__((
-    used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
-    .id = LIMINE_HHDM_REQUEST, .revision = 0};
+	used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
+	.id = LIMINE_HHDM_REQUEST, .revision = 0};
 
 
 uint64_t mem_ammount_b = 0;
@@ -29,181 +29,181 @@ uint64_t hhdm_offset = 0;
 
 static inline void pmm_reserve_block(uint64_t i)
 {
-    BIT_SET(bitmap[i / 8], (i % 8));
+	BIT_SET(bitmap[i / 8], (i % 8));
 }
 static inline void pmm_unreserve_block(uint64_t i)
 {
-    BIT_CLEAR(bitmap[i / 8], (i % 8));
+	BIT_CLEAR(bitmap[i / 8], (i % 8));
 }
 static inline int pmm_test_block(uint64_t i)
 {
-    return BIT_TEST(bitmap[i / 8], (i % 8));
+	return BIT_TEST(bitmap[i / 8], (i % 8));
 }
 
 void pmm_init()
 {
-    hhdm_offset = hhdm_request.response->offset;
+	hhdm_offset = hhdm_request.response->offset;
 
-    /* Count memory */
-    for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
-    {
-        struct limine_memmap_entry *e = memmap_request.response->entries[i];
-        mem_ammount_b += e->length;
-    }
+	/* Count memory */
+	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+	{
+		struct limine_memmap_entry *e = memmap_request.response->entries[i];
+		mem_ammount_b += e->length;
+	}
 
-    total_blocks = mem_ammount_b / BLOCK_SIZE;
+	total_blocks = mem_ammount_b / BLOCK_SIZE;
 
-    /* Init memory as reserved */
-    for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
-    {
-        struct limine_memmap_entry *e = memmap_request.response->entries[i];
-        if (e->type == LIMINE_MEMMAP_USABLE && e->length >= (total_blocks / 8 + 1))
-        {
-            bitmap = (uint8_t *)ALIGN_UP(e->base + hhdm_offset, BLOCK_SIZE);
-            memset(bitmap, 0xFF, total_blocks / 8 + 1);
-            break;
-        }
-    }
+	/* Init memory as reserved */
+	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+	{
+		struct limine_memmap_entry *e = memmap_request.response->entries[i];
+		if (e->type == LIMINE_MEMMAP_USABLE && e->length >= (total_blocks / 8 + 1))
+		{
+			bitmap = (uint8_t *)ALIGN_UP(e->base + hhdm_offset, BLOCK_SIZE);
+			memset(bitmap, 0xFF, total_blocks / 8 + 1);
+			break;
+		}
+	}
 
-    /* Free the usable blocks */
-    for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
-    {
-        struct limine_memmap_entry *e = memmap_request.response->entries[i];
+	/* Free the usable blocks */
+	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+	{
+		struct limine_memmap_entry *e = memmap_request.response->entries[i];
 
-        if (e->type == LIMINE_MEMMAP_FRAMEBUFFER)
-            framebuffer_length = e->length;
-        if (e->type != LIMINE_MEMMAP_USABLE)
-            continue;
+		if (e->type == LIMINE_MEMMAP_FRAMEBUFFER)
+			framebuffer_length = e->length;
+		if (e->type != LIMINE_MEMMAP_USABLE)
+			continue;
 
-        uintptr_t start = ALIGN_UP((uintptr_t)e->base, BLOCK_SIZE);
-        uintptr_t end = align_down((uintptr_t)e->base + e->length, BLOCK_SIZE);
+		uintptr_t start = ALIGN_UP((uintptr_t)e->base, BLOCK_SIZE);
+		uintptr_t end = align_down((uintptr_t)e->base + e->length, BLOCK_SIZE);
 
-        for (uintptr_t addr = start; addr < end; addr += BLOCK_SIZE)
-        {
-            uint64_t bid = addr / BLOCK_SIZE;
-            if (bid >= total_blocks)
-                continue;
-            pmm_unreserve_block(bid);
-            usable_blocks++;
-        }
+		for (uintptr_t addr = start; addr < end; addr += BLOCK_SIZE)
+		{
+			uint64_t bid = addr / BLOCK_SIZE;
+			if (bid >= total_blocks)
+				continue;
+			pmm_unreserve_block(bid);
+			usable_blocks++;
+		}
 
-        usable_memory = usable_blocks * BLOCK_SIZE;
-    }
+		usable_memory = usable_blocks * BLOCK_SIZE;
+	}
 
-    /* Protect Bitmap Area*/
-    uintptr_t phys_bitmap = (uintptr_t)(bitmap - hhdm_offset);
-    uint64_t size = (total_blocks / 8) + 1;
-    uintptr_t end = ALIGN_UP(phys_bitmap + size, BLOCK_SIZE);
+	/* Protect Bitmap Area*/
+	uintptr_t phys_bitmap = (uintptr_t)(bitmap - hhdm_offset);
+	uint64_t size = (total_blocks / 8) + 1;
+	uintptr_t end = ALIGN_UP(phys_bitmap + size, BLOCK_SIZE);
 
-    for (uintptr_t addr = align_down(phys_bitmap, BLOCK_SIZE); addr < end; addr += BLOCK_SIZE)
-    {
-        uint64_t bid = addr / BLOCK_SIZE;
-        if (bid < total_blocks)
-            pmm_reserve_block(bid);
-    }
+	for (uintptr_t addr = align_down(phys_bitmap, BLOCK_SIZE); addr < end; addr += BLOCK_SIZE)
+	{
+		uint64_t bid = addr / BLOCK_SIZE;
+		if (bid < total_blocks)
+			pmm_reserve_block(bid);
+	}
 
-    // pmm_test_all();
+	// pmm_test_all();
 }
 
 void *pmm_alloc_block()
 {
-    for (uint64_t i = 0; i < total_blocks; i++)
-    {
-        if (!pmm_test_block(i))
-        {
-            pmm_reserve_block(i);
-            return (void *)(i * BLOCK_SIZE);
-        }
-    }
-    return NULL;
+	for (uint64_t i = 0; i < total_blocks; i++)
+	{
+		if (!pmm_test_block(i))
+		{
+			pmm_reserve_block(i);
+			return (void *)(i * BLOCK_SIZE);
+		}
+	}
+	return NULL;
 }
 
 void pmm_free_block(void *ptr)
 {
-    uint64_t block = ((uint64_t)ptr) / BLOCK_SIZE;
+	uint64_t block = ((uint64_t)ptr) / BLOCK_SIZE;
 
-    pmm_unreserve_block(block);
+	pmm_unreserve_block(block);
 }
 
 void *pmm_alloc_block_row(uint64_t ammount)
 {
-    if (ammount == 0)
-        return NULL;
+	if (ammount == 0)
+		return NULL;
 
-    void *base = 0x00;
-    uint64_t base_block = 0;
-    uint64_t free_in_row = 0;
+	void *base = 0x00;
+	uint64_t base_block = 0;
+	uint64_t free_in_row = 0;
 
-    for (uint64_t i = 0; i < total_blocks; i++)
-    {
-        if (!pmm_test_block(i))
-        {
-            if (base == NULL)
-            {
-                base = (void *)(i * BLOCK_SIZE);
-                base_block = i;
-            }
+	for (uint64_t i = 0; i < total_blocks; i++)
+	{
+		if (!pmm_test_block(i))
+		{
+			if (base == NULL)
+			{
+				base = (void *)(i * BLOCK_SIZE);
+				base_block = i;
+			}
 
-            free_in_row++;
+			free_in_row++;
 
-            if (free_in_row == ammount)
-            {
-                /* Reserve each block */
-                for (uint64_t block = base_block; block < base_block + ammount; block++)
-                    pmm_reserve_block(block);
+			if (free_in_row == ammount)
+			{
+				/* Reserve each block */
+				for (uint64_t block = base_block; block < base_block + ammount; block++)
+					pmm_reserve_block(block);
 
-                return (void *)((uint64_t)base);
+				return (void *)((uint64_t)base);
 
-            }
-        }
-        else
-        {
-            base = NULL;
-            base_block = 0;
-            free_in_row = 0;
-        }
-    }
-    return NULL;
+			}
+		}
+		else
+		{
+			base = NULL;
+			base_block = 0;
+			free_in_row = 0;
+		}
+	}
+	return NULL;
 }
 
 uint64_t pmm_free_block_count()
 {
-    uint64_t free = 0;
+	uint64_t free = 0;
 
-    for (block_id_t i = 0; i < total_blocks; i++)
-    {
-        if (! pmm_test_block(i))
-        {
-            free++;
-        }
-    }
-    return free;
+	for (block_id_t i = 0; i < total_blocks; i++)
+	{
+		if (! pmm_test_block(i))
+		{
+			free++;
+		}
+	}
+	return free;
 }
 
 uint64_t pmm_used_block_count()
 {
-    return usable_blocks - pmm_free_block_count();
+	return usable_blocks - pmm_free_block_count();
 }
 
 void pmm_test_all()
 {
-    kprintf("PMM: Testing all blocks...\n");
-    uint64_t tested = 0;
+	kprintf("PMM: Testing all blocks...\n");
+	uint64_t tested = 0;
 
-    uint64_t i = 0;
-    while (1)
-    {
-        void *ptr = pmm_alloc_block();
-        if (!ptr)
-            break;
+	uint64_t i = 0;
+	while (1)
+	{
+		void *ptr = pmm_alloc_block();
+		if (!ptr)
+			break;
 
-        memset(ptr, 0xAB, BLOCK_SIZE);
-        kprintf("  tested block $%x at %x\n", i, ptr);
-        i++;
-    }
+		memset(ptr, 0xAB, BLOCK_SIZE);
+		kprintf("  tested block $%x at %x\n", i, ptr);
+		i++;
+	}
 
-    tty_clean();
-    kprintf("COUNTED %u USABLE BLOCKS\n", i);
+	tty_clean();
+	kprintf("COUNTED %u USABLE BLOCKS\n", i);
 
-    kprintf("PMM: Finished. Total blocks tested: %u\n", tested);
+	kprintf("PMM: Finished. Total blocks tested: %u\n", tested);
 }
