@@ -1,4 +1,5 @@
 #include <helpers.h>
+#include <stdio.h>
 #include <string.h>
 #include <kmalloc.h>
 #include <pmm.h>

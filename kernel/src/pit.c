@@ -47,6 +47,7 @@ void pit_init()
 
 void isr_pit(CpuState *regs)
 {
+    (void)regs;
     //scheduler(regs);
     PIC_sendEOI(32);
 }
