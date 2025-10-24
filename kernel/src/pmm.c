@@ -125,6 +125,16 @@ void pmm_free_block(void *ptr)
 	pmm_unreserve_block(block);
 }
 
+void pmm_free_block_row(void *ptr, uint64_t ammount)
+{
+	uint64_t start_block = ((uint64_t)ptr) / BLOCK_SIZE;
+
+	for (uint64_t i = start_block; i < start_block + ammount; i++)
+	{
+		pmm_unreserve_block(i);
+	}
+}
+
 void *pmm_alloc_block_row(uint64_t ammount)
 {
 	if (ammount == 0)

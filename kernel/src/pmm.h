@@ -10,6 +10,7 @@ void pmm_init();
 void *pmm_alloc_block();
 void *pmm_alloc_block_row(uint64_t ammount);
 void pmm_free_block(void *ptr);
+void pmm_free_block_row(void *ptr, uint64_t ammount);
 uint64_t pmm_free_block_count();
 uint64_t pmm_used_block_count();
 
