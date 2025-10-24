@@ -8,10 +8,10 @@
 #define MAX_BLOCK_DEVICES 16
 
 typedef struct BlockDeviceOps {
-	int (*read)();
-	int (*write)();
+	int (*read)(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
+	int (*write)(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
 	
-	int (*flush)();
+	int (*flush)(BlockDevice *dev);
 	int (*ioctl)();
 } BlockDeviceOps;
 
