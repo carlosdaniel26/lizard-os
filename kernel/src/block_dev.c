@@ -1,5 +1,6 @@
 #include <block_dev.h>
 #include <string.h>
+#include <stdio.h>
 
 BlockDevice *block_devices[MAX_BLOCK_DEVICES] = {0};
 uint32_t block_device_count = 0;
