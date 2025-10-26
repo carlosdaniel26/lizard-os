@@ -4,7 +4,7 @@
 #include <string.h>
 #include <tty.h>
 
-CPUID cpu;
+CPUID g_cpuid;
 
 void cpuid(uint32_t code, uint32_t *output)
 {
@@ -21,7 +21,7 @@ void init_cpuid()
 void cpuid_get_brand()
 {
 	uint32_t regs[4];
-	char *brand = cpu.brand_name;
+	char *brand = g_cpuid.brand_name;
 
 	for (uint32_t i = 0; i < 3; i++)
 	{
@@ -61,6 +61,6 @@ bool check_apic()
 void cpuid_kprint()
 {
 	tty_writestring("Cpu brand: ");
-	tty_writestring(cpu.brand_name);
+	tty_writestring(g_cpuid.brand_name);
 	tty_writestring("\n");
 }

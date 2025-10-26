@@ -50,7 +50,7 @@ static inline void lzfetch()
 	kprintf("|				/	/		  |\t\t\t\t\t\t\tFont:	   bitmap_8x16\n");
 	kprintf("|	  ^		   /	\\		   |\t\t\t\t\t\t\tTerminal: tty0\n");
 	kprintf("|	 /|		  (		 )		  |\t\t\t\t\t\t\tTheme:	   CalangoGreen\n");
-	kprintf("|	/ |		,__\\	 /__,	   |\t\t\t\t\t\t\tCPU:		%s\n", cpu.brand_name);
+	kprintf("|	/ |		,__\\	 /__,	   |\t\t\t\t\t\t\tCPU:		%s\n", g_cpuid.brand_name);
 	kprintf("|	\\ \\	_//---,	 ,--\\\\_	  |\t\t\t\t\t\t\tRAM:	   %u.%uMB\n", mem_ammount_mb);
 	kprintf("|	 \\ \\	 /\\  /	 /	 /\\	  | \n");
 	kprintf("|	  \\ \\.___,/  /			|\n");
