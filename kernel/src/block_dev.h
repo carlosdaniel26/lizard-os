@@ -48,3 +48,6 @@ BlockDevice *block_device_find(const char *name);
 uint64_t block_device_size(BlockDevice *dev);  /* in bytes */
 bool block_device_ready(BlockDevice *dev);
 
+/* Public API */
+int block_device_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
+int block_device_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count);
