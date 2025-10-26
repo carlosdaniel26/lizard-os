@@ -15,8 +15,8 @@ size_t terminal_text_height;
 
 size_t terminal_row;
 size_t terminal_column;
-uint32_t terminal_color;
-uint32_t terminal_background_color;
+uint32_t tty_color;
+uint32_t tty_bg_color;
 
 size_t cmd_start_column;
 size_t cmd_start_row;
@@ -38,8 +38,8 @@ void tty_initialize()
 
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_background_color = TERMINAL_BG_COLOR;
-	terminal_color = TERMINAL_COLOR;
+	tty_bg_color = TTY_DEFAULT_BG_COLOR;
+	tty_color = TTY_DEFAULT_COLOR;
 
 	spinlock_init(&tty_lock);
 }
@@ -94,7 +94,7 @@ char tty_putchar(char c)
 		return c;
 	}
 
-	tty_putentryat(c, terminal_color, terminal_column, terminal_row);
+	tty_putentryat(c, tty_color, terminal_column, terminal_row);
 
 	if (++terminal_column == terminal_text_width)
 	{
@@ -158,7 +158,7 @@ void tty_backspace()
 {
 	if (is_cursor_after_input())
 	{
-		tty_putentryat(' ', terminal_color, terminal_column - 1, terminal_row);
+		tty_putentryat(' ', tty_color, terminal_column - 1, terminal_row);
 		terminal_column--;
 
 		if (terminal_column == 0)

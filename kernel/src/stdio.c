@@ -8,13 +8,13 @@
 
 void kpanic(const char *str)
 {
-	extern uint32_t terminal_color;
+	extern uint32_t tty_color;
 
-	uint32_t temp = terminal_color;
+	uint32_t temp = tty_color;
 
-	terminal_color = VGA_COLOR_RED;
+	tty_color = VGA_COLOR_RED;
 	kprintf("[PANIC]");
-	terminal_color = temp;
+	tty_color = temp;
 
 	kprintf(str);
 

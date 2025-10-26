@@ -10,7 +10,7 @@ uint32_t pitch;
 
 uint32_t framebuffer_length;
 
-extern uint32_t terminal_background_color;
+extern uint32_t tty_bg_color;
 
 static unsigned char font[] = {
 	0x00, 0x00, 0x00, 0x3e, 0x63, 0x5d, 0x7d, 0x7b, 0x77, 0x77, 0x7f, 0x77, 0x3e, 0x00, 0x00, 0x00,
@@ -276,7 +276,7 @@ void clear_framebuffer()
 	{
 		for (uint64_t x = 0; x < width; x++)
 		{
-			framebuffer[y * (pitch / 4) + x] = terminal_background_color;
+			framebuffer[y * (pitch / 4) + x] = tty_bg_color;
 		}
 	}
 }
@@ -299,7 +299,7 @@ void draw_pixel(uint64_t x, uint64_t y, uint32_t color)
 void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character)
 {
 	uint64_t first_byte_idx = character * FONT_HEIGHT;
-	uint32_t bg_color = terminal_background_color;
+	uint32_t bg_color = tty_bg_color;
 	for (size_t y = 0; y < FONT_HEIGHT; y++)
 	{
 		uint8_t row_data = font[first_byte_idx + y];
@@ -325,6 +325,6 @@ void scroll_framebuffer(uint32_t pixels)
 	uint32_t *clear_start = fb_ptr + move_pixels;
 	for (uint32_t i = 0; i < scroll_offset; i++)
 	{
-		clear_start[i] = terminal_background_color;
+		clear_start[i] = tty_bg_color;
 	}
 }

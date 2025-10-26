@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <vga.h>
 
-extern uint32_t terminal_color;
+extern uint32_t tty_color;
 
 #define EOF (-1)
 typedef int (*pfnStreamWriteBuf)(char *);

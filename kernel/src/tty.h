@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <vga.h>
 
-#define TERMINAL_BG_COLOR VGA_COLOR_BLACK
-#define TERMINAL_COLOR VGA_COLOR_WHITE
+#define TTY_DEFAULT_BG_COLOR VGA_COLOR_BLACK
+#define TTY_DEFAULT_COLOR VGA_COLOR_WHITE
 
 extern size_t terminal_width;
 extern size_t terminal_height;
@@ -17,8 +17,8 @@ extern size_t terminal_text_height;
 
 extern size_t terminal_row;
 extern size_t terminal_column;
-extern uint32_t terminal_color;
-extern uint32_t terminal_background_color;
+extern uint32_t tty_color;
+extern uint32_t tty_bg_color;
 
 extern size_t cmd_start_column;
 extern size_t cmd_start_row;
