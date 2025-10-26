@@ -5,3 +5,4 @@
 *.iso
 *.img
 qemu_log.txt
+.vscode/
