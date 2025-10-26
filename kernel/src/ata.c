@@ -6,8 +6,8 @@
 #include <block_dev.h>
 #include <kmalloc.h>
 
-uint16_t base[] = {ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
-uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
+static uint16_t base[] = {ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
+static uint16_t ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
@@ -16,13 +16,13 @@ static int block_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t co
 static int block_write(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
 static int block_flush(BlockDevice *dev);
 
-BlockDeviceOps ata_block_ops = {
+static BlockDeviceOps ata_block_ops = {
 	.read = block_read,
 	.write = block_write,
 	.flush = block_flush
 };
 
-void unmask_ata_primary_irq()
+static void unmask_ata_primary_irq()
 {
 	uint8_t mask = inb(PIC2_DATA);
 

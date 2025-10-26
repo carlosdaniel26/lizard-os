@@ -5,8 +5,8 @@
 #include <task.h>
 #include <pmm.h>
 
-Task *current_task;
-Task proc1;
+static Task *current_task;
+static Task proc1;
 
 void proc1_func()
 {

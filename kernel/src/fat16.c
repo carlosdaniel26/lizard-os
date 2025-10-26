@@ -34,7 +34,7 @@ extern BlockDevice *block_devs[];
 #define DIV_ROUND_UP(x, y) (((x) + (y)-1) / (y))
 
 static const char name[] = "fat16";
-VfsConf vfs_conf = {0};
+static VfsConf vfs_conf = {0};
 
 /* ===== INTERNAL HELPERS ===== */
 

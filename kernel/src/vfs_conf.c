@@ -1,7 +1,7 @@
 #include <vfs_conf.h>
 #include <string.h>
 
-VfsConf *vfs_conf_list = NULL;
+static VfsConf *vfs_conf_list = NULL;
 static int next_fs_id = 0;
 
 int vfs_register(VfsConf *conf)

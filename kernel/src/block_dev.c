@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 
-BlockDevice *block_devs[MAX_BLOCK_DEVICES] = {0};
-uint32_t block_dev_count = 0;
+static BlockDevice *block_devs[MAX_BLOCK_DEVICES] = {0};
+static uint32_t block_dev_count = 0;
 
 int block_dev_register(BlockDevice *dev)
 {

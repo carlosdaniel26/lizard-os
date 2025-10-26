@@ -7,7 +7,7 @@
 
 extern VfsConf *vfs_conf_list;
 
-Vfs root = {0};
+static Vfs root = {0};
 
 void vfs_init()
 {
