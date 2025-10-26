@@ -2,10 +2,10 @@
 #include <string.h>
 #include <stdio.h>
 
-BlockDevice *block_devices[MAX_BLOCK_DEVICES] = {0};
-uint32_t block_device_count = 0;
+BlockDevice *block_devs[MAX_BLOCK_DEVICES] = {0};
+uint32_t block_dev_count = 0;
 
-int block_device_register(BlockDevice *dev)
+int block_dev_register(BlockDevice *dev)
 {
 	if (!dev) {
 		kprintf("block_device_register: device is NULL\n");
@@ -22,23 +22,23 @@ int block_device_register(BlockDevice *dev)
 		return -1;
 	}
 	
-	if (block_device_count >= MAX_BLOCK_DEVICES) {
+	if (block_dev_count >= MAX_BLOCK_DEVICES) {
 		kprintf("block_device_register: maximum devices reached (%d)\n", MAX_BLOCK_DEVICES);
 		return -1;
 	}
 	
-	for (uint32_t i = 0; i < block_device_count; i++) 
+	for (uint32_t i = 0; i < block_dev_count; i++) 
 	{
-		if (strcmp(block_devices[i]->name, dev->name) == 0) {
+		if (strcmp(block_devs[i]->name, dev->name) == 0) {
 			kprintf("block_device_register: device name '%s' already exists\n", dev->name);
 			return -1;
 		}
 	}
 	
-	dev->id = block_device_count;
+	dev->id = block_dev_count;
 	
-	block_devices[block_device_count] = dev;
-	block_device_count++;
+	block_devs[block_dev_count] = dev;
+	block_dev_count++;
 	
 	kprintf("Registered block device: %s (sectors: %u, size: %u bytes)\n",
 				 dev->name, dev->total_sectors, dev->sector_size);
@@ -46,20 +46,20 @@ int block_device_register(BlockDevice *dev)
 	return 0;
 }
 
-int block_device_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
+int block_dev_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
 {
 	if (!dev || !dev->ops || !dev->ops->read) {
-		kprintf("block_device_read: invalid device or read operation\n");
+		kprintf("block_dev_read: invalid device or read operation\n");
 		return -1;
 	}
 	
 	return dev->ops->read(dev, sector, buffer, count);
 }
 
-int block_device_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count)
+int block_dev_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count)
 {
 	if (!dev || !dev->ops || !dev->ops->write) {
-		kprintf("block_device_write: invalid device or write operation\n");
+		kprintf("block_dev_write: invalid device or write operation\n");
 		return -1;
 	}
 	

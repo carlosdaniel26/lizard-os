@@ -144,7 +144,7 @@ void ata_detect_devices()
 		dev->read_only = false;
 		dev->present = true;
 
-		block_device_register(dev);
+		block_dev_register(dev);
 	}
 }
 
