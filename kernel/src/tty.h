@@ -1,7 +1,6 @@
 /* TeleTYpewriter */
 
-#ifndef TERMINAL_H
-#define TERMINAL_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -61,4 +60,3 @@ static const char convertScancode[128] = {
 	0,													 /* All other keys are undefined */
 };
 
-#endif

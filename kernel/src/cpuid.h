@@ -1,5 +1,4 @@
-#ifndef CPUID_H
-#define CPUID_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -115,4 +114,3 @@ bool check_apic();
 int cpuid_get_feature(uint64_t feature_id);
 void cpuid_kprint();
 
-#endif

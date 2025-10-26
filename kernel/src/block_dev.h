@@ -1,5 +1,4 @@
-#ifndef BLOCK_DEV
-#define BLOCK_DEV
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -49,4 +48,3 @@ BlockDevice *block_device_find(const char *name);
 uint64_t block_device_size(BlockDevice *dev);  /* in bytes */
 bool block_device_ready(BlockDevice *dev);
 
-#endif

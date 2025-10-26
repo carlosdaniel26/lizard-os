@@ -1,5 +1,4 @@
-#ifndef VFS_CONF_H
-#define VFS_CONF_H
+#pragma once
 
 #include <vfs.h>
 
@@ -15,4 +14,3 @@ typedef struct VfsConf {
 int vfs_register(VfsConf *conf);
 VfsConf *vfs_byname(const char *name);
 
-#endif

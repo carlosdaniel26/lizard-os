@@ -1,5 +1,4 @@
-#ifndef TASK_H
-#define TASK_H
+#pragma once
 
 #include <stdint.h>
 
@@ -54,4 +53,3 @@ void task_exit();
 
 void scheduler(CpuState *regs);
 
-#endif

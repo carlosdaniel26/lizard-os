@@ -1,5 +1,4 @@
-#ifndef FAT16_H
-#define FAT16_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -85,4 +84,3 @@ int fat16_mount(BlockDevice *dev, Fat16 *fs);
 void test_fat16();
 void fat16_init();
 
-#endif

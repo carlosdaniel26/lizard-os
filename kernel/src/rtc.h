@@ -1,5 +1,4 @@
-#ifndef RTC_H
-#define RTC_H
+#pragma once
 
 struct RTC_timer {
 	uint8_t seconds;	   /* 00*/
@@ -25,4 +24,3 @@ void rtc_refresh_time();
 void kprint_rtc_time();
 const char *get_month_string(uint8_t month_id);
 
-#endif

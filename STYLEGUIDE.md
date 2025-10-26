@@ -14,6 +14,7 @@
 #### 1.2.2 Files
 - Use `snake_case`.
 - Use acronyms when useful/usual, if its not usual, its not useful.
+- Header files might use `#pragma once`
   
 #### 1.2.3 Functions
 - Use `snake_case`.

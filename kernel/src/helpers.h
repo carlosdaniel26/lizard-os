@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 
 #define BIT_SET(byte, index) (byte |= (1 << ((index) % 8)))

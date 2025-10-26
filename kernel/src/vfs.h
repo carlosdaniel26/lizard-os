@@ -1,5 +1,4 @@
-#ifndef VFS_H
-#define VFS_H
+#pragma once
 
 /* Credits to the design: https://www.cs.fsu.edu/~awang/courses/cop5611_s2024/vnode.pdf	 */
 
@@ -69,4 +68,3 @@ typedef struct VnodeOps {
 	int (*vn_brelse)();
 } VnodeOps;
 
-#endif

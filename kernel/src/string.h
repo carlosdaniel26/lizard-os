@@ -1,5 +1,4 @@
-#ifndef _STRING_H
-#define _STRING_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -21,4 +20,3 @@ void unsigned_to_hexstring(uint64_t value, char *str);
 char *strcpy(char *dest, const char *src);
 int sprintf(char *buffer, const char *format, ...);
 
-#endif

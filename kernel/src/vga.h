@@ -1,5 +1,4 @@
-#ifndef VGA_H
-#define VGA_H
+#pragma once
 
 #include <stdint.h>
 
@@ -26,4 +25,3 @@ enum vga_color {
 	VGA_COLOR_WHITE = 0xFFFFFF			/* White: RGB(255, 255, 255)*/
 };
 
-#endif

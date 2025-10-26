@@ -1,5 +1,4 @@
-#ifndef ATA_H
-#define ATA_H
+#pragma once
 
 #include <stdint.h>
 
@@ -69,4 +68,3 @@ void ata_detect_devices();
 void isr_ata_primary();
 void isr_ata_secondary();
 
-#endif

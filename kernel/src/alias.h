@@ -1,5 +1,4 @@
-#ifndef ALIAS_H
-#define ALIAS_H
+#pragma once
 
 #define NULL_POINTER 0x00
 
@@ -17,4 +16,3 @@
 	{																							   \
 	}
 
-#endif

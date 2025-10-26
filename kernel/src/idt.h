@@ -1,5 +1,4 @@
-#ifndef IDT_H
-#define IDT_H
+#pragma once
 
 #include <stdint.h>
 #include <task.h>
@@ -25,4 +24,3 @@ void isr_common_entry(uint64_t int_id, CpuState *regs);
 void init_idt();
 void set_idt_gate(int vector, void (*isr)(), uint8_t flags);
 
-#endif

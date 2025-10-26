@@ -1,5 +1,4 @@
-#ifndef isr_vector_H
-#define isr_vector_H
+#pragma once
 
 #include <idt.h>
 
@@ -315,4 +314,3 @@ static void *isr_vectors[IDT_ENTRIES] = {
 	&isr_vector_255,
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef PMM_H
-#define PMM_H
+#pragma once
 
 #include <stdint.h>
 
@@ -22,4 +21,3 @@ extern uint8_t *bitmap;
 extern uint64_t total_blocks;
 extern uint64_t usable_blocks;
 
-#endif

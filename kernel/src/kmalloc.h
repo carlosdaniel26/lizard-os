@@ -1,5 +1,4 @@
-#ifndef KMALLOC_H
-#define KMALLOC_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -22,4 +21,3 @@ void kfree(void *ptr);
 
 void test_kmalloc();
 
-#endif

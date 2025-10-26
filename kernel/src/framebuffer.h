@@ -1,5 +1,4 @@
-#ifndef FRAMEBUFFER_H
-#define FRAMEBUFFER_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -21,4 +20,3 @@ extern uint32_t pitch;
 
 extern uint32_t framebuffer_length;
 
-#endif
