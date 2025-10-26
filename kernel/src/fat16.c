@@ -573,12 +573,14 @@ static int vfs_mount(Vfs *vfs, const char *path, uintptr_t fs_data)
 	vfs->flags = 0x00;
 	vfs->block_size = 512;
 	vfs->data = (uintptr_t)kcalloc(sizeof(Fat16));
+
+	return 0;
 }
 
 
 void fat16_init()
 {
-	vfs_conf.name = &name;
+	vfs_conf.name = (char*)&name;
 	vfs_register(&vfs_conf); /* Config typenum, next */
 	vfs_conf.flags = 0x00;
 
