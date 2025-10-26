@@ -1,32 +1,32 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 
 #define TASK_NAME_MAX_LEN 32
 
 typedef struct __attribute__((packed)) CpuState {
-	uint64_t rax;
-	uint64_t rdi;
-	uint64_t rsi;
-	uint64_t rdx;
-	uint64_t rcx;
-	uint64_t r8;
-	uint64_t r9;
-	uint64_t r10;
-	uint64_t r11;
-	uint64_t rbx;
-	uint64_t rbp;
-	uint64_t r12;
-	uint64_t r13;
-	uint64_t r14;
-	uint64_t r15;
+	u64 rax;
+	u64 rdi;
+	u64 rsi;
+	u64 rdx;
+	u64 rcx;
+	u64 r8;
+	u64 r9;
+	u64 r10;
+	u64 r11;
+	u64 rbx;
+	u64 rbp;
+	u64 r12;
+	u64 r13;
+	u64 r14;
+	u64 r15;
 
 	/* Interrupt Frame */
-	uint64_t rip;
-	uint64_t cs;
-	uint64_t rflags;
-	uint64_t rsp;
-	uint64_t ss;
+	u64 rip;
+	u64 cs;
+	u64 rflags;
+	u64 rsp;
+	u64 ss;
 } CpuState;
 
 typedef struct Task {
@@ -36,15 +36,15 @@ typedef struct Task {
 
 	CpuState regs;
 
-	uint32_t priority;
-	uint32_t ticks_remaining;
+	u32 priority;
+	u32 ticks_remaining;
 
 	struct Task *next;
 } Task;
 
 void task_init();
 
-void task_create(struct Task *task, void (*entry_point)(void), const char *name, uint32_t priority);
+void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority);
 void task_save_context(CpuState *regs);
 void task_load_context(CpuState *regs, Task *task);
 void task_switch();

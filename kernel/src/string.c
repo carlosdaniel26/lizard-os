@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include <stdint.h>
+#include <types.h>
 #include <string.h>
 #include <stdarg.h>
 
@@ -103,7 +103,7 @@ bool strsIsEqual(const char *str1, const char *str2, size_t size)
 	return 1;
 }
 
-void unsigned_to_string(uint64_t value, char *str)
+void unsigned_to_string(u64 value, char *str)
 {
 	char buffer[20];
 	int i = 0;
@@ -130,7 +130,7 @@ void unsigned_to_string(uint64_t value, char *str)
 	str[i] = '\0'; /* null in the end*/
 }
 
-unsigned get_unsigned2string_final_size(uint64_t value)
+unsigned get_unsigned2string_final_size(u64 value)
 {
 	unsigned i = 0;
 
@@ -146,7 +146,7 @@ unsigned get_unsigned2string_final_size(uint64_t value)
 	return i;
 }
 
-unsigned get_u64tostring_final_size(uint64_t value)
+unsigned get_u64tostring_final_size(u64 value)
 {
 	unsigned i = 0;
 
@@ -162,7 +162,7 @@ unsigned get_u64tostring_final_size(uint64_t value)
 	return i;
 }
 
-unsigned get_unsigned2hex_final_size(uint64_t value)
+unsigned get_unsigned2hex_final_size(u64 value)
 {
 	unsigned i = 0;
 
@@ -178,7 +178,7 @@ unsigned get_unsigned2hex_final_size(uint64_t value)
 	return i;
 }
 
-void unsigned_to_hexstring(uint64_t value, char *str)
+void unsigned_to_hexstring(u64 value, char *str)
 {
 	const char *hex_digits = "0123456789abcdef";
 	int index = 0;

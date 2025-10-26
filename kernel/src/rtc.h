@@ -1,21 +1,21 @@
 #pragma once
 
 struct RTC_timer {
-	uint8_t seconds;	   /* 00*/
-	uint8_t seconds_alarm; /* 01*/
-	uint8_t minutes;	   /* 02*/
-	uint8_t minutes_alarm; /* 03*/
-	uint8_t hours;		   /* 04*/
-	uint8_t hours_alarm;   /* 05*/
-	uint8_t day_in_week;   /* 06*/
-	uint8_t date_of_month; /* 07*/
-	uint8_t month;		   /* 08*/
-	uint8_t year;		   /* 09*/
+	u8 seconds;	   /* 00*/
+	u8 seconds_alarm; /* 01*/
+	u8 minutes;	   /* 02*/
+	u8 minutes_alarm; /* 03*/
+	u8 hours;		   /* 04*/
+	u8 hours_alarm;   /* 05*/
+	u8 day_in_week;   /* 06*/
+	u8 date_of_month; /* 07*/
+	u8 month;		   /* 08*/
+	u8 year;		   /* 09*/
 
-	uint8_t status_register_A; /* A*/
-	uint8_t status_register_B; /* B*/
-	uint8_t status_register_C; /* C*/
-	uint8_t status_register_D; /* D*/
+	u8 status_register_A; /* A*/
+	u8 status_register_B; /* B*/
+	u8 status_register_C; /* C*/
+	u8 status_register_D; /* D*/
 };
 
 extern struct RTC_timer RTC_clock;
@@ -24,5 +24,5 @@ void isr_timer();
 void enable_rtc_interrupts();
 void rtc_refresh_time();
 void kprint_rtc_time();
-const char *get_month_string(uint8_t month_id);
+const char *get_month_string(u8 month_id);
 

@@ -3,7 +3,7 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 #include <vga.h>
 
 #define TTY_DEFAULT_BG_COLOR VGA_COLOR_BLACK
@@ -17,15 +17,15 @@ extern size_t terminal_text_height;
 
 extern size_t terminal_row;
 extern size_t terminal_column;
-extern uint32_t tty_color;
-extern uint32_t tty_bg_color;
+extern u32 tty_color;
+extern u32 tty_bg_color;
 
 extern size_t cmd_start_column;
 extern size_t cmd_start_row;
 
 void tty_initialize();
 void tty_clean();
-void tty_putentryat(char c, uint32_t color, size_t x, size_t y);
+void tty_putentryat(char c, u32 color, size_t x, size_t y);
 char tty_putchar(char c);
 void tty_breakline();
 void tty_write(const char *data, size_t size);

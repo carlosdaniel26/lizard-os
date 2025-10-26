@@ -15,15 +15,15 @@ size_t terminal_text_height;
 
 size_t terminal_row;
 size_t terminal_column;
-uint32_t tty_color;
-uint32_t tty_bg_color;
+u32 tty_color;
+u32 tty_bg_color;
 
 size_t cmd_start_column;
 size_t cmd_start_row;
 
 char text_buffer[1000 * 1000];
 
-uint32_t *fb;
+u32 *fb;
 
 static spinlock_t tty_lock;
 
@@ -73,7 +73,7 @@ void tty_clean()
 	clear_framebuffer();
 }
 
-void tty_putentryat(char c, uint32_t color, size_t x, size_t y)
+void tty_putentryat(char c, u32 color, size_t x, size_t y)
 {
 	draw_char(x * FONT_WIDTH, y * FONT_HEIGHT, color, c);
 	text_buffer[(y * terminal_text_width) + x] = c;
@@ -120,7 +120,7 @@ void tty_breakline()
 
 void tty_tab()
 {
-	for (uint8_t i = terminal_column; i % 4 == TAB_SIZE; i++)
+	for (u8 i = terminal_column; i % 4 == TAB_SIZE; i++)
 	{
 		tty_putchar(' ');
 

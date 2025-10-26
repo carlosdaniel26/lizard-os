@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
+#include <types.h>
 
 /* Vendor strings from CPUs.*/
 #define CPUID_VENDOR_AMD "AuthenticAMD"
@@ -110,9 +110,9 @@ typedef struct CPUID {
 extern CPUID g_cpuid;
 
 void init_cpuid();
-void cpuid(uint32_t code, uint32_t *output);
+void cpuid(u32 code, u32 *output);
 void cpuid_get_brand();
 bool check_apic();
-int cpuid_get_feature(uint64_t feature_id);
+int cpuid_get_feature(u64 feature_id);
 void cpuid_kprint();
 

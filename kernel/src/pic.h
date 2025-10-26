@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 
 void PIC_remap();
-void PIC_unmaskIRQ(uint8_t irq);
-void PIC_sendEOI(uint8_t irq);
+void PIC_unmaskIRQ(u8 irq);
+void PIC_sendEOI(u8 irq);

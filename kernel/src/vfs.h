@@ -2,7 +2,7 @@
 
 /* Credits to the design: https://www.cs.fsu.edu/~awang/courses/cop5611_s2024/vnode.pdf	 */
 
-#include <stdint.h>
+#include <types.h>
 
 typedef struct Vfs {
 	struct Vfs *next;			   /* next vfs in list */
@@ -26,10 +26,10 @@ typedef struct VfsOps {
 typedef enum Vtype { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VBAD } Vtype;
 
 typedef struct Vnode {
-	uint8_t v_flag;					  /* vnode flags */
-	uint8_t v_count;				  /* reference count */
-	uint8_t v_shlockc;				  /* # of shared locks */
-	uint8_t v_exlockc;				  /* # of exclusive locks */
+	u8 v_flag;					  /* vnode flags */
+	u8 v_count;				  /* reference count */
+	u8 v_shlockc;				  /* # of shared locks */
+	u8 v_exlockc;				  /* # of exclusive locks */
 	struct Vfs *v_vfsmountedhere;	  /* covering vfs */
 	struct VnodeOps *v_op;			  /* vnode operations */
 	union {

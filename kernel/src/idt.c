@@ -2,7 +2,7 @@
 #include <isr_vector.h>
 #include <keyboard.h>
 #include <pic.h>
-#include <stdint.h>
+#include <types.h>
 #include <stdio.h>
 #include <task.h>
 
@@ -11,7 +11,7 @@ static idt_ptr idt_descriptor;
 
 void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 
-void isr_common_entry(uint64_t int_id, CpuState *regs)
+void isr_common_entry(u64 int_id, CpuState *regs)
 {
 	PIC_sendEOI(15);
 
@@ -21,9 +21,9 @@ void isr_common_entry(uint64_t int_id, CpuState *regs)
 	}
 }
 
-void set_idt_gate(int vector, void (*isr)(), uint8_t flags)
+void set_idt_gate(int vector, void (*isr)(), u8 flags)
 {
-	uint64_t addr = (uint64_t)isr;
+	u64 addr = (u64)isr;
 
 	idt[vector].offset_low = addr & 0xFFFF;
 	idt[vector].selector = 0x08;
@@ -49,7 +49,7 @@ void init_idt()
 		set_idt_gate(i, isr_vectors[i], 0x8E);
 
 	idt_descriptor.limit = sizeof(idt) - 1;
-	idt_descriptor.base = (uint64_t)&idt;
+	idt_descriptor.base = (u64)&idt;
 
 	idt_load();
 }

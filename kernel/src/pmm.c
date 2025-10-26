@@ -4,7 +4,7 @@
 #include <limine.h>
 #include <pmm.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 #include <stdio.h>
 #include <string.h>
 #include <tty.h>
@@ -20,22 +20,22 @@ __attribute__((
 	.id = LIMINE_HHDM_REQUEST, .revision = 0};
 
 
-uint64_t mem_ammount_b = 0;
-uint64_t usable_memory = 0;
-uint8_t *bitmap = NULL;
-uint64_t total_blocks = 0;
-uint64_t usable_blocks = 0;
-uint64_t hhdm_offset = 0;
+u64 mem_ammount_b = 0;
+u64 usable_memory = 0;
+u8 *bitmap = NULL;
+u64 total_blocks = 0;
+u64 usable_blocks = 0;
+u64 hhdm_offset = 0;
 
-static inline void pmm_reserve_block(uint64_t i)
+static inline void pmm_reserve_block(u64 i)
 {
 	BIT_SET(bitmap[i / 8], (i % 8));
 }
-static inline void pmm_unreserve_block(uint64_t i)
+static inline void pmm_unreserve_block(u64 i)
 {
 	BIT_CLEAR(bitmap[i / 8], (i % 8));
 }
-static inline int pmm_test_block(uint64_t i)
+static inline int pmm_test_block(u64 i)
 {
 	return BIT_TEST(bitmap[i / 8], (i % 8));
 }
@@ -45,7 +45,7 @@ void pmm_init()
 	hhdm_offset = hhdm_request.response->offset;
 
 	/* Count memory */
-	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+	for (u64 i = 0; i < memmap_request.response->entry_count; i++)
 	{
 		struct limine_memmap_entry *e = memmap_request.response->entries[i];
 		mem_ammount_b += e->length;
@@ -54,19 +54,19 @@ void pmm_init()
 	total_blocks = mem_ammount_b / BLOCK_SIZE;
 
 	/* Init memory as reserved */
-	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+	for (u64 i = 0; i < memmap_request.response->entry_count; i++)
 	{
 		struct limine_memmap_entry *e = memmap_request.response->entries[i];
 		if (e->type == LIMINE_MEMMAP_USABLE && e->length >= (total_blocks / 8 + 1))
 		{
-			bitmap = (uint8_t *)ALIGN_UP(e->base + hhdm_offset, BLOCK_SIZE);
+			bitmap = (u8 *)ALIGN_UP(e->base + hhdm_offset, BLOCK_SIZE);
 			memset(bitmap, 0xFF, total_blocks / 8 + 1);
 			break;
 		}
 	}
 
 	/* Free the usable blocks */
-	for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+	for (u64 i = 0; i < memmap_request.response->entry_count; i++)
 	{
 		struct limine_memmap_entry *e = memmap_request.response->entries[i];
 
@@ -80,7 +80,7 @@ void pmm_init()
 
 		for (uintptr_t addr = start; addr < end; addr += BLOCK_SIZE)
 		{
-			uint64_t bid = addr / BLOCK_SIZE;
+			u64 bid = addr / BLOCK_SIZE;
 			if (bid >= total_blocks)
 				continue;
 			pmm_unreserve_block(bid);
@@ -92,12 +92,12 @@ void pmm_init()
 
 	/* Protect Bitmap Area*/
 	uintptr_t phys_bitmap = (uintptr_t)(bitmap - hhdm_offset);
-	uint64_t size = (total_blocks / 8) + 1;
+	u64 size = (total_blocks / 8) + 1;
 	uintptr_t end = ALIGN_UP(phys_bitmap + size, BLOCK_SIZE);
 
 	for (uintptr_t addr = align_down(phys_bitmap, BLOCK_SIZE); addr < end; addr += BLOCK_SIZE)
 	{
-		uint64_t bid = addr / BLOCK_SIZE;
+		u64 bid = addr / BLOCK_SIZE;
 		if (bid < total_blocks)
 			pmm_reserve_block(bid);
 	}
@@ -107,7 +107,7 @@ void pmm_init()
 
 void *pmm_alloc_block()
 {
-	for (uint64_t i = 0; i < total_blocks; i++)
+	for (u64 i = 0; i < total_blocks; i++)
 	{
 		if (!pmm_test_block(i))
 		{
@@ -120,31 +120,31 @@ void *pmm_alloc_block()
 
 void pmm_free_block(void *ptr)
 {
-	uint64_t block = ((uint64_t)ptr) / BLOCK_SIZE;
+	u64 block = ((u64)ptr) / BLOCK_SIZE;
 
 	pmm_unreserve_block(block);
 }
 
-void pmm_free_block_row(void *ptr, uint64_t ammount)
+void pmm_free_block_row(void *ptr, u64 ammount)
 {
-	uint64_t start_block = ((uint64_t)ptr) / BLOCK_SIZE;
+	u64 start_block = ((u64)ptr) / BLOCK_SIZE;
 
-	for (uint64_t i = start_block; i < start_block + ammount; i++)
+	for (u64 i = start_block; i < start_block + ammount; i++)
 	{
 		pmm_unreserve_block(i);
 	}
 }
 
-void *pmm_alloc_block_row(uint64_t ammount)
+void *pmm_alloc_block_row(u64 ammount)
 {
 	if (ammount == 0)
 		return NULL;
 
 	void *base = 0x00;
-	uint64_t base_block = 0;
-	uint64_t free_in_row = 0;
+	u64 base_block = 0;
+	u64 free_in_row = 0;
 
-	for (uint64_t i = 0; i < total_blocks; i++)
+	for (u64 i = 0; i < total_blocks; i++)
 	{
 		if (!pmm_test_block(i))
 		{
@@ -159,10 +159,10 @@ void *pmm_alloc_block_row(uint64_t ammount)
 			if (free_in_row == ammount)
 			{
 				/* Reserve each block */
-				for (uint64_t block = base_block; block < base_block + ammount; block++)
+				for (u64 block = base_block; block < base_block + ammount; block++)
 					pmm_reserve_block(block);
 
-				return (void *)((uint64_t)base);
+				return (void *)((u64)base);
 
 			}
 		}
@@ -176,9 +176,9 @@ void *pmm_alloc_block_row(uint64_t ammount)
 	return NULL;
 }
 
-uint64_t pmm_free_block_count()
+u64 pmm_free_block_count()
 {
-	uint64_t free = 0;
+	u64 free = 0;
 
 	for (block_id_t i = 0; i < total_blocks; i++)
 	{
@@ -190,7 +190,7 @@ uint64_t pmm_free_block_count()
 	return free;
 }
 
-uint64_t pmm_used_block_count()
+u64 pmm_used_block_count()
 {
 	return usable_blocks - pmm_free_block_count();
 }
@@ -198,9 +198,9 @@ uint64_t pmm_used_block_count()
 void pmm_test_all()
 {
 	kprintf("PMM: Testing all blocks...\n");
-	uint64_t tested = 0;
+	u64 tested = 0;
 
-	uint64_t i = 0;
+	u64 i = 0;
 	while (1)
 	{
 		void *ptr = pmm_alloc_block();

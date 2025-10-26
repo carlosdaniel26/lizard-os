@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 
 #define PRIMARY 0
 #define SECONDARY 1
@@ -48,19 +48,19 @@
 #define ATA_DEFAULT_SECTOR_SIZE 512
 
 typedef struct ATADevice {
-	uint8_t id;
-	uint16_t io_base;
-	uint16_t ctrl_base;
-	uint8_t present;
+	u8 id;
+	u16 io_base;
+	u16 ctrl_base;
+	u8 present;
 
 	char model[MODEL_NAME_SIZE];
-	uint16_t cylinders;
-	uint16_t heads;
-	uint16_t sectors;
-	uint16_t sector_size;
+	u16 cylinders;
+	u16 heads;
+	u16 sectors;
+	u16 sector_size;
 
-	uint32_t total_sectors;
-	uint64_t total_bytes;
+	u32 total_sectors;
+	u64 total_bytes;
 } ATADevice;
 
 void ata_detect_devices();

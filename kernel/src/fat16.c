@@ -46,35 +46,35 @@ static inline bool is_valid_entry(const Fat16Directory *entry)
 			entry->attributes != 0xFF);
 }
 
-static uint32_t cluster_to_lba(Fat16 *fs, uint16_t cluster) 
+static u32 cluster_to_lba(Fat16 *fs, u16 cluster) 
 {
 	return	((cluster - 2) * fs->header.sectors_per_cluster)
 		   + fs->data_region_lba;
 		   
 }
 
-static int read_fat_entry(Fat16 *fs, uint16_t cluster, uint16_t *next) 
+static int read_fat_entry(Fat16 *fs, u16 cluster, u16 *next) 
 {
-	uint32_t fat_offset = cluster * FAT16_FAT_ENTRY_SIZE;
-	uint32_t fat_sector = fs->fat_start_lba + (fat_offset / fs->header.bytes_per_sector);
-	uint32_t entry_offset = fat_offset % fs->header.bytes_per_sector;
+	u32 fat_offset = cluster * FAT16_FAT_ENTRY_SIZE;
+	u32 fat_sector = fs->fat_start_lba + (fat_offset / fs->header.bytes_per_sector);
+	u32 entry_offset = fat_offset % fs->header.bytes_per_sector;
 
 	char sector[512];
 	if (block_dev_read(fs->dev, fat_sector, sector, 1) != 0)
 		return -1;
 
-	memcpy(next, sector + entry_offset, sizeof(uint16_t));
+	memcpy(next, sector + entry_offset, sizeof(u16));
 	return 0;
 }
 
-static uint16_t get_next_cluster(Fat16 *fs, uint16_t cluster) 
+static u16 get_next_cluster(Fat16 *fs, u16 cluster) 
 {
-	uint16_t next = FAT16_EOC;
+	u16 next = FAT16_EOC;
 	read_fat_entry(fs, cluster, &next);
 	return next;
 }
 
-static void convert_83_to_string(const uint8_t name[8], const uint8_t ext[3], char *out_string)
+static void convert_83_to_string(const u8 name[8], const u8 ext[3], char *out_string)
 {
 	int pos = 0;
 	
@@ -138,17 +138,17 @@ static inline int find_in_root(Fat16 *fs, const char *filename, Fat16Directory *
 {
 	char buffer[512];
 
-	uint32_t root_dir_entries = fs->header.root_entry_count;
-	uint32_t root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
-	uint32_t root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
+	u32 root_dir_entries = fs->header.root_entry_count;
+	u32 root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
+	u32 root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
 	
 
-	for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
+	for (u32 sector = 0; sector < root_dir_sectors; sector++) 
 	{
 		if (block_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0)
 			return -1;
 
-		for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+		for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
 		{
 			Fat16Directory entry;
 			memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
@@ -167,21 +167,21 @@ static inline int find_in_root(Fat16 *fs, const char *filename, Fat16Directory *
 	return -1; /* Not found */
 }
 
-static inline int find_in_dir(Fat16 *fs, uint16_t start_cluster, const char *filename, Fat16Directory *out)
+static inline int find_in_dir(Fat16 *fs, u16 start_cluster, const char *filename, Fat16Directory *out)
 {
-	uint16_t current_cluster = start_cluster;
+	u16 current_cluster = start_cluster;
 	char buffer[512];
 	size_t total_entries_checked = 0;
 
 	do {
-		uint32_t lba = cluster_to_lba(fs, current_cluster);
+		u32 lba = cluster_to_lba(fs, current_cluster);
 
-		for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
+		for (u8 sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
 		{
 			if (block_dev_read(fs->dev, lba + sector, buffer, 1) != 0)
 				return -1;
 
-			for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+			for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
 			{
 				Fat16Directory entry;
 				memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
@@ -232,13 +232,13 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
 		return -1;
 	}
 
-	uint32_t file_size = entry->file_size_bytes;
-	uint16_t current_cluster = entry->first_cluster_low;
-	uint32_t bytes_read = 0;
+	u32 file_size = entry->file_size_bytes;
+	u16 current_cluster = entry->first_cluster_low;
+	u32 bytes_read = 0;
 	
-	uint8_t sectors_per_cluster = fs->header.sectors_per_cluster;
+	u8 sectors_per_cluster = fs->header.sectors_per_cluster;
 	
-	uint32_t data_start_lba = fs->root_dir_lba + 
+	u32 data_start_lba = fs->root_dir_lba + 
 							 (fs->header.root_entry_count * 32 + 511) / 512;
 
 	char sector_buffer[512];
@@ -246,7 +246,7 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
 	
 	while (current_cluster >= 0x0002 && current_cluster <= 0xFFEF && bytes_read < file_size)
 	{
-		uint32_t cluster_lba = data_start_lba + 
+		u32 cluster_lba = data_start_lba + 
 							  (current_cluster - 2) * sectors_per_cluster;
 		
 		for (int i = 0; i < sectors_per_cluster && bytes_read < file_size; i++) 
@@ -256,7 +256,7 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
 				return -1;
 			}
 			
-			uint32_t bytes_to_copy = 512;
+			u32 bytes_to_copy = 512;
 
 			if (bytes_read + bytes_to_copy > file_size) 
 				bytes_to_copy = file_size - bytes_read;
@@ -288,17 +288,17 @@ int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, siz
 	{
 		char buffer[512];
 
-		uint32_t root_dir_entries = fs->header.root_entry_count;
-		uint32_t root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
-		uint32_t root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
+		u32 root_dir_entries = fs->header.root_entry_count;
+		u32 root_dir_size = root_dir_entries * FAT16_DIR_ENTRY_SIZE;
+		u32 root_dir_sectors = DIV_ROUND_UP(root_dir_size, fs->header.bytes_per_sector);
 		
 
-		for (uint32_t sector = 0; sector < root_dir_sectors; sector++) 
+		for (u32 sector = 0; sector < root_dir_sectors; sector++) 
 		{
 			if (block_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0)
 				return -1;
 
-			for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+			for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
 			{
 				Fat16Directory entry;
 				memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));
@@ -325,18 +325,18 @@ int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, siz
 		if (!(dir.attributes & FAT16_ATTR_DIRECTORY))
 			return -1; /* Not a directory */
 
-		uint16_t current_cluster = dir.first_cluster_low;
+		u16 current_cluster = dir.first_cluster_low;
 		char buffer[512];
 
 		do {
-			uint32_t lba = cluster_to_lba(fs, current_cluster);
+			u32 lba = cluster_to_lba(fs, current_cluster);
 
-			for (uint8_t sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
+			for (u8 sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
 			{
 				if (block_dev_read(fs->dev, lba + sector, buffer, 1) != 0)
 					return -1;
 
-				for (uint16_t i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
+				for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
 				{
 					Fat16Directory entry;
 					memcpy(&entry, buffer + (i * FAT16_DIR_ENTRY_SIZE), sizeof(Fat16Directory));

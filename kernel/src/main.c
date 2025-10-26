@@ -15,7 +15,7 @@
 #include <ss.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 #include <tty.h>
 #include <vmm.h>
 
@@ -30,7 +30,7 @@ __attribute__((used,
 
 __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
 
-uint64_t stack_start;
+u64 stack_start;
 
 void kmain()
 {

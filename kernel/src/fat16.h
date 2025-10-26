@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 
 #include <block_dev.h>
 
@@ -29,54 +29,54 @@
 #define FAT16_ATTR_ARCHIVE 0x20
 
 typedef struct FatHeader {
-	uint8_t jump_boot[3];
-	uint8_t oem_name[8];
-	uint16_t bytes_per_sector;
-	uint8_t sectors_per_cluster;
-	uint16_t reserved_sector_count;
-	uint8_t num_fats;
-	uint16_t root_entry_count; /* can't change*/
-	uint16_t total_sectors_16;
-	uint8_t media_descriptor;
-	uint16_t fat_size_16;
-	uint16_t sectors_per_track;
-	uint16_t num_heads;
-	uint32_t hidden_sectors;
-	uint32_t total_sectors_32;
-	uint8_t drive_number;
-	uint8_t reserved;
-	uint8_t boot_signature;
-	uint32_t volume_id;
-	uint8_t volume_label[11];
-	uint8_t fs_type[8];
+	u8 jump_boot[3];
+	u8 oem_name[8];
+	u16 bytes_per_sector;
+	u8 sectors_per_cluster;
+	u16 reserved_sector_count;
+	u8 num_fats;
+	u16 root_entry_count; /* can't change*/
+	u16 total_sectors_16;
+	u8 media_descriptor;
+	u16 fat_size_16;
+	u16 sectors_per_track;
+	u16 num_heads;
+	u32 hidden_sectors;
+	u32 total_sectors_32;
+	u8 drive_number;
+	u8 reserved;
+	u8 boot_signature;
+	u32 volume_id;
+	u8 volume_label[11];
+	u8 fs_type[8];
 } __attribute__((packed)) FatHeader;
 
 typedef struct Fat16Directory {
-	uint8_t name[8];
-	uint8_t extension[3];
-	uint8_t attributes;
-	uint8_t reserved1;
-	uint8_t creation_time_tenths;
-	uint16_t creation_time;
-	uint16_t creation_date;
-	uint16_t last_access_date;
-	uint16_t reserved2;
-	uint16_t write_time;
-	uint16_t write_date;
-	uint16_t first_cluster_low;
-	uint32_t file_size_bytes;
+	u8 name[8];
+	u8 extension[3];
+	u8 attributes;
+	u8 reserved1;
+	u8 creation_time_tenths;
+	u16 creation_time;
+	u16 creation_date;
+	u16 last_access_date;
+	u16 reserved2;
+	u16 write_time;
+	u16 write_date;
+	u16 first_cluster_low;
+	u32 file_size_bytes;
 } __attribute__((packed)) Fat16Directory;
 
 typedef struct Fat16 {
 	FatHeader header;
 	BlockDevice *dev;
 
-	uint32_t fat_start_lba;
-	uint32_t root_dir_lba;
-	uint32_t data_region_lba;
+	u32 fat_start_lba;
+	u32 root_dir_lba;
+	u32 data_region_lba;
 
-	uint32_t root_dir_sectors;
-	uint32_t total_clusters;
+	u32 root_dir_sectors;
+	u32 total_clusters;
 } Fat16;
 
 int fat16_detect(BlockDevice *dev);

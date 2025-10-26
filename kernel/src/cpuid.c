@@ -1,12 +1,12 @@
 #include <cpuid.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <types.h>
 #include <string.h>
 #include <tty.h>
 
 CPUID g_cpuid;
 
-void cpuid(uint32_t code, uint32_t *output)
+void cpuid(u32 code, u32 *output)
 {
 	__asm__ __volatile__("cpuid"
 						 : "=a"(output[0]), "=b"(output[1]), "=c"(output[2]), "=d"(output[3])
@@ -20,10 +20,10 @@ void init_cpuid()
 
 void cpuid_get_brand()
 {
-	uint32_t regs[4];
+	u32 regs[4];
 	char *brand = g_cpuid.brand_name;
 
-	for (uint32_t i = 0; i < 3; i++)
+	for (u32 i = 0; i < 3; i++)
 	{
 		cpuid(0x80000002 + i, regs);
 
@@ -36,9 +36,9 @@ void cpuid_get_brand()
 	brand[48] = '\0';
 }
 
-int cpuid_get_feature(uint64_t feature_id)
+int cpuid_get_feature(u64 feature_id)
 {
-	uint32_t registers[4];
+	u32 registers[4];
 
 	cpuid(0x01, &registers[0]);
 
@@ -51,7 +51,7 @@ int cpuid_get_feature(uint64_t feature_id)
 
 bool check_apic()
 {
-	uint32_t output[4];
+	u32 output[4];
 
 	cpuid(1, output);
 

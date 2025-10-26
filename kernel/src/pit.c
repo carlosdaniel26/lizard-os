@@ -20,7 +20,7 @@ extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 static inline void pit_mask()
 {
 #define PIC1_DATA 0x21
-	uint8_t mask = inb(PIC1_DATA);
+	u8 mask = inb(PIC1_DATA);
 	mask |= 0x01;
 	outb(PIC1_DATA, mask);
 }
@@ -28,7 +28,7 @@ static inline void pit_mask()
 static inline void pit_unmask()
 {
 #define PIC1_DATA 0x21
-	uint8_t mask = inb(PIC1_DATA);
+	u8 mask = inb(PIC1_DATA);
 	mask |= 0x01;
 	mask ^= 0x01;
 	outb(PIC1_DATA, mask);

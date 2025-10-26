@@ -1,22 +1,22 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 #include <string.h>
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
 
 void clear_framebuffer();
-void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth);
-void draw_pixel(uint64_t x, uint64_t y, uint32_t color);
-void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character);
-void scroll_framebuffer(uint32_t pixels);
+void setup_framebuffer(u64 w, u64 h, u32 *fb, u32 pth);
+void draw_pixel(u64 x, u64 y, u32 color);
+void draw_char(u64 x_index, u64 y_index, u32 color, char character);
+void scroll_framebuffer(u32 pixels);
 
-extern uint32_t *framebuffer;
-extern uint64_t height;
-extern uint64_t width;
-extern uint32_t pitch;
+extern u32 *framebuffer;
+extern u64 height;
+extern u64 width;
+extern u32 pitch;
 
-extern uint32_t framebuffer_length;
+extern u32 framebuffer_length;
 

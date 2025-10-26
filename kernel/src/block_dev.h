@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -16,11 +16,11 @@ typedef struct BlockDeviceOps {
 
 typedef struct BlockDevice	{
 	char name[32];
-	uint32_t id;
+	u32 id;
 
-	uint64_t total_sectors;
-	uint32_t sector_size;
-	uint32_t max_transfer_sectors;
+	u64 total_sectors;
+	u32 sector_size;
+	u32 max_transfer_sectors;
 
 	BlockDeviceOps *ops;
 	void *private_data;
@@ -28,8 +28,8 @@ typedef struct BlockDevice	{
 	bool initialized;
 	bool read_only;
 
-	uint64_t read_count;
-	uint64_t write_count;
+	u64 read_count;
+	u64 write_count;
 
 	bool present;
 } BlockDevice;
@@ -42,9 +42,9 @@ int block_dev_unregister(BlockDevice *dev);
 BlockDevice *block_device_find(const char *name);
 
 /* Utility functions */
-uint64_t block_dev_size(BlockDevice *dev);  /* in bytes */
+u64 block_dev_size(BlockDevice *dev);  /* in bytes */
 bool block_dev_ready(BlockDevice *dev);
 
 /* Public API */
-int block_dev_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count);
-int block_dev_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count);
+int block_dev_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
+int block_dev_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);

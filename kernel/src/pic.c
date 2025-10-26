@@ -1,6 +1,6 @@
 #include <idt.h>
 #include <io.h>
-#include <stdint.h>
+#include <types.h>
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA 0x21
@@ -47,7 +47,7 @@ void PIC_remap()
 	outb(PIC2_DATA, 0x00);
 }
 
-void PIC_sendEOI(uint8_t irq)
+void PIC_sendEOI(u8 irq)
 {
 	if (SLAVE_PIC_HAS_TO_BE_WARNED)
 	{
@@ -57,10 +57,10 @@ void PIC_sendEOI(uint8_t irq)
 	outb(PIC1_COMMAND, PIC_EOI);
 }
 
-void PIC_unmaskIRQ(uint8_t irq)
+void PIC_unmaskIRQ(u8 irq)
 {
-	uint16_t port;
-	uint8_t value;
+	u16 port;
+	u8 value;
 
 	if (irq < 8)
 	{

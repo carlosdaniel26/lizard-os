@@ -1,5 +1,5 @@
 #include <helpers.h>
-#include <stdint.h>
+#include <types.h>
 #include <stdio.h>
 #include <string.h>
 #include <task.h>
@@ -18,15 +18,15 @@ void task_init()
 	task_create(&proc1, &proc1_func, "proc1", 1);
 }
 
-void task_create(struct Task *task, void (*entry_point)(void), const char *name, uint32_t priority)
+void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority)
 {
 	/* task->name = name */
 	memcpy(task->name, name, strlen(name));
 
 	task->priority = priority;
-	task->regs.rip = (uint64_t)entry_point;
+	task->regs.rip = (u64)entry_point;
 
-	uint64_t ptr = (uint64_t)pmm_alloc_block() + hhdm_offset;
+	u64 ptr = (u64)pmm_alloc_block() + hhdm_offset;
 	memset((void *)ptr, 0, 4096);
 
 	task->regs.rsp = ptr + 4096;

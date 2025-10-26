@@ -21,7 +21,7 @@ static inline void check_magic_number(KMemoryHeader *header)
 
 static bool kmalloc_extend_heap(size_t size)
 {
-	uint64_t blocks = (uint64_t)DIV_ROUND_UP(size, 4096);
+	u64 blocks = (u64)DIV_ROUND_UP(size, 4096);
 
 	void *new_block_addr = pmm_alloc_block_row(blocks) + hhdm_offset;
 	if (!new_block_addr)

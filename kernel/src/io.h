@@ -1,21 +1,21 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 
-uint8_t inb(uint16_t port);
-uint16_t inw(uint16_t port);
-uint32_t inl(uint16_t port);
-void outb(uint16_t port, uint8_t value);
-void outw(uint16_t port, uint16_t value);
-void outl(uint16_t port, uint32_t value);
+u8 inb(u16 port);
+u16 inw(u16 port);
+u32 inl(u16 port);
+void outb(u16 port, u8 value);
+void outw(u16 port, u16 value);
+void outl(u16 port, u32 value);
 
-#define out_u8(port, value) outb((uint16_t)(port), (uint8_t)(value))
-#define out_u16(port, value) outw((uint16_t)(port), (uint16_t)(value))
-#define out_u32(port, value) outl((uint16_t)(port), (uint32_t)(value))
+#define out_u8(port, value) outb((u16)(port), (u8)(value))
+#define out_u16(port, value) outw((u16)(port), (u16)(value))
+#define out_u32(port, value) outl((u16)(port), (u32)(value))
 
-#define in_u8(port, value) inb((uint16_t)(port))
-#define in_u16(port, value) inw((uint16_t)(port))
-#define in_u32(port, value) inl((uint16_t)(port))
+#define in_u8(port, value) inb((u16)(port))
+#define in_u16(port, value) inw((u16)(port))
+#define in_u32(port, value) inl((u16)(port))
 
 void io_wait(void);
 

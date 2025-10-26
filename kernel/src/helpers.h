@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 
 #define BIT_SET(byte, index) (byte |= (1 << ((index) % 8)))
 #define BIT_CLEAR(byte, index) (byte &= ~(1 << ((index) % 8)))
@@ -19,12 +19,12 @@
 char toupper(char c);
 
 struct Uptime {
-	uint8_t years;
-	uint8_t months;
-	uint8_t days;
-	uint8_t hours;
-	uint8_t minutes;
-	uint8_t seconds;
+	u8 years;
+	u8 months;
+	u8 days;
+	u8 hours;
+	u8 minutes;
+	u8 seconds;
 };
 
 void hlt();

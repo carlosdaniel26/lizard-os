@@ -1,7 +1,7 @@
 #include <alias.h>
 #include <io.h>
 #include <rtc.h>
-#include <stdint.h>
+#include <types.h>
 #include <stdio.h>
 
 /* Ports for RTC communication*/
@@ -32,13 +32,13 @@ void isr_timer()
 
 void enable_rtc_interrupts()
 {
-	uint8_t rate = 6;
+	u8 rate = 6;
 	/* 1. Unmask IRQ8 in the PIC*/
 	outb(PIC2_DATA, inb(PIC2_DATA) & ~0x01);
 
 	/* 2. Enable RTC periodic interrupt*/
 	outb(RTC_COMMAND_PORT, 0x8B);	   /* Select Register B*/
-	uint8_t prev = inb(RTC_DATA_PORT); /* Read current value*/
+	u8 prev = inb(RTC_DATA_PORT); /* Read current value*/
 	outb(RTC_COMMAND_PORT, 0x8B);	   /* Select again to write*/
 	outb(RTC_DATA_PORT, prev | 0x40);  /* Set bit 6 (enable periodic interrupt)*/
 
@@ -55,21 +55,21 @@ void enable_rtc_interrupts()
 	inb(RTC_DATA_PORT); /* Read the data port to clear the interrupt*/
 }
 
-static uint8_t bcd_to_binary(uint8_t bcd)
+static u8 bcd_to_binary(u8 bcd)
 {
 	return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
 }
 
-/* static void rtc_write(uint8_t reg, uint8_t value)*/
+/* static void rtc_write(u8 reg, u8 value)*/
 /* {*/
 /*	outb(RTC_COMMAND_PORT, reg);*/
 /*	outb(RTC_DATA_PORT, value);*/
 /* }*/
 
-static uint8_t rtc_read_b(uint8_t reg)
+static u8 rtc_read_b(u8 reg)
 {
 	outb(RTC_COMMAND_PORT, reg);
-	uint8_t result = inb(RTC_DATA_PORT);
+	u8 result = inb(RTC_DATA_PORT);
 
 	return bcd_to_binary(result);
 }
@@ -142,9 +142,9 @@ static inline void utc_to_local()
 
 void rtc_refresh_time()
 {
-	uint8_t *RTC_array = (uint8_t *)&RTC_clock;
+	u8 *RTC_array = (u8 *)&RTC_clock;
 
-	for (uint8_t reg = 0; reg <= 0xD; reg++)
+	for (u8 reg = 0; reg <= 0xD; reg++)
 	{
 		/* Write the register index to the RTC command port*/
 
@@ -154,7 +154,7 @@ void rtc_refresh_time()
 	utc_to_local();
 }
 
-const char *get_month_string(uint8_t month_id)
+const char *get_month_string(u8 month_id)
 {
 	return months_strings[month_id];
 }

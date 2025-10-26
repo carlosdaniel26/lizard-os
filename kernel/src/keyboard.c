@@ -2,7 +2,7 @@
 #include <io.h>
 #include <keyboard.h>
 #include <pic.h>
-#include <stdint.h>
+#include <types.h>
 #include <tty.h>
 
 #define KEYBOARD_DATA_PORT 0x60
@@ -20,7 +20,7 @@ __attribute__((interrupt)) void isr_keyboard(void *frame)
 
 	while (inb(0x64) & 0x01)
 	{
-		uint8_t scancode = inb(KEYBOARD_DATA_PORT);
+		u8 scancode = inb(KEYBOARD_DATA_PORT);
 		tty_handler_input(scancode);
 	}
 	PIC_sendEOI(1);

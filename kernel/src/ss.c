@@ -37,7 +37,7 @@ static inline void lzfetch()
 	struct Uptime time = {0};
 	time = calculate_uptime();
 
-	uint64_t mem_ammount_mb = mem_ammount_b / (1024 * 1024);
+	u64 mem_ammount_mb = mem_ammount_b / (1024 * 1024);
 
 	kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
 	kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
@@ -66,16 +66,16 @@ void free()
 {
 	#define BLOCK_SIZE 4096
 
-	uint32_t free_blocks = pmm_free_block_count();
-	uint32_t used_blocks = pmm_used_block_count();
+	u32 free_blocks = pmm_free_block_count();
+	u32 used_blocks = pmm_used_block_count();
 
-	uint32_t free_kb = (free_blocks * BLOCK_SIZE) / 1024;
-	uint32_t used_kb = (used_blocks * BLOCK_SIZE) / 1024;
-	uint32_t total_kb = (usable_blocks * BLOCK_SIZE) / 1024;
+	u32 free_kb = (free_blocks * BLOCK_SIZE) / 1024;
+	u32 used_kb = (used_blocks * BLOCK_SIZE) / 1024;
+	u32 total_kb = (usable_blocks * BLOCK_SIZE) / 1024;
 
-	uint32_t free_mb = (free_kb + 512) / 1024;
-	uint32_t used_mb = (used_kb + 512) / 1024;
-	uint32_t total_mb = (total_kb + 512) / 1024;
+	u32 free_mb = (free_kb + 512) / 1024;
+	u32 used_mb = (used_kb + 512) / 1024;
+	u32 total_mb = (total_kb + 512) / 1024;
 
 	#define print_mem(value_kb, value_mb)															   \
 		((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))

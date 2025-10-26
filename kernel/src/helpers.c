@@ -1,6 +1,6 @@
 #include <helpers.h>
 #include <rtc.h>
-#include <stdint.h>
+#include <types.h>
 
 void hlt()
 {
@@ -34,9 +34,9 @@ char toupper(char c)
 
 struct RTC_timer boot_time;
 
-static uint8_t days_in_month(uint8_t month, uint8_t year)
+static u8 days_in_month(u8 month, u8 year)
 {
-	static const uint8_t days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	static const u8 days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (month == 2)
 	{
 		if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))

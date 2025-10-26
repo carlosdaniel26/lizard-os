@@ -8,9 +8,9 @@
 
 void kpanic(const char *str)
 {
-	extern uint32_t tty_color;
+	extern u32 tty_color;
 
-	uint32_t temp = tty_color;
+	u32 temp = tty_color;
 
 	tty_color = VGA_COLOR_RED;
 	kprintf("[PANIC]");
@@ -94,17 +94,17 @@ int kprintf(const char *restrict format, ...)
 		} else if (strsIsEqual(format, "llu", 3))
 		{
 			format += 3;
-			uint64_t number = (uint64_t)va_arg(parameters, uint64_t);
+			u64 number = (u64)va_arg(parameters, u64);
 			if (!maxrem)
 			{
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			uint32_t size = get_unsigned2string_final_size(number);
+			u32 size = get_unsigned2string_final_size(number);
 			char str[size];
 			memset(str, 0, sizeof(str));
 
-			unsigned_to_string((uint64_t)number, str);
+			unsigned_to_string((u64)number, str);
 			if (!kprint(str, sizeof(str)))
 				return -1;
 			written += size;
@@ -118,11 +118,11 @@ int kprintf(const char *restrict format, ...)
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			uint32_t size = get_unsigned2string_final_size(number);
+			u32 size = get_unsigned2string_final_size(number);
 			char str[size];
 			memset(str, 0, sizeof(str));
 
-			unsigned_to_string((uint64_t)number, str);
+			unsigned_to_string((u64)number, str);
 			if (!kprint(str, sizeof(str)))
 				return -1;
 			written++;
@@ -136,11 +136,11 @@ int kprintf(const char *restrict format, ...)
 				/* TODO: Set errno to EOVERFLOW.*/
 				return -1;
 			}
-			uint32_t size = get_unsigned2hex_final_size(number);
+			u32 size = get_unsigned2hex_final_size(number);
 			char str[size + 1];
 			memset(str, 0, sizeof(str));
 
-			unsigned_to_hexstring((uint64_t)number, str);
+			unsigned_to_hexstring((u64)number, str);
 			if (!kprint(str, sizeof(str) - 1))
 				return -1;
 			written++;

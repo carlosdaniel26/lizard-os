@@ -1,23 +1,23 @@
 #pragma once
 
-#include <stdint.h>
+#include <types.h>
 
-typedef uint64_t block_id_t;
+typedef u64 block_id_t;
 
 void kprint_ammount_mem_mb();
 void pmm_init();
 void *pmm_alloc_block();
-void *pmm_alloc_block_row(uint64_t ammount);
+void *pmm_alloc_block_row(u64 ammount);
 void pmm_free_block(void *ptr);
-void pmm_free_block_row(void *ptr, uint64_t ammount);
-uint64_t pmm_free_block_count();
-uint64_t pmm_used_block_count();
+void pmm_free_block_row(void *ptr, u64 ammount);
+u64 pmm_free_block_count();
+u64 pmm_used_block_count();
 
-extern uint64_t hhdm_offset;
-extern uint64_t mem_ammount_b;
-extern uint64_t usable_memory;
+extern u64 hhdm_offset;
+extern u64 mem_ammount_b;
+extern u64 usable_memory;
 
-extern uint8_t *bitmap;
-extern uint64_t total_blocks;
-extern uint64_t usable_blocks;
+extern u8 *bitmap;
+extern u64 total_blocks;
+extern u64 usable_blocks;
 

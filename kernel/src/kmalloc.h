@@ -6,7 +6,7 @@
 #define KMALLOC_MAGIC 0x4C4D414C /* LMAL */
 
 typedef struct __attribute__((packed)) KMemoryHeader {
-	uint32_t magic;
+	u32 magic;
 	struct KMemoryHeader *prev;
 	struct KMemoryHeader *next;
 	size_t size;

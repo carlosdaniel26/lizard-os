@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 BlockDevice *block_devs[MAX_BLOCK_DEVICES] = {0};
-static uint32_t block_dev_count = 0;
+static u32 block_dev_count = 0;
 
 int block_dev_register(BlockDevice *dev)
 {
@@ -27,7 +27,7 @@ int block_dev_register(BlockDevice *dev)
 		return -1;
 	}
 	
-	for (uint32_t i = 0; i < block_dev_count; i++) 
+	for (u32 i = 0; i < block_dev_count; i++) 
 	{
 		if (strcmp(block_devs[i]->name, dev->name) == 0) {
 			kprintf("block_device_register: device name '%s' already exists\n", dev->name);
@@ -46,7 +46,7 @@ int block_dev_register(BlockDevice *dev)
 	return 0;
 }
 
-int block_dev_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count)
+int block_dev_read(BlockDevice *dev, u64 sector, void *buffer, size_t count)
 {
 	if (!dev || !dev->ops || !dev->ops->read) {
 		kprintf("block_dev_read: invalid device or read operation\n");
@@ -56,7 +56,7 @@ int block_dev_read(BlockDevice *dev, uint64_t sector, void *buffer, size_t count
 	return dev->ops->read(dev, sector, buffer, count);
 }
 
-int block_dev_write(BlockDevice *dev, uint64_t sector, const void *buffer, size_t count)
+int block_dev_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count)
 {
 	if (!dev || !dev->ops || !dev->ops->write) {
 		kprintf("block_dev_write: invalid device or write operation\n");

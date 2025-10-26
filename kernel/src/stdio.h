@@ -2,10 +2,10 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 #include <vga.h>
 
-extern uint32_t tty_color;
+extern u32 tty_color;
 
 #define EOF (-1)
 typedef int (*pfnStreamWriteBuf)(char *);

@@ -1,16 +1,16 @@
 #include <framebuffer.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <types.h>
 #include <string.h>
 
-uint32_t *framebuffer;
-uint64_t height;
-uint64_t width;
-uint32_t pitch;
+u32 *framebuffer;
+u64 height;
+u64 width;
+u32 pitch;
 
-uint32_t framebuffer_length;
+u32 framebuffer_length;
 
-extern uint32_t tty_bg_color;
+extern u32 tty_bg_color;
 
 static unsigned char font[] = {
 	0x00, 0x00, 0x00, 0x3e, 0x63, 0x5d, 0x7d, 0x7b, 0x77, 0x77, 0x7f, 0x77, 0x3e, 0x00, 0x00, 0x00,
@@ -272,16 +272,16 @@ static unsigned char font[] = {
 
 void clear_framebuffer()
 {
-	for (uint64_t y = 0; y < height; y++)
+	for (u64 y = 0; y < height; y++)
 	{
-		for (uint64_t x = 0; x < width; x++)
+		for (u64 x = 0; x < width; x++)
 		{
 			framebuffer[y * (pitch / 4) + x] = tty_bg_color;
 		}
 	}
 }
 
-void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth)
+void setup_framebuffer(u64 w, u64 h, u32 *fb, u32 pth)
 {
 	framebuffer = fb;
 	pitch = pth;
@@ -291,39 +291,39 @@ void setup_framebuffer(uint64_t w, uint64_t h, uint32_t *fb, uint32_t pth)
 	/* framebuffer length assigned on pmm.c: pmm_init() function */
 }
 
-void draw_pixel(uint64_t x, uint64_t y, uint32_t color)
+void draw_pixel(u64 x, u64 y, u32 color)
 {
 	framebuffer[(y * (pitch / 4)) + x] = color;
 }
 
-void draw_char(uint64_t x_index, uint64_t y_index, uint32_t color, char character)
+void draw_char(u64 x_index, u64 y_index, u32 color, char character)
 {
-	uint64_t first_byte_idx = character * FONT_HEIGHT;
-	uint32_t bg_color = tty_bg_color;
+	u64 first_byte_idx = character * FONT_HEIGHT;
+	u32 bg_color = tty_bg_color;
 	for (size_t y = 0; y < FONT_HEIGHT; y++)
 	{
-		uint8_t row_data = font[first_byte_idx + y];
+		u8 row_data = font[first_byte_idx + y];
 		for (size_t x = 0; x < FONT_WIDTH; x++)
 		{
-			uint32_t pixel_color = (row_data >> (7 - x)) & 1 ? color : bg_color;
+			u32 pixel_color = (row_data >> (7 - x)) & 1 ? color : bg_color;
 			draw_pixel(x_index + x, y_index + y, pixel_color);
 		}
 	}
 }
 
-void scroll_framebuffer(uint32_t pixels)
+void scroll_framebuffer(u32 pixels)
 {
 	if (pixels == 0 || pixels >= height)
 		return;
 
-	uint32_t *fb_ptr = (uint32_t *)framebuffer;
-	uint32_t scroll_offset = pixels * width;
-	uint32_t move_pixels = (height - pixels) * width;
+	u32 *fb_ptr = (u32 *)framebuffer;
+	u32 scroll_offset = pixels * width;
+	u32 move_pixels = (height - pixels) * width;
 
-	memmove(fb_ptr, fb_ptr + scroll_offset, move_pixels * sizeof(uint32_t));
+	memmove(fb_ptr, fb_ptr + scroll_offset, move_pixels * sizeof(u32));
 
-	uint32_t *clear_start = fb_ptr + move_pixels;
-	for (uint32_t i = 0; i < scroll_offset; i++)
+	u32 *clear_start = fb_ptr + move_pixels;
+	for (u32 i = 0; i < scroll_offset; i++)
 	{
 		clear_start[i] = tty_bg_color;
 	}
