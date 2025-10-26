@@ -9,6 +9,20 @@
 #define TERMINAL_BG_COLOR VGA_COLOR_BLACK
 #define TERMINAL_COLOR VGA_COLOR_WHITE
 
+extern size_t terminal_width;
+extern size_t terminal_height;
+
+extern size_t terminal_text_width;
+extern size_t terminal_text_height;
+
+extern size_t terminal_row;
+extern size_t terminal_column;
+extern uint32_t terminal_color;
+extern uint32_t terminal_background_color;
+
+extern size_t cmd_start_column;
+extern size_t cmd_start_row;
+
 void tty_initialize();
 void tty_clean();
 void tty_putentryat(char c, uint32_t color, size_t x, size_t y);

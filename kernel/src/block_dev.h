@@ -34,6 +34,8 @@ typedef struct BlockDevice	{
 	bool present;
 } BlockDevice;
 
+extern BlockDevice *block_devs[];
+
 /* Block layer management */
 int block_dev_register(BlockDevice *dev);
 int block_dev_unregister(BlockDevice *dev);

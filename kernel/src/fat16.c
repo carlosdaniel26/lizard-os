@@ -9,8 +9,6 @@
 #include <vfs_conf.h>
 #include <block_dev.h>
 
-extern BlockDevice *block_devs[];
-
 /* ===== CONSTANTS ===== */
 
 /* FAT16 Boot Sector Signatures */

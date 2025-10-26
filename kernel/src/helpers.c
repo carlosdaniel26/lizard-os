@@ -32,7 +32,6 @@ char toupper(char c)
 	return c;
 }
 
-extern struct RTC_timer RTC_clock;
 struct RTC_timer boot_time;
 
 static uint8_t days_in_month(uint8_t month, uint8_t year)

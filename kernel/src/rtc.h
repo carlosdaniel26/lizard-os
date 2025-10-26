@@ -18,6 +18,8 @@ struct RTC_timer {
 	uint8_t status_register_D; /* D*/
 };
 
+extern struct RTC_timer RTC_clock;
+
 void isr_timer();
 void enable_rtc_interrupts();
 void rtc_refresh_time();

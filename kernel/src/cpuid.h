@@ -107,6 +107,8 @@ typedef struct CPUID {
 	char brand_name[49];
 } CPUID;
 
+extern CPUID cpu;
+
 void init_cpuid();
 void cpuid(uint32_t code, uint32_t *output);
 void cpuid_get_brand();

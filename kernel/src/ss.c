@@ -7,19 +7,7 @@
 #include <string.h>
 #include <tty.h>
 #include <vga.h>
-
-extern size_t cmd_start_column;
-extern size_t cmd_start_row;
-extern size_t terminal_row;
-extern size_t terminal_column;
-
-extern uint32_t height;
-extern uint32_t width;
-
-extern uint32_t terminal_color;
-extern uint32_t terminal_background_color;
-
-extern CPUID cpu;
+#include <framebuffer.h>
 
 void kprint_prompt()
 {
