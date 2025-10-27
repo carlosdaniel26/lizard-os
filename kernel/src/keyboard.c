@@ -4,6 +4,7 @@
 #include <pic.h>
 #include <types.h>
 #include <tty.h>
+#include <stdio.h>
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_PIC_MASK 0x01
@@ -12,6 +13,7 @@ void init_keyboard()
 {
 	PIC_unmaskIRQ(KEYBOARD_PIC_MASK);
 	set_idt_gate(33, isr_keyboard, 0x8E);
+	debug_printf("Keyboard: Initialized.\n");
 }
 
 __attribute__((interrupt)) void isr_keyboard(void *frame)

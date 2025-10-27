@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <types.h>
 #include <string.h>
+#include <stdio.h>
 #include <vmm.h>
 #include <framebuffer.h>
 
@@ -134,6 +135,7 @@ void vmm_init()
 				 PAGE_PRESENT | PAGE_WRITABLE);
 
 	vmm_load_pml4();
+	debug_printf("VMM: Initialized.\n");
 }
 
 void *vmm_alloc_page(void *pml4)

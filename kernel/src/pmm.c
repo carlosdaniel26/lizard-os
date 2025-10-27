@@ -102,6 +102,8 @@ void pmm_init()
 			pmm_reserve_block(bid);
 	}
 
+	debug_printf("PMM: Initialized. Total Memory: %u bytes, Usable Memory: %u bytes\n", mem_ammount_b,
+				 usable_memory);
 	// pmm_test_all();
 }
 
