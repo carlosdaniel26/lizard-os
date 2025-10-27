@@ -113,8 +113,6 @@ void ata_detect_devices()
 		{
 			ata_dev->total_sectors = (u32)ata_dev->cylinders * ata_dev->heads * ata_dev->sectors;
 		}
-		
-		ata_dev->total_bytes = (u64)ata_dev->total_sectors * 512;
 
 		/* Get Sector Size */
 		if (identify_data[117])
@@ -125,6 +123,8 @@ void ata_detect_devices()
 		{
 			ata_dev->sector_size = ATA_DEFAULT_SECTOR_SIZE;
 		}
+
+		ata_dev->total_bytes = (u64)ata_dev->total_sectors * ata_dev->sector_size;
 
 		for (int i = 0; i < 20; i++) 
 		{
