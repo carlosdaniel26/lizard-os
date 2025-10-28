@@ -95,6 +95,19 @@ void free()
 	#undef print_mem
 }
 
+void uptime()
+{
+	struct Uptime time = {0};
+	time = calculate_uptime();
+
+	kprintf("Uptime: %ud %uH:%uM:%us\n", time.days, time.hours, time.minutes, time.seconds);
+}
+
+void ms()
+{
+	kprintf("Uptime: [%u.%u] milliseconds\n", uptime_seconds(), pit_milliseconds);
+}
+
 extern struct RTC_timer RTC_clock;
 
 static inline void date()
@@ -120,5 +133,17 @@ void runcmd(const char *command)
 	} else if (CMD_IS(command, "date"))
 	{
 		date();
+	}
+	else if (CMD_IS(command, "uptime"))
+	{
+		uptime();
+	} 
+	else if (CMD_IS(command, "ms"))
+	{
+		ms();
+	}
+	else
+	{
+		kprintf("Command not found: %s\n", command);
 	}
 }

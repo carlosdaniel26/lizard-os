@@ -105,3 +105,10 @@ struct Uptime calculate_uptime()
 
 	return up;
 }
+
+u64 uptime_seconds()
+{
+	struct Uptime up = calculate_uptime();
+	return up.seconds + up.minutes * 60 + up.hours * 3600 + up.days * 86400 +
+		   up.months * 2592000 + up.years * 31536000;
+}

@@ -57,6 +57,7 @@ void kmain()
 					  framebuffer->pitch);
 	init_cpuid();
 	tty_initialize();
+	pit_init();
 	pmm_init();
 	init_gdt();
 	init_idt();
@@ -68,7 +69,6 @@ void kmain()
 	//vfs_init();
 	PIC_remap();
 	init_keyboard();
-	pit_init();
 	enable_scheduler();
 	hlt();
 }

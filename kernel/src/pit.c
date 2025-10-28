@@ -19,7 +19,7 @@
 
 extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 
-volatile u64 milliseconds = 0;
+volatile u64 pit_milliseconds = 0;
 
 static inline void pit_mask()
 {
@@ -46,13 +46,31 @@ void pit_init()
 	outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
 
 	isr_table[PIT_ISR_INDEX] = &isr_pit;
+
+	/* Synchronize RTC and PIT to avoid time glitches */
+	rtc_refresh_time();
+	u8 initial_second = rtc_read_b(0x00);
+	u8 current_second = initial_second;
+
+	do {
+		rtc_refresh_time();
+		current_second = rtc_read_b(0x00);
+	} while (initial_second == current_second);
+
 	pit_unmask();
 }
 
 void isr_pit(CpuState *regs)
 {
 	(void)regs;
-	milliseconds++;
+	pit_milliseconds++;
+	if (pit_milliseconds % 1000 == 0)
+	{
+		rtc_refresh_time();
+		utc_to_local();
+		pit_milliseconds = 0;
+	}
+
 	scheduler(regs);
 	PIC_sendEOI(PIT_ISR_INDEX);
 }

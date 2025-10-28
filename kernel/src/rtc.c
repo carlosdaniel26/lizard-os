@@ -66,7 +66,7 @@ static u8 bcd_to_binary(u8 bcd)
 /*	outb(RTC_DATA_PORT, value);*/
 /* }*/
 
-static u8 rtc_read_b(u8 reg)
+u8 rtc_read_b(u8 reg)
 {
 	outb(RTC_COMMAND_PORT, reg);
 	u8 result = inb(RTC_DATA_PORT);
@@ -74,7 +74,7 @@ static u8 rtc_read_b(u8 reg)
 	return bcd_to_binary(result);
 }
 
-static inline void utc_to_local()
+void utc_to_local()
 {
 	/* Convert to UTC - 3 */
 	if (RTC_clock.hours >= 3)
