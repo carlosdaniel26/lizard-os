@@ -58,4 +58,9 @@ struct task *task_current();
 void task_exit();
 
 void scheduler(CpuState *regs);
+void enable_scheduler();
+void disable_scheduler();
+u8 scheduler_is_enabled();
 
+
+extern u8 scheduler_enabled;

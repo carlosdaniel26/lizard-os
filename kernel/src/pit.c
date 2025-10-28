@@ -12,10 +12,14 @@
 #define PIT_CHANNEL0 0x40
 #define PIT_FREQUENCY_HZ 1193182
 
-#define PIT_TARGET_HZ 100
+#define PIT_TARGET_HZ 1000 /* 1000 Hz = 1 ms tick */
 #define PIT_DESIRED_FREQUENCY_HZ (PIT_FREQUENCY_HZ / PIT_TARGET_HZ)
 
+#define PIT_ISR_INDEX 32
+
 extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
+
+volatile u64 milliseconds = 0;
 
 static inline void pit_mask()
 {
@@ -41,13 +45,14 @@ void pit_init()
 	outb(PIT_CHANNEL0, PIT_DESIRED_FREQUENCY_HZ & 0xFF); /* Low Byte */
 	outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
 
-	isr_table[32] = &isr_pit;
-	//pit_unmask();
+	isr_table[PIT_ISR_INDEX] = &isr_pit;
+	pit_unmask();
 }
 
 void isr_pit(CpuState *regs)
 {
 	(void)regs;
-	//scheduler(regs);
-	PIC_sendEOI(32);
+	milliseconds++;
+	scheduler(regs);
+	PIC_sendEOI(PIT_ISR_INDEX);
 }

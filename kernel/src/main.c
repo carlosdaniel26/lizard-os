@@ -15,6 +15,7 @@
 #include <ss.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <types.h>
 #include <tty.h>
 #include <vmm.h>
@@ -60,7 +61,6 @@ void kmain()
 	init_gdt();
 	init_idt();
 	vmm_init();
-	pit_init();
 	task_init();
 	ata_detect_devices();
 	//test_fat16();
@@ -68,6 +68,7 @@ void kmain()
 	//vfs_init();
 	PIC_remap();
 	init_keyboard();
-	shit_shell_init();
+	pit_init();
+	enable_scheduler();
 	hlt();
 }

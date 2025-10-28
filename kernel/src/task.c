@@ -4,12 +4,16 @@
 #include <string.h>
 #include <task.h>
 #include <pmm.h>
+#include <ss.h>
 
 static Task *current_task;
 static Task proc1;
 
+u8 scheduler_enabled = 0;
+
 void proc1_func()
 {
+	shit_shell_init();
 	hlt();
 }
 
@@ -88,6 +92,9 @@ void task_save_context(CpuState *regs)
 
 void scheduler(CpuState *regs)
 {
+	if (! scheduler_enabled)
+		return;
+
 	if (!current_task)
 	{
 		current_task = &proc1;
@@ -113,4 +120,19 @@ void scheduler(CpuState *regs)
 
 	regs->rip = current_task->regs.rip;
 	regs->rsp = current_task->regs.rsp;
+}
+
+void enable_scheduler()
+{
+	scheduler_enabled = 1;
+}
+
+void disable_scheduler()
+{
+	scheduler_enabled = 0;
+}
+
+u8 scheduler_is_enabled()
+{
+	return scheduler_enabled;
 }
