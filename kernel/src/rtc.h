@@ -11,7 +11,7 @@ struct RTC_timer {
 	u8 hours;		   /* 04*/
 	u8 hours_alarm;   /* 05*/
 	u8 day_in_week;   /* 06*/
-	u8 date_of_month; /* 07*/
+	u8 day_of_month; /* 07*/
 	u8 month;		   /* 08*/
 	u8 year;		   /* 09*/
 

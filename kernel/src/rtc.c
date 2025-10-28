@@ -37,7 +37,7 @@ static ClockTime rtc_to_clock()
 
 	time.year = 2000 + RTC_clock.year;
 	time.month = RTC_clock.month;
-	time.day = RTC_clock.date_of_month;
+	time.day = RTC_clock.day_of_month;
 	time.hour = RTC_clock.hours;
 	time.minute = RTC_clock.minutes;
 	time.second = RTC_clock.seconds;
