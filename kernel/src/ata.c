@@ -22,14 +22,14 @@ static BlockDeviceOps ata_block_ops = {
 	.flush = block_flush
 };
 
-static void unmask_ata_primary_irq()
-{
-	u8 mask = inb(PIC2_DATA);
+// static void unmask_ata_primary_irq()
+// {
+// 	u8 mask = inb(PIC2_DATA);
 
-	mask &= ~(1 << 6);
+// 	mask &= ~(1 << 6);
 
-	outb(PIC2_DATA, mask);
-}
+// 	outb(PIC2_DATA, mask);
+// }
 
 static int ata_wait(u16 io_base, u8 mask, int set)
 {
