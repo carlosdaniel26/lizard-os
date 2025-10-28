@@ -44,6 +44,7 @@ typedef struct Task {
 
 	u32 priority;
 	u32 ticks_remaining;
+	u32 sleep_ticks;	/* PIT TICKS*/
 
 	struct Task *next;
 } Task;
@@ -61,6 +62,6 @@ void scheduler(CpuState *regs);
 void enable_scheduler();
 void disable_scheduler();
 u8 scheduler_is_enabled();
-
+void task_sleep(u32 ms);
 
 extern u8 scheduler_enabled;

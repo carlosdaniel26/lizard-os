@@ -5,6 +5,7 @@
 #include <task.h>
 #include <pmm.h>
 #include <ss.h>
+#include <clock.h>
 
 static Task *current_task;
 static Task proc1;
@@ -14,6 +15,17 @@ u8 scheduler_enabled = 0;
 void proc1_func()
 {
 	shit_shell_init();
+	/* Count to 10 */
+	ClockTime start_time;
+	clock_current(&start_time);
+	for (u32 i = 0; i < 10; i++)
+	{
+		ClockTime current_time;
+		clock_current(&current_time);
+		kprintf("Proc1: %u seconds elapsed\n", current_time.second - start_time.second);
+		task_sleep(1000);
+	}
+
 	hlt();
 }
 
@@ -90,6 +102,62 @@ void task_save_context(CpuState *regs)
 	// saved->ss  = regs->ss;
 }
 
+static inline void scheduler_trigger()
+{
+    asm volatile ("int $32"); // 32 is your PIT IRQ
+}
+
+void task_sleep(u32 ms)
+{
+	if (!current_task)
+		return;
+
+	current_task->sleep_ticks = ms;
+	current_task->state = TASK_STATE_WAITING;
+
+	task_switch();
+}
+
+/*
+ * Clean this code up to make sleep work properly
+*/
+void task_switch()
+{
+	Task *next_task = current_task->next;
+	CpuState *prev_regs = &current_task->regs;
+	if (next_task == NULL)
+	{
+		next_task = &proc1;
+	}
+
+	if (next_task->state == TASK_STATE_WAITING)
+	{
+		kprintf("WAIT SHIT");
+		next_task = next_task->next;
+		if (next_task == NULL)
+		{
+			next_task = &proc1;
+			if (next_task->state == TASK_STATE_WAITING)
+			{
+				return;
+			}
+		}
+		if (next_task == current_task)
+		{
+			return;
+		}
+	}
+
+	if (next_task == current_task)
+		return;
+
+	task_load_context(prev_regs, next_task);
+	current_task = next_task;
+
+	prev_regs->rip = current_task->regs.rip;
+	prev_regs->rsp = current_task->regs.rsp;
+}
+
 void scheduler(CpuState *regs)
 {
 	if (! scheduler_enabled)
@@ -103,23 +171,6 @@ void scheduler(CpuState *regs)
 	}
 
 	task_save_context(regs);
-
-	Task *next_task = current_task->next;
-	if (next_task == NULL)
-	{
-		next_task = &proc1;
-	}
-
-	if (next_task == current_task)
-	{
-		return;
-	}
-
-	task_load_context(regs, next_task);
-	current_task = next_task;
-
-	regs->rip = current_task->regs.rip;
-	regs->rsp = current_task->regs.rsp;
 }
 
 void enable_scheduler()
