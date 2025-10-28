@@ -103,12 +103,14 @@ void ms()
 	kprintf("Uptime: [%u.%u] milliseconds\n", g_uptime_seconds, g_uptime_milliseconds);
 }
 
-extern struct RTC_timer RTC_clock;
-
 static inline void date()
 {
-	kprintf("%s %u, %u %u:%u:%u\n", get_month_string(RTC_clock.month), RTC_clock.date_of_month, RTC_clock.year, 
-	RTC_clock.hours, RTC_clock.minutes, RTC_clock.seconds);
+	ClockTime time;
+	
+	clock_current(&time);
+
+	kprintf("Current Date and Time: %u/%u/%u %u:%u:%u\n", time.day, time.month,
+			time.year, time.hour, time.minute, time.second);
 }
 
 /* Main */

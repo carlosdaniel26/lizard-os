@@ -19,19 +19,6 @@ void save_boot_time()
 {
 	boot = get_rtc_time();
 
-	boot.year = RTC_clock.year;
-    boot.month = RTC_clock.month;
-    boot.day = RTC_clock.date_of_month;
-    boot.hour = RTC_clock.hours;
-    boot.minute = RTC_clock.minutes;
-    boot.second = RTC_clock.seconds;
-    
-    /*
-     * Milliseconds are not provided by RTC, PIT is responsible for that.
-     * For now we set it to zero.
-     */
-    boot.millisecond = 0;
-
     /* Also initialize clock to boot time */
     clock = boot;
 }

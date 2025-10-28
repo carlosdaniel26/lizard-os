@@ -23,7 +23,7 @@ const char *months_strings[] = {"Undefined", "January",	 "February", "March",  "
 								"May",		 "June",	 "July",	 "August", "September",
 								"October",	 "November", "December"};
 
-struct RTC_timer RTC_clock;
+static struct RTC_timer RTC_clock;
 
 void isr_timer()
 {
@@ -35,13 +35,18 @@ static ClockTime rtc_to_clock()
 {
 	ClockTime time;
 
-	time.year = RTC_clock.year;
+	time.year = 2000 + RTC_clock.year;
 	time.month = RTC_clock.month;
 	time.day = RTC_clock.date_of_month;
 	time.hour = RTC_clock.hours;
 	time.minute = RTC_clock.minutes;
 	time.second = RTC_clock.seconds;
-	time.millisecond = 0; /* RTC does not provide milliseconds */
+	time.millisecond = 0;
+
+	/*
+     * Milliseconds are not provided by RTC, PIT is responsible for that.
+     * For now we set it to zero.
+     */
 
 	return time;
 }

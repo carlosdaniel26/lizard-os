@@ -21,11 +21,8 @@ struct RTC_timer {
 	u8 status_register_D; /* D*/
 };
 
-extern struct RTC_timer RTC_clock;
-
 void isr_timer();
 void enable_rtc_interrupts();
-void kprint_rtc_time();
 int rtc_read_b(u8 reg);
 const char *get_month_string(int month_id);
 ClockTime get_rtc_time();
