@@ -29,10 +29,16 @@ typedef struct __attribute__((packed)) CpuState {
 	u64 ss;
 } CpuState;
 
+/* States */
+#define TASK_STATE_RUNNING    0
+#define TASK_STATE_READY      1
+#define TASK_STATE_WAITING    2
+#define TASK_STATE_TERMINATED 3
+
 typedef struct Task {
 	char name[TASK_NAME_MAX_LEN];
 
-	enum { TASK_RUNNING, TASK_READY, TASK_WAITING, TASK_TERMINATED } state;
+	u8 state;
 
 	CpuState regs;
 
