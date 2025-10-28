@@ -5,6 +5,7 @@
 #include <pit.h>
 #include <stdio.h>
 #include <task.h>
+#include <helpers.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
 
@@ -47,13 +48,11 @@ void pit_init()
 
 	isr_table[PIT_ISR_INDEX] = &isr_pit;
 
-	/* Synchronize RTC and PIT to avoid time glitches */
-	rtc_refresh_time();
+	/* Synchronize RTC and PIT to avoid time glitches */;
 	u8 initial_second = rtc_read_b(0x00);
 	u8 current_second = initial_second;
 
 	do {
-		rtc_refresh_time();
 		current_second = rtc_read_b(0x00);
 	} while (initial_second == current_second);
 
@@ -62,14 +61,9 @@ void pit_init()
 
 void isr_pit(CpuState *regs)
 {
-	(void)regs;
 	pit_milliseconds++;
-	if (pit_milliseconds % 1000 == 0)
-	{
-		rtc_refresh_time();
-		utc_to_local();
-		pit_milliseconds = 0;
-	}
+
+	clock_increase_ms();
 
 	scheduler(regs);
 	PIC_sendEOI(PIT_ISR_INDEX);

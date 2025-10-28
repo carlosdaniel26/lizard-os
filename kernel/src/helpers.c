@@ -32,83 +32,13 @@ char toupper(char c)
 	return c;
 }
 
-struct RTC_timer boot_time;
-
-static u8 days_in_month(u8 month, u8 year)
+int days_in_month(int month, int year)
 {
-	static const u8 days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	static const int days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (month == 2)
 	{
 		if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
 			return 29;
 	}
 	return days[month - 1];
-}
-
-void save_boot_time()
-{
-	rtc_refresh_time();
-	boot_time = RTC_clock;
-}
-
-struct Uptime calculate_uptime()
-{
-	struct Uptime up = {0};
-
-	rtc_refresh_time();
-
-	int sec = RTC_clock.seconds - boot_time.seconds;
-	int min = RTC_clock.minutes - boot_time.minutes;
-	int hour = RTC_clock.hours - boot_time.hours;
-	int day = RTC_clock.date_of_month - boot_time.date_of_month;
-	int month = RTC_clock.month - boot_time.month;
-	int year = RTC_clock.year - boot_time.year;
-
-	if (sec < 0)
-	{
-		sec += 60;
-		min--;
-	}
-	if (min < 0)
-	{
-		min += 60;
-		hour--;
-	}
-	if (hour < 0)
-	{
-		hour += 24;
-		day--;
-	}
-	if (day < 0)
-	{
-		month--;
-		if (month < 0)
-		{
-			month += 12;
-			year--;
-		}
-		day +=
-			days_in_month((boot_time.month == 1 ? 12 : boot_time.month - 1), 2000 + boot_time.year);
-	}
-	if (month < 0)
-	{
-		month += 12;
-		year--;
-	}
-
-	up.seconds = sec;
-	up.minutes = min;
-	up.hours = hour;
-	up.days = day;
-	up.months = month;
-	up.years = year;
-
-	return up;
-}
-
-u64 uptime_seconds()
-{
-	struct Uptime up = calculate_uptime();
-	return up.seconds + up.minutes * 60 + up.hours * 3600 + up.days * 86400 +
-		   up.months * 2592000 + up.years * 31536000;
 }

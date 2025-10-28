@@ -33,17 +33,16 @@ static inline void clear()
 
 static inline void lzfetch()
 {
-
-	struct Uptime time = {0};
-	time = calculate_uptime();
+	ClockTime time = {0};
+	clock_uptime(&time);
 
 	u64 mem_ammount_mb = mem_ammount_b / (1024 * 1024);
 
 	kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
 	kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
 	kprintf("|				   /\"\\		|\t\t\t\t\t\t\tKernel:	lz-kernel 0.1\n");
-	kprintf("|				  /o o\\	   |\t\t\t\t\t\t\tUptime:  %ud %uH:%uM:%us\n", time.days,
-			time.hours, time.minutes, time.seconds);
+	kprintf("|				  /o o\\	   |\t\t\t\t\t\t\tUptime:  %ud %uH:%uM:%us\n", time.day,
+			time.hour, time.minute, time.second);
 	kprintf("|			 _\\/  \\	/ \\/_	 |\t\t\t\t\t\t\tShell:	 shit-shell v0.0.3\n");
 	kprintf("|			  \\\\._/  /_.//	|\t\t\t\t\t\t\tPackages: 5 (hardcoded)\n");
 	kprintf("|			  `--,	,----'	  |\t\t\t\t\t\t\tResolution: %ux%u\n", width, height);
@@ -95,19 +94,6 @@ void free()
 	#undef print_mem
 }
 
-void uptime()
-{
-	struct Uptime time = {0};
-	time = calculate_uptime();
-
-	kprintf("Uptime: %ud %uH:%uM:%us\n", time.days, time.hours, time.minutes, time.seconds);
-}
-
-void ms()
-{
-	kprintf("Uptime: [%u.%u] milliseconds\n", uptime_seconds(), pit_milliseconds);
-}
-
 extern struct RTC_timer RTC_clock;
 
 static inline void date()
@@ -133,14 +119,6 @@ void runcmd(const char *command)
 	} else if (CMD_IS(command, "date"))
 	{
 		date();
-	}
-	else if (CMD_IS(command, "uptime"))
-	{
-		uptime();
-	} 
-	else if (CMD_IS(command, "ms"))
-	{
-		ms();
 	}
 	else
 	{

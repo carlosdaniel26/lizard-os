@@ -17,18 +17,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 char toupper(char c);
-
-struct Uptime {
-	u8 years;
-	u8 months;
-	u8 days;
-	u8 hours;
-	u8 minutes;
-	u8 seconds;
-};
-
 void hlt();
 int oct2bin(unsigned char *str, int size);
 char toupper(char c);
-void save_boot_time();
-struct Uptime calculate_uptime();
+int days_in_month(int month, int year);

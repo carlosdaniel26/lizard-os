@@ -3,6 +3,7 @@
 #include <rtc.h>
 #include <types.h>
 #include <stdio.h>
+#include <clock.h>
 
 /* Ports for RTC communication*/
 #define RTC_COMMAND_PORT 0x70
@@ -28,6 +29,21 @@ void isr_timer()
 {
 	outb(RTC_COMMAND_PORT, 0x0C);
 	inb(RTC_DATA_PORT);
+}
+
+static ClockTime rtc_to_clock()
+{
+	ClockTime time;
+
+	time.year = RTC_clock.year;
+	time.month = RTC_clock.month;
+	time.day = RTC_clock.date_of_month;
+	time.hour = RTC_clock.hours;
+	time.minute = RTC_clock.minutes;
+	time.second = RTC_clock.seconds;
+	time.millisecond = 0; /* RTC does not provide milliseconds */
+
+	return time;
 }
 
 void enable_rtc_interrupts()
@@ -66,81 +82,15 @@ static u8 bcd_to_binary(u8 bcd)
 /*	outb(RTC_DATA_PORT, value);*/
 /* }*/
 
-u8 rtc_read_b(u8 reg)
+int rtc_read_b(u8 reg)
 {
 	outb(RTC_COMMAND_PORT, reg);
-	u8 result = inb(RTC_DATA_PORT);
+	int result = inb(RTC_DATA_PORT);
 
 	return bcd_to_binary(result);
 }
 
-void utc_to_local()
-{
-	/* Convert to UTC - 3 */
-	if (RTC_clock.hours >= 3)
-	{
-		RTC_clock.hours -= 3;
-	}
-	else
-	{
-		RTC_clock.hours = (RTC_clock.hours + 24) - 3;
-		/* Previous day */
-		if (RTC_clock.date_of_month > 1)
-		{
-			RTC_clock.date_of_month--;
-		}
-		else
-		{
-			/* Move to previous month */
-			if (RTC_clock.month == 1)
-			{
-				RTC_clock.month = 12;
-				RTC_clock.year--;
-			}
-			else
-			{
-				RTC_clock.month--;
-			}
-
-			/* Set the correct date_of_month */
-			switch (RTC_clock.month)
-			{
-			case 1: /* January */
-			case 3: /* March */
-			case 5: /* May */
-			case 7: /* July */
-			case 8: /* August */
-			case 10: /* October */
-			case 12: /* December */
-				RTC_clock.date_of_month = 31;
-				break;
-			case 4: /* April */
-			case 6: /* June */
-			case 9: /* September */
-			case 11: /* November */
-				RTC_clock.date_of_month = 30;
-				break;
-			case 2: /* February */
-				/* Check for leap year*/
-				if ((RTC_clock.year % 4 == 0 && RTC_clock.year % 100 != 0) ||
-					(RTC_clock.year % 400 == 0))
-				{
-					RTC_clock.date_of_month = 29;
-				}
-				else
-				{
-					RTC_clock.date_of_month = 28;
-				}
-				break;
-			default:
-				RTC_clock.date_of_month = 31; /* Fallback, should not happen*/
-				break;
-			}
-		}
-	}
-}
-
-void rtc_refresh_time()
+static void rtc_refresh_time()
 {
 	u8 *RTC_array = (u8 *)&RTC_clock;
 
@@ -151,10 +101,15 @@ void rtc_refresh_time()
 		RTC_array[reg] = rtc_read_b(reg);
 	}
 	
-	utc_to_local();
 }
 
-const char *get_month_string(u8 month_id)
+const char *get_month_string(int month_id)
 {
 	return months_strings[month_id];
+}
+
+ClockTime get_rtc_time()
+{
+	rtc_refresh_time();
+	return rtc_to_clock();
 }

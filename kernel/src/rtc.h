@@ -1,5 +1,8 @@
 #pragma once
 
+#include <types.h>
+#include <clock.h>
+
 struct RTC_timer {
 	u8 seconds;	   /* 00*/
 	u8 seconds_alarm; /* 01*/
@@ -22,7 +25,7 @@ extern struct RTC_timer RTC_clock;
 
 void isr_timer();
 void enable_rtc_interrupts();
-void rtc_refresh_time();
 void kprint_rtc_time();
-const char *get_month_string(u8 month_id);
-
+int rtc_read_b(u8 reg);
+const char *get_month_string(int month_id);
+ClockTime get_rtc_time();
