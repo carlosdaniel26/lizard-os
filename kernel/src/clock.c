@@ -36,12 +36,6 @@ void save_boot_time()
     clock = boot;
 }
 
-void clock_uptime(ClockTime *out)
-{
-    //calculate_uptime();
-    *out = clock;
-}
-
 void clock_current(ClockTime *out)
 {
     *out = get_rtc_time();
