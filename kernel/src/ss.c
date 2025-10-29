@@ -107,8 +107,7 @@ static inline void date()
 {
 	ClockTime time;
 	
-	clock_current(&time);
-	clock_utc_to_local(&time);
+	clock_get_local(&time);
 
 	kprintf("%u/%u/%u %u:%u:%u\n", time.day, time.month,
 			time.year, time.hour, time.minute, time.second);

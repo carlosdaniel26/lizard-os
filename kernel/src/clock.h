@@ -18,6 +18,7 @@ void clock_uptime(ClockTime *out);
 void clock_current(ClockTime *out);
 void clock_increase_ms();
 void clock_utc_to_local(ClockTime *time);
+void clock_get_local(ClockTime *out);
 
 extern int g_uptime_milliseconds;
 extern int g_uptime_seconds;

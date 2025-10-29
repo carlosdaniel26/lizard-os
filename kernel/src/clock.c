@@ -115,3 +115,9 @@ void clock_utc_to_local(ClockTime *time)
         }
     }
 }
+
+void clock_get_local(ClockTime *out)
+{
+    *out = clock;
+    clock_utc_to_local(out);
+}
