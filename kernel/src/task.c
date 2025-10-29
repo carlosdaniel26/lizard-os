@@ -15,17 +15,6 @@ u8 scheduler_enabled = 0;
 void proc1_func()
 {
 	shit_shell_init();
-	/* Count to 10 */
-	ClockTime start_time;
-	clock_current(&start_time);
-	for (u32 i = 0; i < 10; i++)
-	{
-		ClockTime current_time;
-		clock_current(&current_time);
-		kprintf("Proc1: %u seconds elapsed\n", current_time.second - start_time.second);
-		task_sleep(1000);
-	}
-
 	hlt();
 }
 
@@ -132,7 +121,6 @@ void task_switch()
 
 	if (next_task->state == TASK_STATE_WAITING)
 	{
-		kprintf("WAIT SHIT");
 		next_task = next_task->next;
 		if (next_task == NULL)
 		{

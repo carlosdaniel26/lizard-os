@@ -113,8 +113,8 @@ const char *get_month_string(int month_id)
 	return months_strings[month_id];
 }
 
-ClockTime get_rtc_time()
+void rtc_get_time(ClockTime *out)
 {
 	rtc_refresh_time();
-	return rtc_to_clock();
+	*out = rtc_to_clock();
 }

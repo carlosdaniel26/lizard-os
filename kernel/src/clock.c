@@ -3,6 +3,8 @@
 #include <types.h>
 #include <helpers.h>
 
+#define UTC_OFFSET_BRAZIL -3
+
 static ClockTime boot = {0};
 
 int g_uptime_milliseconds = 0;
@@ -14,10 +16,11 @@ int g_uptime_months = 0;
 int g_uptime_years = 0;
 
 static ClockTime clock = {0};
+int utc_offset_hours = UTC_OFFSET_BRAZIL;
 
 void save_boot_time()
 {
-	boot = get_rtc_time();
+	rtc_get_time(&boot);
 
     /* Also initialize clock to boot time */
     clock = boot;
@@ -25,7 +28,7 @@ void save_boot_time()
 
 void clock_current(ClockTime *out)
 {
-    *out = get_rtc_time();
+    *out = clock;
 }
 
 static void clock_refresh_uptime()
@@ -75,4 +78,40 @@ void clock_increase_ms()
     }
 
     clock_refresh_uptime();
+}
+
+void clock_utc_to_local(ClockTime *time)
+{
+    time->hour += utc_offset_hours;
+    if (time->hour >= 24)
+    {
+        time->hour -= 24;
+        time->day++;
+        int dim = days_in_month(time->month, 2000 + time->year);
+        if (time->day > dim)
+        {
+            time->day = 1;
+            time->month++;
+            if (time->month > 12)
+            {
+                time->month = 1;
+                time->year++;
+            }
+        }
+    }
+    else if (time->hour < 0)
+    {
+        time->hour += 24;
+        time->day--;
+        if (time->day < 1)
+        {
+            time->month--;
+            if (time->month < 1)
+            {
+                time->month = 12;
+                time->year--;
+            }
+            time->day = days_in_month(time->month, 2000 + time->year);
+        }
+    }
 }

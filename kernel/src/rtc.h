@@ -25,4 +25,4 @@ void isr_timer();
 void enable_rtc_interrupts();
 int rtc_read_b(u8 reg);
 const char *get_month_string(int month_id);
-ClockTime get_rtc_time();
+void rtc_get_time(ClockTime *out);

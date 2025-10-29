@@ -94,13 +94,13 @@ void free()
 
 void uptime()
 {
-	kprintf("Uptime: %ud %uH:%uM:%us\n", g_uptime_days, g_uptime_hours, g_uptime_minutes,
+	kprintf("%ud %uH:%uM:%us\n", g_uptime_days, g_uptime_hours, g_uptime_minutes,
 			g_uptime_seconds);
 }
 
 void ms()
 {
-	kprintf("Uptime: [%u.%u] milliseconds\n", g_uptime_seconds, g_uptime_milliseconds);
+	kprintf("[%u.%u]\n", g_uptime_seconds, g_uptime_milliseconds);
 }
 
 static inline void date()
@@ -108,8 +108,9 @@ static inline void date()
 	ClockTime time;
 	
 	clock_current(&time);
+	clock_utc_to_local(&time);
 
-	kprintf("Current Date and Time: %u/%u/%u %u:%u:%u\n", time.day, time.month,
+	kprintf("%u/%u/%u %u:%u:%u\n", time.day, time.month,
 			time.year, time.hour, time.minute, time.second);
 }
 
