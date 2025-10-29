@@ -13,6 +13,34 @@ static Task *current_task = &idle;
 
 u8 scheduler_enabled = 0;
 
+static inline void save_current_regs(CpuState *regs)
+{
+    asm volatile(
+        "mov %%rax, %0\n"
+        "mov %%rbx, %1\n"
+        "mov %%rcx, %2\n"
+        "mov %%rdx, %3\n"
+        "mov %%rsi, %4\n"
+        "mov %%rdi, %5\n"
+        "mov %%rbp, %6\n"
+        "mov %%r8,  %7\n"
+        "mov %%r9,  %8\n"
+        "mov %%r10, %9\n"
+        "mov %%r11, %10\n"
+        "mov %%r12, %11\n"
+        "mov %%r13, %12\n"
+        "mov %%r14, %13\n"
+        "mov %%r15, %14\n"
+        : "=m"(regs->rax), "=m"(regs->rbx), "=m"(regs->rcx), "=m"(regs->rdx),
+          "=m"(regs->rsi), "=m"(regs->rdi), "=m"(regs->rbp), "=m"(regs->r8),
+          "=m"(regs->r9), "=m"(regs->r10), "=m"(regs->r11), "=m"(regs->r12),
+          "=m"(regs->r13), "=m"(regs->r14), "=m"(regs->r15)
+    );
+    regs->rsp = (u64)__builtin_frame_address(0);
+    regs->rip = (u64)&&resume_here;
+resume_here:;
+}
+
 void idle_func()
 {
 	while (1)
@@ -23,8 +51,12 @@ void idle_func()
 
 void proc1_func()
 {
-	shit_shell_init();
-	hlt();
+    
+    while (1) {
+        kprintf("Proc1: Before sleep\n");
+        task_sleep(1000);
+        kprintf("Proc1: After sleep - Woke up!\n");
+    }
 }
 
 void task_init()
@@ -108,61 +140,116 @@ void task_save_context(CpuState *regs)
 	// saved->ss  = regs->ss;
 }
 
-static inline void scheduler_trigger()
+static inline void timer_tick()
 {
-    asm volatile ("int $32"); // 32 is your PIT IRQ
+    Task *t = &idle;
+    int woke_up = 0;
+    
+    do {
+        if (t->state == TASK_STATE_WAITING && t->sleep_ticks > 0) {
+            t->sleep_ticks--;
+            if (t->sleep_ticks == 0) {
+                t->state = TASK_STATE_READY;
+                woke_up++;
+            }
+        }
+        t = t->next;
+    } while (t != NULL);
+    
+    if (woke_up > 0) {
+    }
 }
 
 void task_sleep(u32 ms)
 {
-	if (!current_task)
-		return;
+    if (!current_task || current_task == &idle) {
+        return;
+    }
 
-	current_task->sleep_ticks = ms;
-	current_task->state = TASK_STATE_WAITING;
+    save_current_regs(&current_task->regs);
+    
+    current_task->sleep_ticks = ms;
+    current_task->state = TASK_STATE_WAITING;
+    
+    task_switch(&current_task->regs);
 }
 
-/*
- * Clean this code up to make sleep work properly
-*/
+static Task* choose_next_task(void)
+{
+    Task *next_task = current_task->next;
+    if (next_task == NULL) {
+        next_task = &idle;
+    }
+
+    Task *start_task = next_task;
+    int searches = 0;
+    const int MAX_SEARCHES = 10;
+
+    while (next_task->state != TASK_STATE_READY)
+	{
+        searches++;
+        if (searches >= MAX_SEARCHES) {
+            next_task = &idle;
+            break;
+        }
+        
+        next_task = next_task->next;
+        if (next_task == NULL) {
+            next_task = &idle;
+        }
+        
+        if (next_task == start_task) {
+            next_task = &idle;
+            break;
+        }
+    }
+
+    if (next_task->state != TASK_STATE_READY)
+{
+        next_task = &idle;
+        next_task->state = TASK_STATE_READY;
+    }
+
+    return next_task;
+}
+
 int task_switch(CpuState *prev_regs)
 {
-	Task *next_task = current_task->next;
+    if (!scheduler_enabled) {
+        return 0;
+    }
 
-	if (next_task == NULL)
-		next_task = &idle;
+    Task *next_task = choose_next_task();
 
-	/* Find the next READY task */
-	while (next_task->state != TASK_STATE_READY)
-	{
-		next_task = next_task->next;
+    if (next_task == current_task && current_task != &idle) {
+        return 0;
+    }
 
-		if (next_task == NULL)
-			next_task = &idle;
-	}
+    if (current_task != &idle) {
+        task_save_context(prev_regs);
+    }
 
-	if (next_task == current_task)
-		return 0;
+    if (current_task->state == TASK_STATE_RUNNING && current_task != &idle) {
+        current_task->state = TASK_STATE_READY;
+    }
+    
+    next_task->state = TASK_STATE_RUNNING;
 
-	task_save_context(prev_regs);
-	task_load_context(prev_regs, next_task);
+    task_load_context(prev_regs, next_task);
 
-	current_task->state = TASK_STATE_READY;
-	next_task->state = TASK_STATE_RUNNING;
-
-	current_task = next_task;
-
-	prev_regs->rip = current_task->regs.rip;
-	prev_regs->rsp = current_task->regs.rsp;
-
-	return 0;
+    current_task = next_task;
+    
+    return 1;
 }
 
 void scheduler(CpuState *regs)
 {
-	if (! scheduler_enabled)
-		return;
+    if (!scheduler_enabled) {
+        return;
+    }
 
+    timer_tick();
+    
 	task_switch(regs);
 }
 
