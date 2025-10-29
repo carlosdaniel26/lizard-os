@@ -7,10 +7,19 @@
 #include <ss.h>
 #include <clock.h>
 
-static Task *current_task;
-static Task proc1;
+static Task proc1 = {0};
+static Task idle = {0};
+static Task *current_task = &idle;
 
 u8 scheduler_enabled = 0;
+
+void idle_func()
+{
+	while (1)
+	{
+		hlt();
+	}
+}
 
 void proc1_func()
 {
@@ -20,6 +29,7 @@ void proc1_func()
 
 void task_init()
 {
+	task_create(&idle, &idle_func, "idle", 1);
 	task_create(&proc1, &proc1_func, "proc1", 1);
 }
 
@@ -35,6 +45,13 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
 	memset((void *)ptr, 0, 4096);
 
 	task->regs.rsp = ptr + 4096;
+	Task *i;
+	for (i = current_task; i->next != NULL; i = i->next);
+
+	i->next = task;
+	task->next = NULL;
+
+	task->state = TASK_STATE_READY;
 }
 
 void task_load_context(CpuState *regs, Task *task)
@@ -103,47 +120,42 @@ void task_sleep(u32 ms)
 
 	current_task->sleep_ticks = ms;
 	current_task->state = TASK_STATE_WAITING;
-
-	task_switch();
 }
 
 /*
  * Clean this code up to make sleep work properly
 */
-void task_switch()
+int task_switch(CpuState *prev_regs)
 {
 	Task *next_task = current_task->next;
-	CpuState *prev_regs = &current_task->regs;
-	if (next_task == NULL)
-	{
-		next_task = &proc1;
-	}
 
-	if (next_task->state == TASK_STATE_WAITING)
+	if (next_task == NULL)
+		next_task = &idle;
+
+	/* Find the next READY task */
+	while (next_task->state != TASK_STATE_READY)
 	{
 		next_task = next_task->next;
+
 		if (next_task == NULL)
-		{
-			next_task = &proc1;
-			if (next_task->state == TASK_STATE_WAITING)
-			{
-				return;
-			}
-		}
-		if (next_task == current_task)
-		{
-			return;
-		}
+			next_task = &idle;
 	}
 
 	if (next_task == current_task)
-		return;
+		return 0;
 
+	task_save_context(prev_regs);
 	task_load_context(prev_regs, next_task);
+
+	current_task->state = TASK_STATE_READY;
+	next_task->state = TASK_STATE_RUNNING;
+
 	current_task = next_task;
 
 	prev_regs->rip = current_task->regs.rip;
 	prev_regs->rsp = current_task->regs.rsp;
+
+	return 0;
 }
 
 void scheduler(CpuState *regs)
@@ -151,14 +163,7 @@ void scheduler(CpuState *regs)
 	if (! scheduler_enabled)
 		return;
 
-	if (!current_task)
-	{
-		current_task = &proc1;
-		task_load_context(regs, current_task);
-		return;
-	}
-
-	task_save_context(regs);
+	task_switch(regs);
 }
 
 void enable_scheduler()
