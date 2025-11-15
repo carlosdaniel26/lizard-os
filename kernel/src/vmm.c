@@ -53,6 +53,23 @@ static u64 *vmm_alloc_table()
 	return (u64 *)page;
 }
 
+static void vmm_free_table(u64 *table)
+{
+    if (table == NULL) return;
+    void *phys_addr = (void *)((u64)table - hhdm_offset);
+    pmm_free_block(phys_addr);
+}
+
+static int vmm_table_empty(u64 *table)
+{
+    for (u64 i = 0; i < 512; i++) {
+        if (table[i] & PAGE_PRESENT) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void vmm_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
 {
 	/* Normalize values */
@@ -112,6 +129,17 @@ static inline void vmm_maprange(u64 *pml4, u64 virt, u64 phys, u64 length_in_blo
 	}
 }
 
+void vmm_unmap_range(u64 *pml4, u64 virt, u64 length_in_blocks)
+{
+	virt = (u64)align_ptr_down(virt, PAGE_SIZE);
+	for (u64 i = 0; i < length_in_blocks; i++)
+	{
+		vmm_free_page(pml4, virt);
+		virt += PAGE_SIZE;
+	}
+
+}
+
 static inline void vmm_load_pml4()
 {
 	register u64 phys = (u64)kernel_pml4 - hhdm_offset;
@@ -164,6 +192,20 @@ void *vmm_alloc_block_row(void *pml4, u64 ammount)
 
 int vmm_free_page(u64 *pml4, uintptr_t ptr)
 {
+
+	/*
+	* FREEING FLOW: Inside → Out
+	* 
+	*   if PDPT empty? FREE PDPT
+	* PDPT  
+	*   ↑ if PD empty? FREE PD
+	* PD
+	*   ↑ if PT empty? FREE PT
+	* PT  ← START: Free page entry
+	* 
+	* Recursively free tables from bottom up
+	*/
+
 	ptr = (uintptr_t)align_ptr_down(ptr, PAGE_SIZE);
 
 	/* Calculate index */
@@ -197,6 +239,32 @@ int vmm_free_page(u64 *pml4, uintptr_t ptr)
 	pt[pt_i] &= (~PAGE_PRESENT | ~PAGE_WRITABLE);
 
 	pmm_free_block((void *)ptr - hhdm_offset);
+
+	/* Check if we can free the page's table */
+
+	/* PT */
+	if (vmm_table_empty(pt))
+	{
+		pd[pd_i] = 0;
+		invlpg(pd);
+		vmm_free_table(pt);
+		
+		/* PD */
+		if (vmm_table_empty(pd)) 
+		{
+			pdpt[pdpt_i] = 0;
+			invlpg(pdpt);
+			vmm_free_table(pd);
+			
+			/* PDPT */
+			if (vmm_table_empty(pdpt)) 
+			{
+				pml4[pml4_i] = 0;
+				invlpg(pml4);
+				vmm_free_table(pdpt);
+			}
+		}
+	}
 
 	return 0;
 }
