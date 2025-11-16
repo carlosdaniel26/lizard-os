@@ -31,11 +31,14 @@ __attribute__((used,
 
 __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
 
-u64 stack_start;
+#define KERNEL_STACK_SIZE 0x4000 /* 16 KiB */
+
+__attribute__((aligned(16)))
+u8 kernel_stack[KERNEL_STACK_SIZE];
 
 void kmain()
 {
-	asm volatile("mov %%rsp, %0" : : "m"(stack_start) : "memory");
+	asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
 
 	stop_interrupts();
 	save_boot_time();
