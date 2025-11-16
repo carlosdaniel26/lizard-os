@@ -48,7 +48,7 @@ static inline void invlpg(void *addr)
 
 static u64 *vmm_alloc_table()
 {
-	void *page = VIRT_ADDR(pmm_alloc_block);
+	void *page = pmm_alloc_block() + hhdm_offset;
 	memset(page, 0, PAGE_SIZE);
 	return (u64 *)page;
 }
