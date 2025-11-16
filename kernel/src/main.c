@@ -19,6 +19,7 @@
 #include <types.h>
 #include <tty.h>
 #include <vmm.h>
+#include <buddy.h>
 
 __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
 
@@ -62,6 +63,7 @@ void kmain()
 	tty_initialize();
 	pit_init();
 	pmm_init();
+	buddy_init();
 	init_gdt();
 	init_idt();
 	vmm_init();

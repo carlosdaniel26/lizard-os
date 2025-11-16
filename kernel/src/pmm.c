@@ -12,7 +12,7 @@
 #define ALIGN_UP(x, a) (((x) + ((a)-1)) & ~((a)-1))
 #define BLOCK_SIZE 4096
 
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_memmap_request
+__attribute__((used, section(".limine_requests"))) volatile struct limine_memmap_request
 	memmap_request = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0};
 
 __attribute__((
