@@ -124,7 +124,7 @@ MemoryRegion *buddy_parse_mmap(void)
         
         /* allocate memory for this region node using early allocator */
         size_t pages_needed = (sizeof(MemoryRegion) + PAGE_SIZE - 1) / PAGE_SIZE;
-        MemoryRegion *region = early_alloc(pages_needed) + hhdm_offset;
+        MemoryRegion *region = VIRT_ADDR(early_alloc(pages_needed));
         if (!region) break;
 
         region->base = entry->base;
@@ -280,7 +280,7 @@ void buddy_init(void)
         /* add all blocks of current size to free list */
         while (addr + block_size <= allocator.base + allocator.size)
         {
-            BuddyBlock *block = (BuddyBlock *)(addr + hhdm_offset); /* convert to virtual address */
+            BuddyBlock *block = (BuddyBlock *)VIRT_ADDR(addr); /* convert to virtual address */
             block->next = prev;
             prev = block;
             addr += block_size;
@@ -326,7 +326,7 @@ void *buddy_alloc(int order)
 /* free a block back to buddy allocator */
 void buddy_free(void *ptr, int order)
 {
-    u64 addr = (u64)ptr + hhdm_offset;
+    u64 addr = (u64)VIRT_ADDR(ptr);
     BuddyBlock *block = (BuddyBlock *)addr;
 
     while (order < MAX_ORDER - 1)
@@ -338,7 +338,7 @@ void buddy_free(void *ptr, int order)
 
         while (current)
         {
-            if ((u64)current == buddy_addr + hhdm_offset)
+            if ((u64)current == VIRT_ADDR(buddy_addr))
             {
                 if (*prev == current)
                 {
