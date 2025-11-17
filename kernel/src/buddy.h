@@ -51,3 +51,4 @@ BuddyAllocator;
 MemoryRegion *buddy_parse_mmap(void);
 void buddy_dump_regions(MemoryRegion *regions);
 size_t buddy_calculate_usable_memory(MemoryRegion *regions);
+MemoryRegion *buddy_get_regions();

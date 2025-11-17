@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limine.h>
+#include <helpers.h>
 
 /* function prototypes */
 void *early_alloc(size_t pages);
@@ -121,14 +122,24 @@ MemoryRegion *buddy_parse_mmap(void)
     for (size_t i = 0; i < response->entry_count; i++)
     {
         struct limine_memmap_entry *entry = response->entries[i];
+
+        u64 aligned_base = align_up(entry->base, PAGE_SIZE);
+        u64 aligned_end = align_down(entry->base + entry->length, PAGE_SIZE);
+
+        if (aligned_base >= aligned_end)
+        {
+            continue;
+        }
+
+        u64 aligned_length = aligned_end - aligned_base;
         
         /* allocate memory for this region node using early allocator */
         size_t pages_needed = (sizeof(MemoryRegion) + PAGE_SIZE - 1) / PAGE_SIZE;
         MemoryRegion *region = early_alloc(pages_needed) + hhdm_offset;
         if (!region) break;
 
-        region->base = entry->base;
-        region->length = entry->length;
+        region->base = aligned_base;
+        region->length = aligned_length;
         if (entry->type == LIMINE_MEMMAP_USABLE)
         {
             region->type = MEMORY_REGION_USABLE;
@@ -381,4 +392,9 @@ void buddy_free(void *ptr, int order)
 
     block->next = allocator.free_list[order];
     allocator.free_list[order] = block;
+}
+
+MemoryRegion *buddy_get_regions()
+{
+    return regions;
 }
