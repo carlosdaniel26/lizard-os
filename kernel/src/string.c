@@ -162,7 +162,7 @@ unsigned get_u64tostring_final_size(u64 value)
 	return i;
 }
 
-unsigned get_unsigned2hex_final_size(u64 value)
+long unsigned get_unsigned2hex_final_size(u64 value)
 {
 	unsigned i = 0;
 

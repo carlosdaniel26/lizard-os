@@ -15,7 +15,7 @@ bool strsIsEqual(const char *str1, const char *str2, size_t size);
 void unsigned_to_string(u64 value, char *str);
 unsigned get_unsigned2string_final_size(u64 value);
 unsigned get_u64tostring_final_size(u64 value);
-unsigned get_unsigned2hex_final_size(u64 value);
+long unsigned get_unsigned2hex_final_size(u64 value);
 void unsigned_to_hexstring(u64 value, char *str);
 char *strcpy(char *dest, const char *src);
 int sprintf(char *buffer, const char *format, ...);

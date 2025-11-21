@@ -112,7 +112,7 @@ int kprintf(const char *restrict format, ...)
 		} else if (*format == 'u')
 		{
 			format++;
-			unsigned number = (unsigned)va_arg(parameters, unsigned);
+			unsigned number = (unsigned)va_arg(parameters, long unsigned);
 			if (!maxrem)
 			{
 				/* TODO: Set errno to EOVERFLOW.*/
@@ -130,7 +130,7 @@ int kprintf(const char *restrict format, ...)
 		} else if (*format == 'x')
 		{
 			format++;
-			unsigned number = (unsigned)va_arg(parameters, unsigned);
+			long long unsigned number = (long unsigned)va_arg(parameters, long unsigned);
 			if (!maxrem)
 			{
 				/* TODO: Set errno to EOVERFLOW.*/
