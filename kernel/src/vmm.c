@@ -161,6 +161,11 @@ void vmm_init()
 	u64 phys = kernel_address_request.response->physical_base;
 	vmm_maprange(kernel_pml4, vir, phys, (u64)(&kernel_end - &kernel_start),
 				 PAGE_PRESENT | PAGE_WRITABLE);
+	
+	/* Framebuffer */
+    vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
+                framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+
 
 	vmm_load_pml4();
 	debug_printf("VMM: Initialized.\n");
