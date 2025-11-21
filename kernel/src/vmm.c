@@ -159,7 +159,9 @@ void vmm_init()
 	/* Kernel */
 	u64 vir = kernel_address_request.response->virtual_base;
 	u64 phys = kernel_address_request.response->physical_base;
-	vmm_maprange(kernel_pml4, vir, phys, (u64)(&kernel_end - &kernel_start),
+	u64 kernel_size = (u64)&kernel_end - (u64)&kernel_start;
+    u64 kernel_pages = (kernel_size + PAGE_SIZE - 1) / PAGE_SIZE;
+	vmm_maprange(kernel_pml4, vir, phys, kernel_pages,
 				 PAGE_PRESENT | PAGE_WRITABLE);
 	
 	/* Framebuffer */
