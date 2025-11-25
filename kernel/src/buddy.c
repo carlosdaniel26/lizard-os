@@ -327,7 +327,8 @@ void *buddy_alloc(int order)
                 allocator.free_list[current] = buddy;
             }
 
-            return (void *)((u64)block - hhdm_offset); /* convert back to physical address */
+            //debug_printf("buddy addr: %x\n", block);
+            return (void*)(block); /* return virt addr*/
         }
     }
 
