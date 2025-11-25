@@ -55,7 +55,7 @@ void vmm_unmap_page(u64 virt)
 
 void *vmm_alloc_page(void)
 {
-    char *ptr = buddy_alloc(0);
+    uintptr_t ptr = (uintptr_t)buddy_alloc(0);
     pgtable_map(current_pml4, ptr, ptr - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
     return (void *)ptr;
 }
