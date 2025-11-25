@@ -1,13 +1,12 @@
-
 #pragma once
 
-#define PAGE_PRESENT 0x1
-#define PAGE_WRITABLE 0x2
-#define PAGE_USER 0x4
+#include <types.h>
 
-#define PAGE_SIZE 4096
+extern u64 *current_pml4;
 
-void vmm_init();
-void *vmm_alloc_page(void *pml4);
-void *vmm_alloc_block_row(void *pml4, u64 ammount);
-int vmm_free_page(u64 *pml4, uintptr_t ptr);
+void vmm_init(void);
+void vmm_map_page(u64 virt, u64 phys, u64 flags);
+void vmm_unmap_page(u64 virt);
+void *vmm_alloc_page(void);
+void vmm_free_page(void *ptr);
+void vmm_switch_pml4(u64 *pml4);

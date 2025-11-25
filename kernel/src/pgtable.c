@@ -1,0 +1,143 @@
+#include <helpers.h>
+#include <pmm.h>
+#include <stddef.h>
+#include <types.h>
+#include <string.h>
+#include <pgtable.h>
+#include <buddy.h>
+
+extern u64 hhdm_offset;
+
+static inline void pgtable_invlpg(void *addr)
+{
+    __asm__ volatile("invlpg (%0)" : : "r"(addr) : "memory");
+}
+
+u64 *pgtable_alloc_table(void)
+{
+    char *page = buddy_alloc(0);
+    memset(page, 0, PAGE_SIZE);
+    return (u64*)page;
+}
+
+void pgtable_free_table(u64 *table)
+{
+    if (table == NULL) return;
+    void *phys_addr = (void *)((u64)table - hhdm_offset);
+    pmm_free_block(phys_addr);
+}
+
+static int pgtable_table_empty(u64 *table)
+{
+    for (u64 i = 0; i < 512; i++) {
+        if (table[i] & PAGE_PRESENT) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void pgtable_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
+{
+    virt = (u64)align_ptr_down(virt, PAGE_SIZE);
+    phys = (u64)align_ptr_down(phys, PAGE_SIZE);
+
+    u64 pml4_i = (virt >> 39) & 0x1FF;
+    u64 pdpt_i = (virt >> 30) & 0x1FF;
+    u64 pd_i = (virt >> 21) & 0x1FF;
+    u64 pt_i = (virt >> 12) & 0x1FF;
+
+    u64 *pdpt, *pd, *pt;
+
+    if (!(pml4[pml4_i] & PAGE_PRESENT))
+    {
+        pdpt = pgtable_alloc_table();
+        pml4[pml4_i] = ((u64)pdpt - hhdm_offset) | flags;
+    } else
+    {
+        pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+    }
+
+    if (!(pdpt[pdpt_i] & PAGE_PRESENT))
+    {
+        pd = pgtable_alloc_table();
+        pdpt[pdpt_i] = ((u64)pd - hhdm_offset) | flags;
+    } else
+    {
+        pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
+    }
+
+    if (!(pd[pd_i] & PAGE_PRESENT))
+    {
+        pt = pgtable_alloc_table();
+        pd[pd_i] = ((u64)pt - hhdm_offset) | flags;
+    } else
+    {
+        pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
+    }
+
+    pt[pt_i] = phys | flags;
+    pgtable_invlpg((void *)virt);
+}
+
+void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 length, u64 flags)
+{
+    for (u64 i = 0; i < length; i++)
+    {
+        pgtable_map(pml4, virt, phys, flags);
+        virt += PAGE_SIZE;
+        phys += PAGE_SIZE;
+    }
+}
+
+void pgtable_unmap(u64 *pml4, u64 virt)
+{
+    virt = (u64)align_ptr_down(virt, PAGE_SIZE);
+
+    u64 pml4_i = (virt >> 39) & 0x1FF;
+    u64 pdpt_i = (virt >> 30) & 0x1FF;
+    u64 pd_i = (virt >> 21) & 0x1FF;
+    u64 pt_i = (virt >> 12) & 0x1FF;
+
+    u64 *pdpt, *pd, *pt;
+
+    pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+    pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
+    pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
+
+    if (!(pml4[pml4_i] & PAGE_PRESENT) || 
+        !(pdpt[pdpt_i] & PAGE_PRESENT) || 
+        !(pd[pd_i] & PAGE_PRESENT))
+        return;
+
+    pt[pt_i] = 0;
+    pgtable_invlpg((void *)virt);
+    pmm_free_block((void *)virt - hhdm_offset);
+
+    if (pgtable_table_empty(pt))
+    {
+        pd[pd_i] = 0;
+        pgtable_invlpg(pd);
+        pgtable_free_table(pt);
+        
+        if (pgtable_table_empty(pd)) 
+        {
+            pdpt[pdpt_i] = 0;
+            pgtable_invlpg(pdpt);
+            pgtable_free_table(pd);
+            
+            if (pgtable_table_empty(pdpt)) 
+            {
+                pml4[pml4_i] = 0;
+                pgtable_invlpg(pml4);
+                pgtable_free_table(pdpt);
+            }
+        }
+    }
+}
+
+void pgtable_switch(u64 *pml4)
+{
+    register u64 phys = (u64)pml4 - hhdm_offset;
+    __asm__ volatile("mov %0, %%cr3" ::"r"(phys));
+}

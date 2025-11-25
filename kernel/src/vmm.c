@@ -7,271 +7,66 @@
 #include <stdio.h>
 #include <vmm.h>
 #include <framebuffer.h>
+#include <pgtable.h>
+#include <buddy.h>
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_address_request
-	kernel_address_request
-	= {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
-
-/* 
-
-x86-64 VIRTUAL ADDRESS LAYOUT
-
-16 bits	   9 bits	 9 bits	   9 bits	 9 bits	   12 bits
-┌─────────┬─────────┬─────────┬─────────┬─────────┬────────────┐
-│ SIGN	│ PML4	│ PDP		│ PD		│ PT		│ OFFSET	   │
-│ EXTEND	│ INDEX	│ INDEX	│ INDEX	│ INDEX	│ (4K PAGE)  │
-├─────────┼─────────┼─────────┼─────────┼─────────┼────────────┤
-│ 0xFFFF	│ 0x1FF	│ 0x1FF	│ 0x1FF	│ 0x1FF	│ 0xFFF	   │
-│ (SIGN)	│ (511)	│ (511)	│ (511)	│ (511)	│ (4095)	   │
-└─────────┴─────────┴─────────┴─────────┴─────────┴────────────┘
-
-CANONICAL ADDRESS RANGES:
-┌──────────────────────────────────────────────────────────────┐
-│ 0x0000000000000000 - 0x00007FFFFFFFFFFF	 │ User Space		   │
-├──────────────────────────────────────────────────────────────┤
-│ 0xFFFF800000000000 - 0xFFFFFFFFFFFFFFFF	 │ Kernel Space	   │
-└──────────────────────────────────────────────────────────────┘
-
-*/
+    kernel_address_request
+    = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
 extern u64 stack_start;
-
 extern u32 kernel_start;
 extern u32 kernel_end;
 
-static u64 *kernel_pml4;
+u64 *current_pml4 = NULL;
+u64 *kpml4 = NULL;
+extern u64 hhdm_offset;
+extern u64 total_blocks;
 
-static inline void invlpg(void *addr)
+void vmm_init(void)
 {
-	__asm__ volatile("invlpg (%0)" : : "r"(addr) : "memory");
-}
+    kpml4 = pgtable_alloc_table();
+	current_pml4 = kpml4;
 
-static u64 *vmm_alloc_table()
-{
-	void *page = pmm_alloc_block() + hhdm_offset;
-	memset(page, 0, PAGE_SIZE);
-	return (u64 *)page;
-}
+    pgtable_maprange(kpml4, hhdm_offset, 0, total_blocks, PAGE_PRESENT | PAGE_WRITABLE);
 
-static void vmm_free_table(u64 *table)
-{
-    if (table == NULL) return;
-    void *phys_addr = (void *)((u64)table - hhdm_offset);
-    pmm_free_block(phys_addr);
-}
-
-static int vmm_table_empty(u64 *table)
-{
-    for (u64 i = 0; i < 512; i++) {
-        if (table[i] & PAGE_PRESENT) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-void vmm_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
-{
-	/* Normalize values */
-	virt = (u64)align_ptr_down(virt, PAGE_SIZE);
-	phys = (u64)align_ptr_down(phys, PAGE_SIZE);
-
-	/* Calculate index */
-	u64 pml4_i = (virt >> 39) & 0x1FF;
-	u64 pdpt_i = (virt >> 30) & 0x1FF;
-	u64 pd_i = (virt >> 21) & 0x1FF;
-	u64 pt_i = (virt >> 12) & 0x1FF;
-
-	u64 *pdpt, *pd, *pt;
-
-	/* PDPT */
-	if (!(pml4[pml4_i] & PAGE_PRESENT))
-	{
-		pdpt = vmm_alloc_table();
-		pml4[pml4_i] = ((u64)pdpt - hhdm_offset) | flags;
-	} else
-	{
-		pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
-	}
-
-	/* PD */
-	if (!(pdpt[pdpt_i] & PAGE_PRESENT))
-	{
-		pd = vmm_alloc_table();
-		pdpt[pdpt_i] = ((u64)pd - hhdm_offset) | flags;
-	} else
-	{
-		pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
-	}
-
-	/* PT */
-	if (!(pd[pd_i] & PAGE_PRESENT))
-	{
-		pt = vmm_alloc_table();
-		pd[pd_i] = ((u64)pt - hhdm_offset) | flags;
-	} else
-	{
-		pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
-	}
-
-	pt[pt_i] = phys | flags;
-	invlpg((void *)virt);
-}
-
-static inline void vmm_maprange(u64 *pml4, u64 virt, u64 phys, u64 length_in_blocks,
-								u64 flags)
-{
-	for (u64 i = 0; i < length_in_blocks; i++)
-	{
-		vmm_map(pml4, virt, phys, flags);
-		virt += PAGE_SIZE;
-		phys += PAGE_SIZE;
-	}
-}
-
-void vmm_unmap_range(u64 *pml4, u64 virt, u64 length_in_blocks)
-{
-	virt = (u64)align_ptr_down(virt, PAGE_SIZE);
-	for (u64 i = 0; i < length_in_blocks; i++)
-	{
-		vmm_free_page(pml4, virt);
-		virt += PAGE_SIZE;
-	}
-
-}
-
-static inline void vmm_load_pml4()
-{
-	register u64 phys = (u64)kernel_pml4 - hhdm_offset;
-	__asm__ volatile("mov %0, %%cr3" ::"r"(phys));
-}
-
-void vmm_init()
-{
-	kernel_pml4 = vmm_alloc_table();
-
-	/* == DEFAULT MAPPING == */
-
-	vmm_maprange(kernel_pml4, hhdm_offset, 0, total_blocks, PAGE_PRESENT | PAGE_WRITABLE);
-
-	/* == SPECIAL AREA MAPPING == */
-
-	/* Kernel */
-	u64 vir = kernel_address_request.response->virtual_base;
-	u64 phys = kernel_address_request.response->physical_base;
-	u64 kernel_size = (u64)&kernel_end - (u64)&kernel_start;
+    u64 vir = kernel_address_request.response->virtual_base;
+    u64 phys = kernel_address_request.response->physical_base;
+    u64 kernel_size = (u64)&kernel_end - (u64)&kernel_start;
     u64 kernel_pages = (kernel_size + PAGE_SIZE - 1) / PAGE_SIZE;
-	vmm_maprange(kernel_pml4, vir, phys, kernel_pages,
-				 PAGE_PRESENT | PAGE_WRITABLE);
-	
-	/* Framebuffer */
-    vmm_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
-                framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
-
-
-	vmm_load_pml4();
-	debug_printf("VMM: Initialized.\n");
+    
+    pgtable_maprange(kpml4, vir, phys, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    
+    pgtable_maprange(kpml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
+                    framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+    pgtable_switch(kpml4);
+    debug_printf("VMM: Initialized.\n");
 }
 
-void *vmm_alloc_page(void *pml4)
+void vmm_map_page(u64 virt, u64 phys, u64 flags)
 {
-	uintptr_t ptr = (uintptr_t)pmm_alloc_block();
-	vmm_map(pml4, ptr + hhdm_offset, ptr, PAGE_PRESENT | PAGE_WRITABLE);
-
-	return (void *)ptr + hhdm_offset;
+    pgtable_map(current_pml4, virt, phys, flags);
 }
 
-void *vmm_alloc_block_row(void *pml4, u64 ammount)
+void vmm_unmap_page(u64 virt)
 {
-	if (ammount == 0)
-		return NULL;
-	
-	uintptr_t ptr = (uintptr_t)pmm_alloc_block_row(ammount);
-
-	for (u64 i = 0; i < ammount; i++)
-	{
-		vmm_map(pml4, ptr + hhdm_offset + (i * PAGE_SIZE), ptr + (i * PAGE_SIZE),
-				PAGE_PRESENT | PAGE_WRITABLE);
-	}
-
-	return (void *)ptr + hhdm_offset;
+    pgtable_unmap(current_pml4, virt);
 }
 
-int vmm_free_page(u64 *pml4, uintptr_t ptr)
+void *vmm_alloc_page(void)
 {
+    char *ptr = buddy_alloc(0);
+    pgtable_map(current_pml4, ptr, ptr - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
+    return (void *)ptr;
+}
 
-	/*
-	* FREEING FLOW: Inside → Out
-	* 
-	*   if PDPT empty? FREE PDPT
-	* PDPT  
-	*   ↑ if PD empty? FREE PD
-	* PD
-	*   ↑ if PT empty? FREE PT
-	* PT  ← START: Free page entry
-	* 
-	* Recursively free tables from bottom up
-	*/
+void vmm_free_page(void *ptr)
+{
+    pgtable_unmap(current_pml4, (u64)ptr);
+}
 
-	ptr = (uintptr_t)align_ptr_down(ptr, PAGE_SIZE);
-
-	/* Calculate index */
-	u64 pml4_i = (ptr >> 39) & 0x1FF;
-	u64 pdpt_i = (ptr >> 30) & 0x1FF;
-	u64 pd_i = (ptr >> 21) & 0x1FF;
-	u64 pt_i = (ptr >> 12) & 0x1FF;
-
-	u64 *pdpt, *pd, *pt;
-
-	/* Get the table */
-	pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
-
-	pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
-
-	pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
-
-	/* PDPT */
-	if (!(pml4[pml4_i] & PAGE_PRESENT))
-		return -1;
-
-	/* PD */
-	if (!(pdpt[pdpt_i] & PAGE_PRESENT))
-		return -1;
-
-	/* PT */
-	if (!(pd[pd_i] & PAGE_PRESENT))
-		return -1;
-
-	/* Not present anymore */
-	pt[pt_i] &= (~PAGE_PRESENT | ~PAGE_WRITABLE);
-
-	pmm_free_block((void *)ptr - hhdm_offset);
-
-	/* Check if we can free the page's table */
-
-	/* PT */
-	if (vmm_table_empty(pt))
-	{
-		pd[pd_i] = 0;
-		invlpg(pd);
-		vmm_free_table(pt);
-		
-		/* PD */
-		if (vmm_table_empty(pd)) 
-		{
-			pdpt[pdpt_i] = 0;
-			invlpg(pdpt);
-			vmm_free_table(pd);
-			
-			/* PDPT */
-			if (vmm_table_empty(pdpt)) 
-			{
-				pml4[pml4_i] = 0;
-				invlpg(pml4);
-				vmm_free_table(pdpt);
-			}
-		}
-	}
-
-	return 0;
+void vmm_switch_pml4(u64 *pml4)
+{
+    current_pml4 = pml4;
+    pgtable_switch(pml4);
 }

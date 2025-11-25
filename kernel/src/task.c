@@ -4,6 +4,7 @@
 #include <string.h>
 #include <task.h>
 #include <pmm.h>
+#include <vmm.h>
 #include <ss.h>
 #include <clock.h>
 
@@ -40,8 +41,8 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
 
 	task->priority = priority;
 	task->regs.rip = (u64)entry_point;
+	char *ptr = vmm_alloc_page();
 
-	u64 ptr = (u64)pmm_alloc_block() + hhdm_offset;
 	memset((void *)ptr, 0, 4096);
 
 	task->regs.rsp = ptr + 4096;

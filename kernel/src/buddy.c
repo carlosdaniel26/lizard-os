@@ -349,7 +349,7 @@ void buddy_free(void *ptr, int order)
 
         while (current)
         {
-            if ((u64)current == buddy_addr + hhdm_offset)
+            if ((u64)current == buddy_addr)
             {
                 if (*prev == current)
                 {
