@@ -1,6 +1,5 @@
 #include <helpers.h>
 #include <limine.h>
-#include <pmm.h>
 #include <stddef.h>
 #include <types.h>
 #include <string.h>
@@ -21,15 +20,36 @@ extern u32 kernel_end;
 u64 *current_pml4 = NULL;
 u64 *kpml4 = NULL;
 extern u64 hhdm_offset;
-extern u64 total_blocks;
 
 void vmm_init(void)
 {
     kpml4 = pgtable_alloc_table();
 	current_pml4 = kpml4;
 
-    pgtable_maprange(kpml4, hhdm_offset, 0, total_blocks, PAGE_PRESENT | PAGE_WRITABLE);
+    vmm_map_page((u64)kpml4, (u64)kpml4 - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
+    /* get regions from buddy then maps all the regions */
+    for (MemoryRegion *region = regions; region != NULL; region = region->next)
+    {
+        if (region->type != MEMORY_REGION_USABLE)
+            continue;
 
+        u64 region_start = region->base;
+        u64 region_end = region->base + region->length;
+        u64 region_pages = (region_end - region_start + PAGE_SIZE - 1) / PAGE_SIZE;
+
+        /* check if maps ffffffff7f80ebb7, print yes or no and hlt*/
+        debug_printf("VMM: Mapping memory region: start=0x%x, end=0x%x, pages=%u\n",
+                         region_start, region_end, region_pages);
+        if (region_start > 0xbfd09000 || region_end < 0xbfd09000)
+        {
+            debug_printf("VMM: Memory region overlaps critical address 0xbfd09000\n");
+            hlt();
+        }
+
+        pgtable_maprange(kpml4, region_start + hhdm_offset, region_start,
+                        region_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    }
+    
     u64 vir = kernel_address_request.response->virtual_base;
     u64 phys = kernel_address_request.response->physical_base;
     u64 kernel_size = (u64)&kernel_end - (u64)&kernel_start;

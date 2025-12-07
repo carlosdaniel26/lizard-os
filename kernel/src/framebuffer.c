@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <types.h>
 #include <string.h>
+#include <buddy.h>
 
 u32 *framebuffer;
 u64 height;
@@ -288,7 +289,16 @@ void setup_framebuffer(u64 w, u64 h, u32 *fb, u32 pth)
 	width = w;
 	height = h;
 
-	/* framebuffer length assigned on pmm.c: pmm_init() function */
+	/* Iterate on limine's memmap to get framebuffer length */
+	for(size_t i = 0; i < memmap_request.response->entry_count; i++)
+	{
+		struct limine_memmap_entry *entry = memmap_request.response->entries[i];
+		if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
+		{
+			framebuffer_length = entry->length;
+			break; /* done */
+		}
+	}
 }
 
 void draw_pixel(u64 x, u64 y, u32 color)

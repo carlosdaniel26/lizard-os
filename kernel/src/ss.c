@@ -1,13 +1,13 @@
 #include <ata.h>
 #include <cpuid.h>
 #include <helpers.h>
-#include <pmm.h>
 #include <rtc.h>
 #include <stdio.h>
 #include <string.h>
 #include <tty.h>
 #include <vga.h>
 #include <framebuffer.h>
+#include <buddy.h>
 
 void kprint_prompt()
 {
@@ -33,8 +33,7 @@ static inline void clear()
 
 static inline void lzfetch()
 {
-
-	u64 mem_ammount_mb = mem_ammount_b / (1024 * 1024);
+	size_t total_memory = buddy_calculate_usable_memory(regions);
 
 	kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
 	kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
@@ -48,7 +47,7 @@ static inline void lzfetch()
 	kprintf("|	  ^		   /	\\		   |\t\t\t\t\t\t\tTerminal: tty0\n");
 	kprintf("|	 /|		  (		 )		  |\t\t\t\t\t\t\tTheme:	   CalangoGreen\n");
 	kprintf("|	/ |		,__\\	 /__,	   |\t\t\t\t\t\t\tCPU:		%s\n", g_cpuid.brand_name);
-	kprintf("|	\\ \\	_//---,	 ,--\\\\_	  |\t\t\t\t\t\t\tRAM:	   %u.%uMB\n", mem_ammount_mb);
+	kprintf("|	\\ \\	_//---,	 ,--\\\\_	  |\t\t\t\t\t\t\tRAM:	   %u.%uMB\n", 0);
 	kprintf("|	 \\ \\	 /\\  /	 /	 /\\	  | \n");
 	kprintf("|	  \\ \\.___,/  /			|\n");
 	kprintf("|	   \\.______,/			   |\n");
@@ -61,35 +60,35 @@ static inline void lzfetch()
 
 void free()
 {
-	#define BLOCK_SIZE 4096
+	// #define BLOCK_SIZE 4096
 
-	u32 free_blocks = pmm_free_block_count();
-	u32 used_blocks = pmm_used_block_count();
+	// u32 free_blocks = pmm_free_block_count();
+	// u32 used_blocks = pmm_used_block_count();
 
-	u32 free_kb = (free_blocks * BLOCK_SIZE) / 1024;
-	u32 used_kb = (used_blocks * BLOCK_SIZE) / 1024;
-	u32 total_kb = (usable_blocks * BLOCK_SIZE) / 1024;
+	// u32 free_kb = (free_blocks * BLOCK_SIZE) / 1024;
+	// u32 used_kb = (used_blocks * BLOCK_SIZE) / 1024;
+	// u32 total_kb = (usable_blocks * BLOCK_SIZE) / 1024;
 
-	u32 free_mb = (free_kb + 512) / 1024;
-	u32 used_mb = (used_kb + 512) / 1024;
-	u32 total_mb = (total_kb + 512) / 1024;
+	// u32 free_mb = (free_kb + 512) / 1024;
+	// u32 used_mb = (used_kb + 512) / 1024;
+	// u32 total_mb = (total_kb + 512) / 1024;
 
-	#define print_mem(value_kb, value_mb)															   \
-		((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
+	// #define print_mem(value_kb, value_mb)															   \
+	// 	((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
 
-	kprintf("Memory Available: ");
-	print_mem(free_kb, free_mb);
-	kprintf(" (%u blocos)\n", free_blocks);
+	// kprintf("Memory Available: ");
+	// print_mem(free_kb, free_mb);
+	// kprintf(" (%u blocos)\n", free_blocks);
 
-	kprintf("Used Memory: ");
-	print_mem(used_kb, used_mb);
-	kprintf(" (%u blocos)\n", used_blocks);
+	// kprintf("Used Memory: ");
+	// print_mem(used_kb, used_mb);
+	// kprintf(" (%u blocos)\n", used_blocks);
 
-	kprintf("Total Memory: ");
-	print_mem(total_kb, total_mb);
-	kprintf(" (%u blocos)\n", total_blocks);
+	// kprintf("Total Memory: ");
+	// print_mem(total_kb, total_mb);
+	// kprintf(" (%u blocos)\n", total_blocks);
 
-	#undef print_mem
+	// #undef print_mem
 }
 
 void uptime()

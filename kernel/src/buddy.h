@@ -3,6 +3,7 @@
 #include <limine.h>
 #include <types.h>
 #include <string.h>
+#include <limine.h>
 
 #define MAX_ORDER 16
 
@@ -54,3 +55,6 @@ size_t buddy_calculate_usable_memory(MemoryRegion *regions);
 MemoryRegion *buddy_get_regions();
 void *buddy_alloc(int order);
 void buddy_init(void);
+
+extern MemoryRegion *regions;
+extern volatile struct limine_memmap_request memmap_request;

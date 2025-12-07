@@ -16,12 +16,20 @@ extern u32 kernel_end;
 #define KERNEL_STACK_SIZE 0x4000 /* 16 KiB */
 extern u8 kernel_stack[KERNEL_STACK_SIZE];
 
-extern struct limine_memmap_request memmap_request;
+__attribute__((used, section(".limine_requests"))) volatile struct limine_memmap_request
+	memmap_request = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0};
+
+__attribute__((
+	used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
+	.id = LIMINE_HHDM_REQUEST, .revision = 0};
+
+u64 hhdm_offset = 0;
+
 extern u64 hhdm_offset;
 
 #define PAGE_SIZE 4096
 
-static MemoryRegion *regions = NULL;
+MemoryRegion *regions = NULL;
 static size_t regions_count = 0;
 static BuddyAllocator allocator;
 
@@ -223,11 +231,11 @@ void buddy_dump_regions(MemoryRegion *regions)
     {
         if (current->type == MEMORY_REGION_USABLE)
         {
-            kprintf("base: 0x%x, length: 0x%x, type: usable\n", current->base, current->length);
+            kprintf("base: 0x%x, length: 0x%x, end = 0x%x, type: usable\n", current->base, current->length);
         }
         else
         {
-            kprintf("base: 0x%x, length: 0x%x, type: reserved\n", current->base, current->length);
+            kprintf("base: 0x%x, length: 0x%x, end = 0x%x, type: reserved\n", current->base, current->length);
         }
         current = current->next;
         i++;
@@ -253,6 +261,8 @@ size_t buddy_calculate_usable_memory(MemoryRegion *regions)
 /* initialize buddy allocator */
 void buddy_init(void)
 {
+    hhdm_offset = hhdm_request.response->offset;
+
     early_init();
 	
     regions = buddy_parse_mmap();
@@ -338,7 +348,7 @@ void *buddy_alloc(int order)
 /* free a block back to buddy allocator */
 void buddy_free(void *ptr, int order)
 {
-    u64 addr = (u64)ptr + hhdm_offset;
+    u64 addr = (u64)ptr;
     BuddyBlock *block = (BuddyBlock *)addr;
 
     while (order < MAX_ORDER - 1)

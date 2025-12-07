@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <vfs.h>
 #include <ata.h>
-#include <kmalloc.h>
 #include <vfs_conf.h>
 
 extern VfsConf *vfs_conf_list;

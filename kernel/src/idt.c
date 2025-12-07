@@ -18,6 +18,7 @@ void isr_common_entry(u64 int_id, CpuState *regs)
 	if (isr_table[int_id])
 	{
 		isr_table[int_id](regs);
+		return;
 	}
 }
 

@@ -3,10 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <task.h>
-#include <pmm.h>
+#include <buddy.h>
 #include <vmm.h>
 #include <ss.h>
 #include <clock.h>
+#include <pgtable.h>
 
 static Task proc1 = {0};
 static Task idle = {0};

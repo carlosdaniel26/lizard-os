@@ -10,7 +10,6 @@
 #include <limine.h>
 #include <pic.h>
 #include <pit.h>
-#include <pmm.h>
 #include <rtc.h>
 #include <ss.h>
 #include <stdbool.h>
@@ -62,13 +61,12 @@ void kmain()
 	init_cpuid();
 	tty_initialize();
 	pit_init();
-	pmm_init();
 	buddy_init();
 	init_gdt();
 	init_idt();
 	vmm_init();
 	task_init();
-	ata_detect_devices();
+	//ata_detect_devices();
 	//test_fat16();
 	//fat16_init();
 	//vfs_init();

@@ -1,10 +1,12 @@
 #include <helpers.h>
-#include <pmm.h>
 #include <stddef.h>
 #include <types.h>
 #include <string.h>
 #include <pgtable.h>
 #include <buddy.h>
+#include <stdio.h>
+
+/* times i forgot to automap: 3*/
 
 extern u64 hhdm_offset;
 
@@ -39,6 +41,7 @@ static int pgtable_table_empty(u64 *table)
 
 void pgtable_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
 {
+
     virt = (u64)align_ptr_down(virt, PAGE_SIZE);
     phys = (u64)align_ptr_down(phys, PAGE_SIZE);
 
@@ -82,6 +85,8 @@ void pgtable_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
 
 void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 length, u64 flags)
 {
+    /* check if maps ffffffff7f80ebb7, print yes or no and hlt*/
+
     for (u64 i = 0; i < length; i++)
     {
         pgtable_map(pml4, virt, phys, flags);
