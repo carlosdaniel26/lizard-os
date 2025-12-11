@@ -37,15 +37,6 @@ void vmm_init(void)
         u64 region_end = region->base + region->length;
         u64 region_pages = (region_end - region_start + PAGE_SIZE - 1) / PAGE_SIZE;
 
-        /* check if maps ffffffff7f80ebb7, print yes or no and hlt*/
-        debug_printf("VMM: Mapping memory region: start=0x%x, end=0x%x, pages=%u\n",
-                         region_start, region_end, region_pages);
-        if (region_start > 0xbfd09000 || region_end < 0xbfd09000)
-        {
-            debug_printf("VMM: Memory region overlaps critical address 0xbfd09000\n");
-            hlt();
-        }
-
         pgtable_maprange(kpml4, region_start + hhdm_offset, region_start,
                         region_pages, PAGE_PRESENT | PAGE_WRITABLE);
     }
