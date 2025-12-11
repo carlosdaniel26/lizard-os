@@ -26,7 +26,7 @@ void pgtable_free_table(u64 *table)
 {
     if (table == NULL) return;
     void *phys_addr = (void *)((u64)table - hhdm_offset);
-    pmm_free_block(phys_addr);
+    buddy_free(phys_addr, 0);
 }
 
 static int pgtable_table_empty(u64 *table)
@@ -117,7 +117,7 @@ void pgtable_unmap(u64 *pml4, u64 virt)
 
     pt[pt_i] = 0;
     pgtable_invlpg((void *)virt);
-    pmm_free_block((void *)virt - hhdm_offset);
+    buddy_free((void *)virt - hhdm_offset, 0);
 
     if (pgtable_table_empty(pt))
     {

@@ -54,6 +54,7 @@ void buddy_dump_regions(MemoryRegion *regions);
 size_t buddy_calculate_usable_memory(MemoryRegion *regions);
 MemoryRegion *buddy_get_regions();
 void *buddy_alloc(int order);
+void buddy_free(void *ptr, int order);
 void buddy_init(void);
 
 extern MemoryRegion *regions;
