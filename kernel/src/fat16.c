@@ -7,6 +7,7 @@
 #include <vfs.h>
 #include <vfs_conf.h>
 #include <block_dev.h>
+#include <kmalloc.h>
 
 /* ===== CONSTANTS ===== */
 

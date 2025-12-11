@@ -4,7 +4,7 @@
 #include <ata.h>
 #include <vfs_conf.h>
 
-extern VfsConf *vfs_conf_list;
+VfsConf *vfs_conf_list;
 
 static Vfs root = {0};
 
