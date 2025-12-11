@@ -10,6 +10,24 @@
 #define MEMORY_REGION_USABLE 0
 #define MEMORY_REGION_RESERVED 1
 
+#define PAGES_TO_ORDER(pages) ( \
+    (pages) <= 1 ? 0 : \
+    (pages) <= 2 ? 1 : \
+    (pages) <= 4 ? 2 : \
+    (pages) <= 8 ? 3 : \
+    (pages) <= 16 ? 4 : \
+    (pages) <= 32 ? 5 : \
+    (pages) <= 64 ? 6 : \
+    (pages) <= 128 ? 7 : \
+    (pages) <= 256 ? 8 : \
+    (pages) <= 512 ? 9 : \
+    (pages) <= 1024 ? 10 : \
+    (pages) <= 2048 ? 11 : \
+    (pages) <= 4096 ? 12 : \
+    (pages) <= 8192 ? 13 : \
+    (pages) <= 16384 ? 14 : \
+    15 )
+
 typedef struct MemoryRegion {
     uintptr_t base;
     size_t length;
