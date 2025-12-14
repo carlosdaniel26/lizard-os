@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #define MAX_BLOCK_DEVICES 16
+#define DEFAULT_NAME_SIZE 32
 
 typedef struct BlockDeviceOps {
 	int (*read)();
@@ -15,7 +16,7 @@ typedef struct BlockDeviceOps {
 } BlockDeviceOps;
 
 typedef struct BlockDevice	{
-	char name[32];
+	char name[DEFAULT_NAME_SIZE];
 	u32 id;
 
 	u64 total_sectors;
