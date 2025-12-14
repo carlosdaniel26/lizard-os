@@ -68,3 +68,4 @@ typedef struct VnodeOps {
 	int (*vn_brelse)();
 } VnodeOps;
 
+void vfs_init();
