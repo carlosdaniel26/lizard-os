@@ -1,0 +1,53 @@
+#pragma once
+
+#include <stddef.h>
+#include <list.h>
+#include <spinlock.h>
+
+#define KMEMCACHE_NAME_LEN 32
+
+typedef struct KMemCache {
+    char name[KMEMCACHE_NAME_LEN];
+
+    size_t object_size;             /* requested size */
+    size_t align;                   /* object alignment */
+    size_t size;                    /* actual size including metadata */
+    unsigned int in_use;            /* total allocated objects */
+    unsigned int free_slab_count;   /* number of free slabs */
+
+    unsigned int objects_per_slab;
+
+    unsigned int order;				/* pages per slab = 2^order */
+
+    ListHead slabs_full;
+    ListHead slabs_partial;
+    ListHead slabs_free;
+
+    unsigned long flags;
+
+    void (*ctor)(void *obj);
+    void (*dtor)(void *obj);
+
+    spinlock_t lock;
+} KMemCache;
+
+typedef struct Slab {
+    ListHead list;
+
+    void *start;            		/* base address of slab */
+    unsigned int in_use;     		/* allocated objects */
+    unsigned int free;      		/* free objects */
+
+    void *freelist;         		/* singly-linked list of free objs */
+
+    KMemCache *cache;
+} Slab;
+
+KMemCache *kmemcache_create(const char *name, size_t obj_size, void *ctor);
+int kmemcache_destroy(KMemCache *cache);
+
+void *kmemcache_alloc(KMemCache *cache);
+int kmemcache_free(KMemCache *cache, void *obj);
+
+Slab *slab_create(KMemCache *cache);
+void slab_destroy(KMemCache *cache, Slab *slab);

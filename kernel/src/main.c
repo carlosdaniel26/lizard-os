@@ -65,11 +65,12 @@ void kmain()
 	init_gdt();
 	init_idt();
 	vmm_init();
+	kmalloc_init();
 	task_init();
 	ata_detect_devices();
 	fat16_init();
 	test_fat16();
-	vfs_init();
+	//vfs_init();
 	PIC_remap();
 	init_keyboard();
 	enable_scheduler();

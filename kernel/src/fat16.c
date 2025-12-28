@@ -570,7 +570,7 @@ static int vfs_mount(Vfs *vfs, const char *path, uintptr_t fs_data)
 	vfs->vnode_covered = NULL;
 	vfs->flags = 0x00;
 	vfs->block_size = 512;
-	vfs->data = (uintptr_t)kcalloc(sizeof(Fat16));
+	vfs->data = (uintptr_t)zalloc(sizeof(Fat16));
 
 	return 0;
 }

@@ -1,9 +1,11 @@
 #pragma once
 
-struct ListHead {
+#include <stddef.h>
+
+typedef struct ListHead {
     struct ListHead *next;
     struct ListHead *prev;
-};
+} ListHead;
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
@@ -27,17 +29,17 @@ static inline void __ListAdd(
     prev->next = new;
 }
 
-static inline void ListAdd(struct ListHead *new, struct ListHead *head)
+static inline void list_add(struct ListHead *new, struct ListHead *head)
 {
     __ListAdd(new, head, head->next);
 }
 
-static inline void ListAddTail(struct ListHead *new, struct ListHead *head)
+static inline void list_add_tail(struct ListHead *new, struct ListHead *head)
 {
     __ListAdd(new, head->prev, head);
 }
 
-static inline void __ListDel(
+static inline void __list_del(
     struct ListHead *prev,
     struct ListHead *next)
 {
@@ -45,11 +47,31 @@ static inline void __ListDel(
     prev->next = next;
 }
 
-static inline void ListDel(struct ListHead *entry)
+static inline void list_del(struct ListHead *entry)
 {
-    __ListDel(entry->prev, entry->next);
-    entry->next = entry->prev = nullptr; /* ou NULL se C */
+    __list_del(entry->prev, entry->next);
+    entry->next = entry->prev = NULL;
 }
 
-#define ListForEach(pos, head) \
-    for (pos = (head)->next; pos != (head); pos = pos->next)
+static inline void list_move_tail(struct ListHead *entry, struct ListHead *head)
+{
+    list_del(entry);
+    list_add_tail(entry, head);
+}
+
+static inline void list_move(struct ListHead *entry, struct ListHead *head)
+{
+    list_del(entry);
+    list_add(entry, head);
+}
+
+
+#define list_for_each(pos, tmp, head) \
+    for (pos = (head)->next, tmp = pos->next; pos != (head); \
+         pos = tmp, tmp = pos->next)
+
+#define container_of(ptr, type, member) \
+    ((type *)((char *)(ptr) - offsetof(type, member)))
+
+#define list_first_entry(head, type, member) \
+    container_of((head)->next, type, member)

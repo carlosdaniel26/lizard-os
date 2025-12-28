@@ -60,7 +60,7 @@ void ata_detect_devices()
 {
 	for (u8 i = PRIMARY; i <= PRIMARY; i++)
 	{
-		ATADevice *ata_dev = kcalloc(sizeof(ATADevice));
+		ATADevice *ata_dev = zalloc(sizeof(ATADevice));
 
 		ata_dev->id = i;
 		ata_dev->io_base = base[i];
@@ -133,7 +133,7 @@ void ata_detect_devices()
 		}
 		ata_dev->model[40] = '\0';
 		
-		BlockDevice *dev = kcalloc(sizeof(BlockDevice));
+		BlockDevice *dev = zalloc(sizeof(BlockDevice));
 		strcpy(dev->name, ata_dev->model);
 		dev->id = i;
 		dev->total_sectors = ata_dev->total_sectors;
