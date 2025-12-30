@@ -11,6 +11,7 @@
 #include <early_alloc.h>
 #include <kernelcfg.h>
 #include <debug.h>
+#include <panic.h>
 
 
 #define DIV_UP(a, b) (((a) + (b)-1) / (b))
@@ -46,14 +47,14 @@ void vmm_init(void)
     debug_printf("kernel last page is on phys %x\n", phys + kernel_pages * PAGE_SIZE);
     debug_printf("kernel last page is on virt %x\n", vir + kernel_pages * PAGE_SIZE);
     debug_printf("is stack inside of kernel area? %s\n",
-                 ((&kernel_start <= ((u64)&kernel_stack)) &&
-                  (((u64)&kernel_stack + KERNEL_STACK_SIZE) <= (&kernel_end)))
+                 (((u64)&kernel_start <= ((u64)&kernel_stack)) &&
+                  (((u64)&kernel_stack + KERNEL_STACK_SIZE) <= (u64)&kernel_end))
                      ? "yes"
                      : "no");
 
     /* is stack inside of the mapped area? */
     if ((u64)&kernel_stack < vir ||
-        (u64)&kernel_stack[KERNEL_STACK_SIZE-1] > &kernel_end)
+        (u64)&kernel_stack[KERNEL_STACK_SIZE-1] > (u64)&kernel_end)
     {
         debug_printf("Error: kernel stack is outside of mapped kernel area!\n");
     }
@@ -63,12 +64,12 @@ void vmm_init(void)
         debug_printf("Kernel stack: 0x%x - 0x%x\n", (u64)&kernel_stack, (u64)&kernel_stack + KERNEL_STACK_SIZE);
         debug_printf("Kernel stack last page: 0x%x\n", ((u64)&kernel_stack + KERNEL_STACK_SIZE - 1) & ~(PAGE_SIZE - 1));
     }
-    if (&kernel_stack[KERNEL_STACK_SIZE] < hhdm_offset)
+    if ((u64)&kernel_stack[KERNEL_STACK_SIZE] < hhdm_offset)
     {
         debug_printf("Error: kernel stack is below hhdm_offset!\n");
     }
 
-    if (&kernel_stack < (u64 *)(&kernel_start))
+    if ((u64)&kernel_stack < (u64)&kernel_start)
     {
         debug_printf("Error: kernel stack is below physical kernel base!\n");
     }
@@ -78,8 +79,8 @@ void vmm_init(void)
         debug_printf("Error: kernel stack is above physical kernel end!\n");
     }
 
-    char *ptr = 0xffff8000bff7dfd0; /*fault addr */
-    char *page = align_down((uintptr_t)ptr, PAGE_SIZE);
+    char *ptr = (char *)0xffff8000bff7dfd0; /*fault addr */
+    char *page = (char *)align_down((uintptr_t)ptr, PAGE_SIZE);
 	extern u64 *kpml4;
     if (pgtable_is_mapped(kpml4, (u64)page))
     {

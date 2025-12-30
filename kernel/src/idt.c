@@ -51,9 +51,8 @@ void isr_common_entry(u64 int_id, CpuState *regs)
 					faulting_address, regs->rip, regs->rflags);
 		}
 
-		if ((framebuffer <= faulting_address &&
-			 faulting_address < (framebuffer + framebuffer_length)))
-		{
+		                if (((u64)framebuffer <= faulting_address &&
+		                         faulting_address < ((u64)framebuffer + framebuffer_length)))		{
 			kpanic("Page Fault in framebuffer space at address 0x%x, RIP: 0x%x, Error Code: 0x%x",
 					faulting_address, regs->rip, regs->rflags);
 		}
