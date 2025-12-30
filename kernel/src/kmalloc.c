@@ -3,6 +3,11 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <types.h>
+#include <pgtable.h>
+#include <helpers.h>
+#include <kmalloc.h>
+#include <early_alloc.h>
 
 typedef struct CacheNode {
     ListHead list;
@@ -11,28 +16,29 @@ typedef struct CacheNode {
 } CacheNode;
 
 static LIST_HEAD(cache_list);
+static KMemCache *kmalloc_node_cache = NULL;
 
 void kmalloc_init(void)
 {
     InitListHead(&cache_list);
+    kmalloc_node_cache = kmemcache_create("kmalloc_node", sizeof(CacheNode), NULL, NULL);
 
-    size_t sizes[] = {8, 16, 32, 64, 128, 256, 512, 1024, 2048};
+    size_t sizes[] = {8, 16, 32, 64, 128, 256, 512, 1024, 2048}; // bytes
     char name[KMEMCACHE_NAME_LEN];
 
     for (size_t i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++) {
-        KMemCache *cache = kmemcache_create("kmalloc_node", sizeof(CacheNode), NULL);
-        CacheNode *node = kmemcache_alloc(cache);
+        CacheNode *node = kmemcache_alloc(kmalloc_node_cache);
         node->size = sizes[i];
 
-        sprintf(name, "kmalloc_%zu", sizes[i]);
-        node->cache = kmemcache_create(name, sizes[i], NULL);
+        sprintf(name, "kmalloc_%u", (unsigned)sizes[i]);
+        node->cache = kmemcache_create(name, sizes[i], NULL, NULL);
 
         list_add(&node->list, &cache_list);
     }
 }
 
 void *kmalloc(size_t size)
-{
+{   
     ListHead *pos, *tmp;
     CacheNode *best = NULL;
 
@@ -43,17 +49,18 @@ void *kmalloc(size_t size)
     }
 
     if (!best) {
-        CacheNode *new_node = kmemcache_alloc(kmemcache_create("kmalloc_node", sizeof(CacheNode), NULL));
+        CacheNode *new_node = kmemcache_alloc(kmalloc_node_cache);
         new_node->size = size;
 		char name[KMEMCACHE_NAME_LEN];
-        sprintf(name, "kmalloc_%u", size);
-        new_node->cache = kmemcache_create(name, size, NULL);
+        sprintf(name, "kmalloc_%u", (unsigned)size);
+        new_node->cache = kmemcache_create(name, size, NULL, NULL);
 
         list_add(&new_node->list, &cache_list);
         best = new_node;
     }
 
-    return kmemcache_alloc(best->cache);
+    void *addr = kmemcache_alloc(best->cache);
+    return addr;
 }
 
 void kfree(void *ptr)

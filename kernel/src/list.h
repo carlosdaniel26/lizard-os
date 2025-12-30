@@ -65,6 +65,11 @@ static inline void list_move(struct ListHead *entry, struct ListHead *head)
     list_add(entry, head);
 }
 
+static inline int list_empty(const struct ListHead *head)
+{
+    return head->next == head;
+}
+
 
 #define list_for_each(pos, tmp, head) \
     for (pos = (head)->next, tmp = pos->next; pos != (head); \
@@ -73,5 +78,4 @@ static inline void list_move(struct ListHead *entry, struct ListHead *head)
 #define container_of(ptr, type, member) \
     ((type *)((char *)(ptr) - offsetof(type, member)))
 
-#define list_first_entry(head, type, member) \
-    container_of((head)->next, type, member)
+#define list_first_entry(head, type, member) container_of((head)->next, type, member)

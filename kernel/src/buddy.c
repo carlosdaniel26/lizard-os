@@ -4,408 +4,237 @@
 #include <stdio.h>
 #include <limine.h>
 #include <helpers.h>
-
-/* function prototypes */
-void *early_alloc(size_t pages);
-void early_init(void);
-MemoryRegion *buddy_parse_mmap(void);
+#include <early_alloc.h>
+#include <pgtable.h>
+#include <panic.h>
 
 extern u32 kernel_start;
 extern u32 kernel_end;
 
+#define IS_ALIGNED(pfn, order) (((pfn) & ((1UL << (order)) - 1)) == 0)
+#define BLOCK_FITS(pfn, order, end_pfn) ((pfn) + (1UL << (order)) <= (long unsigned int)(end_pfn))
+
 #define KERNEL_STACK_SIZE 0x4000 /* 16 KiB */
 extern u8 kernel_stack[KERNEL_STACK_SIZE];
 
-__attribute__((used, section(".limine_requests"))) volatile struct limine_memmap_request
-	memmap_request = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0};
+__attribute__((used, section(".limine_requests"))) volatile struct limine_executable_address_request
+    kernel_address_request
+    = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
-__attribute__((
-	used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
-	.id = LIMINE_HHDM_REQUEST, .revision = 0};
 
-u64 hhdm_offset = 0;
+BuddyAllocator buddy;
 
-extern u64 hhdm_offset;
-
-#define PAGE_SIZE 4096
-
-MemoryRegion *regions = NULL;
-static size_t regions_count = 0;
-static BuddyAllocator allocator;
-
-/* 
- * early allocation explanation:
- *
- * initially as i dont want to depends on global variables to handle a linked list,
- * i'm going to use a bitmap allocator initially just to allocate this linked list,
- * after that, then i'll rellay on the buddy allocator futher on.
- * 
- * so the following functions, variables and macros will be related and used
- * on this early allocation before buddy be ready, which btw buddy will use to allocate 
- * its structures too.
- * 
- * that kinda remember me egg and chicken problem.
- */
-
-#define EARLY_BITMAP_SIZE 8192  /* 8kb can track 64k pages (256mb) */
-
-static unsigned long early_bitmap[EARLY_BITMAP_SIZE / sizeof(unsigned long)];
-static uintptr_t early_memory_base;
-static size_t early_pages;
-
-/* check if a page is free in the early bitmap */
-static int early_page_is_free(size_t page_index)
+unsigned int pages_to_order(unsigned int pages)
 {
-    size_t long_index = page_index / (sizeof(unsigned long) * 8);
-    size_t bit_index = page_index % (sizeof(unsigned long) * 8);
-    return !(early_bitmap[long_index] & (1UL << bit_index));
-}
+    unsigned int order = 0;
+    unsigned int size = 1;
 
-/* mark a page as used in the early bitmap */
-static void mark_page_used(size_t page_index)
-{
-    size_t long_index = page_index / (sizeof(unsigned long) * 8);
-    size_t bit_index = page_index % (sizeof(unsigned long) * 8);
-    early_bitmap[long_index] |= (1UL << bit_index);
-}
-
-/* find consecutive free pages in early bitmap */
-static int find_free_pages(size_t pages, size_t *start_index)
-{
-    size_t consecutive_free = 0;
-    
-    for (size_t i = 0; i < early_pages; i++)
-    {
-        if (early_page_is_free(i))
-        {
-            if (consecutive_free == 0)
-            {
-                *start_index = i;
-            }
-            consecutive_free++;
-            if (consecutive_free >= pages)
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            consecutive_free = 0;
-        }
+    while (size < pages) {
+        size <<= 1;
+        order++;
     }
-    return 0;
+    return order;
 }
 
-/* count usable memory regions from limine memory map */
-size_t count_usable_regions(void)
+static size_t detect_page_count(void)
 {
-    struct limine_memmap_response *response = memmap_request.response;
-    size_t count = 0;
-    
-    if (!response) return 0;
-    
-    for (size_t i = 0; i < response->entry_count; i++)
-    {
-        if (response->entries[i]->type == LIMINE_MEMMAP_USABLE)
-        {
-            count++;
-        }
-    }
-    return count;
-}
+    struct limine_memmap_response *resp = memmap_request.response;
+    uintptr_t max_addr = 0;
 
-/* parse the memory map from limine and populate regions linked list */
-MemoryRegion *buddy_parse_mmap(void)
-{
-    struct limine_memmap_response *response = memmap_request.response;
-    if (!response || !response->entry_count)
-    {
-        return NULL;
-    }
+    if (!resp)
+        return 0;
 
-    MemoryRegion *head = NULL;
-    MemoryRegion *tail = NULL;
-    regions_count = 0;
-
-    for (size_t i = 0; i < response->entry_count; i++)
-    {
-        struct limine_memmap_entry *entry = response->entries[i];
-
-        u64 aligned_base = align_up(entry->base, PAGE_SIZE);
-        u64 aligned_end = align_down(entry->base + entry->length, PAGE_SIZE);
-
-        if (aligned_base >= aligned_end)
-        {
+    const uint64_t entry_count = resp->entry_count;
+    for (uint64_t i = 0; i < entry_count; i++) {
+        struct limine_memmap_entry *e = resp->entries[i];
+        if (e->type != LIMINE_MEMMAP_USABLE)
             continue;
-        }
-
-        u64 aligned_length = aligned_end - aligned_base;
-        
-        /* allocate memory for this region node using early allocator */
-        size_t pages_needed = (sizeof(MemoryRegion) + PAGE_SIZE - 1) / PAGE_SIZE;
-        MemoryRegion *region = early_alloc(pages_needed) + hhdm_offset;
-        if (!region) break;
-
-        region->base = aligned_base;
-        region->length = aligned_length;
-        if (entry->type == LIMINE_MEMMAP_USABLE)
-        {
-            region->type = MEMORY_REGION_USABLE;
-        }
-        else
-        {
-            region->type = MEMORY_REGION_RESERVED;
-        }
-        region->next = NULL;
-
-        /* add to linked list */
-        if (!head)
-        {
-            head = region;
-            tail = region;
-        }
-        else
-        {
-            tail->next = region;
-            tail = region;
-        }
-        
-        regions_count++;
+        uintptr_t end = e->base + e->length;
+        if (end > max_addr)
+            max_addr = end;
     }
 
-    regions = head;
-    return head;
+    return (size_t)(align_up(max_addr, PAGE_SIZE) / PAGE_SIZE);
 }
 
-/* initialize early bitmap allocator */
-void early_init(void)
+static inline void buddy_add_block(BuddyPage *page, uint8_t order)
 {
-    struct limine_memmap_response *response = memmap_request.response;
-    if (!response || !response->entry_count)
-    {
-        return;
-    }
+    page->flags = PAGE_FREE;
+    page->order = order;
 
-    /* find first usable region for early allocation */
-    for (size_t i = 0; i < response->entry_count; i++)
-    {
-        if (response->entries[i]->type == LIMINE_MEMMAP_USABLE)
-        {
-            early_memory_base = response->entries[i]->base;
-            early_pages = response->entries[i]->length / PAGE_SIZE;
-            break;
-        }
-    }
+    list_add(&page->list,
+             &buddy.free_areas[order].free_list);
 
-    /* initialize bitmap - all pages free initially */
-    memset(early_bitmap, 0, sizeof(early_bitmap));
-	
+    buddy.free_areas[order].free_count++;
 }
 
-/* allocate pages using early bitmap allocator */
-void *early_alloc(size_t pages)
+void buddy_init()
 {
-    size_t start_index;
+    buddy.page_count = detect_page_count();
+    buddy.pages = early_alloc(
+        buddy.page_count * sizeof(BuddyPage), 
+        0);
+
+    const size_t page_count = buddy.page_count;
+    /* init reserved to later free just the usable parts */
+    for (size_t i = 0; i < page_count; i++)
+    {
+        buddy.pages[i].flags = PAGE_RESERVED;
+        buddy.pages[i].order = 0;
+    }
+
+	/* initialize free lists */
+	for (int order = 0; order <= MAX_ORDER; order++)
+	{
+        buddy.free_areas[order].free_list.next = &buddy.free_areas[order].free_list;
+		buddy.free_areas[order].free_list.prev = &buddy.free_areas[order].free_list;
+
+        buddy.free_areas[order].free_count = 0;
+    }
+
+    /* mark usable pages */
+    struct limine_memmap_response *resp =
+        memmap_request.response;
     
-    if (!find_free_pages(pages, &start_index))
-    {
-        return NULL;
-    }
-
-    /* mark pages as used */
-    for (size_t i = 0; i < pages; i++)
-    {
-        mark_page_used(start_index + i);
-    }
-
-    return (void *)(early_memory_base + (start_index * PAGE_SIZE));
-}
-
-/* dump all memory regions for debugging */
-void buddy_dump_regions(MemoryRegion *regions)
-{
-    kprintf("memory regions:\n");
-    MemoryRegion *current = regions;
-    size_t i = 0;
-    while (current)
-    {
-        if (current->type == MEMORY_REGION_USABLE)
-        {
-            kprintf("base: 0x%x, length: 0x%x, end = 0x%x, type: usable\n", current->base, current->length);
-        }
-        else
-        {
-            kprintf("base: 0x%x, length: 0x%x, end = 0x%x, type: reserved\n", current->base, current->length);
-        }
-        current = current->next;
-        i++;
-    }
-}
-
-/* calculate total usable memory across all regions */
-size_t buddy_calculate_usable_memory(MemoryRegion *regions)
-{
-    size_t total = 0;
-    MemoryRegion *current = regions;
-    while (current)
-    {
-        if (current->type == MEMORY_REGION_USABLE)
-        {
-            total += current->length;
-        }
-        current = current->next;
-    }
-    return total;
-}
-
-/* initialize buddy allocator */
-void buddy_init(void)
-{
-    hhdm_offset = hhdm_request.response->offset;
-
-    early_init();
-	
-    regions = buddy_parse_mmap();
-    
-	if (!regions)
-    {
+    if (!resp)
         return;
-    }
 
-    buddy_dump_regions(regions);
-	
-    size_t total_memory = buddy_calculate_usable_memory(regions);
-    kprintf("total usable memory: %u mb\n", total_memory / (1024 * 1024));
-    memset(&allocator, 0, sizeof(allocator));
-
-    /* use first usable region for buddy allocator */
-    MemoryRegion *current = regions;
-    while (current)
+    const u64 entry_count = resp->entry_count;
+    for (u64 i = 0; i < entry_count; i++)
     {
-        if (current->type == MEMORY_REGION_USABLE)
+        struct limine_memmap_entry *e = resp->entries[i];
+
+        if (e->type != LIMINE_MEMMAP_USABLE)
+            continue; /* skip non-usable regions */
+
+        uintptr_t base = align_up(e->base, PAGE_SIZE);
+        uintptr_t end = align_down(e->base + e->length, PAGE_SIZE);
+
+        if (base >= end)
+            continue; /* unusable region */
+
+        int start_pfn = base / PAGE_SIZE;
+        int end_pfn = end / PAGE_SIZE;
+
+        int curr_pfn = start_pfn;
+        
+        /* allright this is usable */
+        while(curr_pfn < end_pfn)
         {
-            allocator.base = current->base;
-            allocator.size = current->length & ~(PAGE_SIZE - 1); /* align down to page size */
-            break;
+            u8 order = MAX_ORDER;
+
+            /* find biggest block */
+            while(order > 0)
+            {
+                if (! IS_ALIGNED(curr_pfn, order) ||
+                    ! BLOCK_FITS(curr_pfn, order, end_pfn))
+                {
+                    order--; /* try a smaller block*/
+                    continue;
+                }
+
+                break; /* found largest block */
+            }
+
+            /* check if any block is being used */
+            int can_use = 1;
+            for (u64 p = 0; p < (1UL << order); p++)
+            {
+                if (buddy.pages[curr_pfn + p].flags == PAGE_FREE)
+                {
+                    can_use = 0;
+                    break;
+                }
+            }
+
+            if (can_use)
+            {
+                buddy_add_block(&buddy.pages[curr_pfn], order);
+
+                for (u64 j = 0; j < (1UL << order); j++)
+                    buddy.pages[curr_pfn + j].flags = PAGE_FREE;
+            }
+
+            curr_pfn += 1UL << order;
         }
-        current = current->next;
     }
 
-    /* initialize free lists for each order */
-    size_t block_size = PAGE_SIZE; /* start with 4kb blocks */
-    u64 addr = allocator.base;
+    /* reserve early_alloc allocated memory */
+    int start_page = align_down(early_base, PAGE_SIZE) / PAGE_SIZE;
+    int end_page = align_up(early_current, PAGE_SIZE) / PAGE_SIZE;
 
-    for (int order = 0; order < MAX_ORDER && block_size <= allocator.size; order++)
+    for (int p = start_page; p < end_page; p++)
     {
-        BuddyBlock *prev = NULL;
-        /* add all blocks of current size to free list */
-        while (addr + block_size <= allocator.base + allocator.size)
-        {
-            BuddyBlock *block = (BuddyBlock *)(addr + hhdm_offset); /* convert to virtual address */
-            block->next = prev;
-            prev = block;
-            addr += block_size;
-        }
-        allocator.free_list[order] = prev;
-        block_size <<= 1; /* double block size for next order */
+        buddy.pages[p].flags = PAGE_RESERVED;
     }
+
+    /* reserve kernel memory */
+	uintptr_t kernel_size = (uintptr_t)&kernel_end - (uintptr_t)&kernel_start;
+
+	uintptr_t kernel_phys_start = kernel_address_request.response->physical_base;
+	uintptr_t kernel_phys_end = kernel_phys_start + kernel_size;
+
+    u64 kernel_start_pfn = kernel_phys_start / PAGE_SIZE;
+    u64 kernel_end_pfn   = kernel_phys_end / PAGE_SIZE;
+
+    for (u64 pfn = kernel_start_pfn; pfn < kernel_end_pfn; pfn++)
+        buddy.pages[pfn].flags = PAGE_RESERVED;
+
 }
 
-/* allocate a block of 2^order pages */
 void *buddy_alloc(int order)
 {
-    if (order >= MAX_ORDER)
-    {
-        return NULL;
-    }
+    if (order > MAX_ORDER)
+        return NULL; /* too big */
 
-    /* search for first available block of sufficient size */
-    for (int current = order; current < MAX_ORDER; current++)
+    const i64 block_size = 1UL << order;
+
+    for (size_t pfn = 0; pfn + block_size <= buddy.page_count; pfn++)
     {
-        if (allocator.free_list[current])
+        if ((pfn & (block_size - 1)) != 0)
+            continue;
+
+        int can_use = 1;
+        for (i64 i = 0; i < block_size; i++)
         {
-            BuddyBlock *block = allocator.free_list[current];
-            allocator.free_list[current] = block->next;
-
-            /* split larger blocks until we reach requested order */
-            while (current > order)
+            if (buddy.pages[pfn + i].flags != PAGE_FREE)
             {
-                current--;
-                /* calculate buddy address and add to free list */
-                BuddyBlock *buddy = (BuddyBlock *)((u64)block + (1ULL << (current + 12))); /* +12 for page size in bits */
-                buddy->next = allocator.free_list[current];
-                allocator.free_list[current] = buddy;
-            }
-
-            //debug_printf("buddy addr: %x\n", block);
-            return (void*)(block); /* return virt addr*/
-        }
-    }
-
-    return NULL; /* no memory available */
-}
-
-/* free a block back to buddy allocator */
-void buddy_free(void *ptr, int order)
-{
-    u64 addr = (u64)ptr;
-    BuddyBlock *block = (BuddyBlock *)addr;
-
-    while (order < MAX_ORDER - 1)
-    {
-        u64 buddy_addr = ((addr - allocator.base) ^ (1ULL << (order + 12))) + allocator.base;
-        BuddyBlock **prev = &allocator.free_list[order];
-        BuddyBlock *current = allocator.free_list[order];
-        int merged = 0;
-
-        while (current)
-        {
-            if ((u64)current == buddy_addr)
-            {
-                if (*prev == current)
-                {
-                    *prev = current->next;
-                }
-                else
-                {
-                    BuddyBlock *tmp = allocator.free_list[order];
-                    while (tmp && tmp->next != current)
-                    {
-                        tmp = tmp->next;
-                    }
-                    if (tmp)
-                    {
-                        tmp->next = current->next;
-                    }
-                }
-                if (addr < buddy_addr)
-                {
-                    addr = addr;
-                }
-                else
-                {
-                    addr = buddy_addr;
-                }
-                block = (BuddyBlock *)addr;
-                order++;
-                merged = 1;
+                can_use = 0;
                 break;
             }
-            prev = &current->next;
-            current = current->next;
         }
 
-        if (!merged)
-        {
-            break;
-        }
+        if (!can_use)
+            continue;
+
+        for (i64 i = 0; i < block_size; i++)
+            buddy.pages[pfn + i].flags = PAGE_ALLOCATED;
+
+        uintptr_t addr = (uintptr_t)(pfn * PAGE_SIZE) + hhdm_offset;
+        if (addr % PAGE_SIZE != 0)
+            kpanic("buddy_alloc: allocated address not aligned");
+        return (void *)addr;
     }
 
-    block->next = allocator.free_list[order];
-    allocator.free_list[order] = block;
+    kpanic("buddy_alloc: no block found");
+    return NULL; /* no block found */
 }
 
-MemoryRegion *buddy_get_regions()
+void buddy_free(void *addr, int order)
 {
-    return regions;
+    addr = (void *)((uintptr_t)addr - hhdm_offset);
+    if (!addr || order > MAX_ORDER)
+        return;
+
+    const int block_size = 1UL << order;
+    const size_t pfn = (uintptr_t)addr / PAGE_SIZE;
+
+    if (pfn + block_size > buddy.page_count)
+        return;
+
+    for (int i = 0; i < block_size; i++)
+    {
+        buddy.pages[pfn + i].flags = PAGE_FREE;
+        buddy.pages[pfn + i].order = 0;
+    }
 }

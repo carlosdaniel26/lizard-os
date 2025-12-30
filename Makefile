@@ -69,14 +69,15 @@ kernel: kernel-deps
 hdd:
 	qemu-img create -f raw hda.img 512M
 	mkfs.fat -F 16 hda.img
-	
-	sudo mount -o loop hda.img /mnt/lzos-fs
-	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'
-	sudo sh -c 'mkdir /mnt/lzos-fs/folder'
-	sudo sh -c 'echo "MY SECRETS"' > /mnt/lzos-fs/folder/file.txt'
-	sudo umount /mnt/lzos-fs
-	
 
+	sudo mkdir -p /mnt/lzos-fs
+	sudo mount -o loop hda.img /mnt/lzos-fs
+
+	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'
+	sudo mkdir -p /mnt/lzos-fs/folder
+	sudo sh -c 'echo "MY SECRETS" > /mnt/lzos-fs/folder/file.txt'
+
+	sudo umount /mnt/lzos-fs
 # Build
 
 $(IMAGE_NAME).iso: limine/limine kernel

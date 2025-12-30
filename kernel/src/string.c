@@ -314,7 +314,17 @@ int sprintf(char *buffer, const char *format, ...)
 				while (*num_ptr) {
 					*buf_ptr++ = *num_ptr++;
 				}
-			} else if (*fmt_ptr == 'x') {
+			} 
+			else if (*fmt_ptr == 'u') {
+				unsigned int val = va_arg(args, unsigned int);
+				char num_buffer[20];
+				unsigned_to_string(val, num_buffer);
+				char *num_ptr = num_buffer;
+				while (*num_ptr) {
+					*buf_ptr++ = *num_ptr++;
+				}
+			}
+			else if (*fmt_ptr == 'x') {
 				unsigned int val = va_arg(args, unsigned int);
 				char hex_buffer[20];
 				unsigned_to_hexstring(val, hex_buffer);

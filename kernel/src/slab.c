@@ -1,151 +1,180 @@
 #include <slab.h>
-#include <pgtable.h>
 #include <buddy.h>
-#include <string.h>
 #include <helpers.h>
-#include <stdio.h>
+#include <string.h>
 #include <list.h>
+#include <panic.h>
+#include <pgtable.h>
+#include <stdio.h>
+#include <debug.h>
 
 #define MAX_FREE_SLABS 3
-#define MAX_OBJS_PER_SLAB 1024
 
-KMemCache *kmemcache_create(const char *name, size_t obj_size, void *ctor)
+/* ============================================================
+ * Slab object header
+ * ============================================================ */
+
+/* ============================================================
+ * Slab helpers
+ * ============================================================ */
+
+static Slab *slab_create(KMemCache *cache)
 {
-    size_t required_bytes = sizeof(Slab) + obj_size * MAX_OBJS_PER_SLAB;
-    int order = 0;
-
-    while ((size_t)PAGE_SIZE << order < required_bytes)
-        order++;
-
-    KMemCache *cache = buddy_alloc(0);
-    if (!cache)
+    void *mem = buddy_alloc(cache->order);
+    debug_printf("slab_create: allocating slab for cache '%s'\n", cache->name);
+    if (!mem)
         return NULL;
 
-    cache->object_size = obj_size;
-    cache->order = order;
-    cache->free_slab_count = 0;
-    cache->in_use = 0;
+    size_t slab_size = (size_t)PAGE_SIZE << cache->order;
+    uintptr_t slab_start = (uintptr_t)mem;
+    uintptr_t slab_end   = slab_start + slab_size;
 
-    size_t slabs_bytes = (size_t)PAGE_SIZE << order;
-    cache->objects_per_slab = (slabs_bytes - sizeof(Slab)) / obj_size;
-    if (cache->objects_per_slab == 0)
-    {
-        debug_printf("on %s", name);
-        kpanic("kmemcache_create: object size too big for slab\n");
-    }
-
-    if (cache->objects_per_slab > MAX_OBJS_PER_SLAB)
-    {
-        cache->objects_per_slab = MAX_OBJS_PER_SLAB;
-    }
-
-    cache->ctor = ctor;
-
-    cache->slabs_free.next = cache->slabs_free.prev = &cache->slabs_free;
-    cache->slabs_partial.next = cache->slabs_partial.prev = &cache->slabs_partial;
-    cache->slabs_full.next = cache->slabs_full.prev = &cache->slabs_full;
-
-    if (name)
-    {
-        strncpy(cache->name, name, KMEMCACHE_NAME_LEN - 1);
-        cache->name[KMEMCACHE_NAME_LEN - 1] = '\0';
-    }
-    else
-    {
-        cache->name[0] = '\0';
-    }
-
-    return cache;
-}
-
-int kmemcache_destroy(KMemCache *cache)
-{
-    if (cache->in_use > 0)
-        return -1;
-
-    if (cache->slabs_full.next != &cache->slabs_full)
-        return -1;
-
-    if (cache->slabs_free.next != &cache->slabs_free)
-    {
-        ListHead *pos, *tmp;
-        list_for_each(pos, tmp, &cache->slabs_free)
-        {
-            Slab *slab = container_of(pos, Slab, list);
-            slab_destroy(cache, slab);
-        }
-    }
-
-    buddy_free(cache, 0);
-    return 0;
-}
-
-Slab *slab_create(KMemCache *cache)
-{
-    Slab *slab = buddy_alloc(cache->order);
-    if (!slab)
-        return NULL;
-
+    Slab *slab = (Slab *)mem;
+    slab->magic = SLAB_MAGIC;
     slab->cache = cache;
-    slab->start = (void *)slab + sizeof(Slab);
+    slab->start = mem;
     slab->in_use = 0;
-    slab->free = cache->objects_per_slab;
-    slab->freelist = slab->start;
+    slab->freelist = NULL;
 
-    uintptr_t obj_addr = (uintptr_t)slab->start;
+    slab->list.next = slab->list.prev = &slab->list;
 
-    for (unsigned int i = 0; i < cache->objects_per_slab - 1; i++)
-    {
-        uintptr_t next_obj_addr = obj_addr + cache->object_size;
-        *(void **)obj_addr = (void *)next_obj_addr;
-        obj_addr = next_obj_addr;
+    uintptr_t obj_start = align_up(
+        slab_start + sizeof(Slab),
+        cache->align
+    );
+
+    if (obj_start >= slab_end)
+        kpanic("slab_create: no space for objects");
+
+    size_t usable = slab_end - obj_start;
+    unsigned int objs = usable / cache->real_object_size;
+
+    if (objs == 0)
+        kpanic("slab_create: zero objects");
+
+    slab->free = objs;
+
+    for (int i = objs - 1; i >= 0; i--) {
+        SlabObj *o = (SlabObj *)(obj_start +
+            i * cache->real_object_size);
+
+        o->slab = slab;
+        o->next = slab->freelist;
+        slab->freelist = o;
     }
 
-    *(void **)obj_addr = NULL;
-
-    list_add(&slab->list, &cache->slabs_free);
+    debug_printf("%s: created slab %p for cache '%s' with %u objects\n",
+        cache->name, slab, cache->name, objs);
 
     return slab;
 }
 
-void slab_destroy(KMemCache *cache, Slab *slab)
+static void slab_destroy(KMemCache *cache, Slab *slab)
 {
+    if (slab->magic != SLAB_MAGIC)
+        kpanic("slab_destroy: bad slab");
+
     list_del(&slab->list);
+    slab->magic = 0;
+
     buddy_free(slab, cache->order);
 }
+
+/* ============================================================
+ * Cache API
+ * ============================================================ */
+
+KMemCache *kmemcache_create(const char *name,
+                           size_t obj_size,
+                           void (*ctor)(void *),
+                           void (*dtor)(void *))
+{
+    KMemCache *cache = buddy_alloc(0);
+    if (!cache)
+        return NULL;
+
+    memset(cache, 0, sizeof(*cache));
+
+    if (name) {
+        strncpy(cache->name, name, KMEMCACHE_NAME_LEN - 1);
+        cache->name[KMEMCACHE_NAME_LEN - 1] = 0;
+    }
+
+    cache->object_size = obj_size;
+    cache->align = sizeof(void *);
+
+    cache->real_object_size =
+        align_up(sizeof(SlabObj) + obj_size, cache->align);
+
+    size_t needed = sizeof(Slab) + cache->real_object_size;
+
+    cache->order = 0;
+    while (((size_t)PAGE_SIZE << cache->order) < needed)
+        cache->order++;
+
+    size_t slab_bytes = (size_t)PAGE_SIZE << cache->order;
+
+    cache->objects_per_slab =
+        (slab_bytes - sizeof(Slab)) / cache->real_object_size;
+
+    if (cache->objects_per_slab == 0)
+        kpanic("kmemcache_create: object too large");
+
+    cache->ctor = ctor;
+    cache->dtor = dtor;
+
+    // INIT_LIST_HEAD(&cache->slabs_full);
+    // INIT_LIST_HEAD(&cache->slabs_partial);
+    // INIT_LIST_HEAD(&cache->slabs_free);
+    cache->slabs_full.next = cache->slabs_full.prev = &cache->slabs_full;
+    cache->slabs_partial.next = cache->slabs_partial.prev = &cache->slabs_partial;
+    cache->slabs_free.next = cache->slabs_free.prev = &cache->slabs_free;
+
+    debug_printf(
+        "kmemcache_create: '%s' obj=%u real=%u align=%u order=%u objs=%u\n",
+        cache->name,
+        (unsigned)cache->object_size,
+        (unsigned)cache->real_object_size,
+        (unsigned)cache->align,
+        cache->order,
+        cache->objects_per_slab
+    );
+
+    return cache;
+}
+
+/* ============================================================
+ * Allocation
+ * ============================================================ */
 
 void *kmemcache_alloc(KMemCache *cache)
 {
     Slab *slab;
 
-    if (cache->slabs_partial.next != &cache->slabs_partial)
-    {
+    if (!list_empty(&cache->slabs_partial)) {
         slab = list_first_entry(&cache->slabs_partial, Slab, list);
-    }
-    else if (cache->slabs_free.next != &cache->slabs_free)
-    {
+    } else if (!list_empty(&cache->slabs_free)) {
         slab = list_first_entry(&cache->slabs_free, Slab, list);
         list_move(&slab->list, &cache->slabs_partial);
         cache->free_slab_count--;
-    }
-    else
-    {
+    } else {
         slab = slab_create(cache);
         if (!slab)
             return NULL;
-
-        list_move(&slab->list, &cache->slabs_partial);
+        list_add(&slab->list, &cache->slabs_partial);
     }
 
-    void *obj = slab->freelist;
-    slab->freelist = *(void **)obj;
+    SlabObj *o = slab->freelist;
+    slab->freelist = o->next;
 
-    slab->cache->in_use++;
     slab->in_use++;
     slab->free--;
+    cache->in_use++;
 
-    if (slab->in_use == cache->objects_per_slab)
+    if (slab->free == 0)
         list_move(&slab->list, &cache->slabs_full);
+
+    void *obj = (void *)(o + 1);
 
     if (cache->ctor)
         cache->ctor(obj);
@@ -153,45 +182,42 @@ void *kmemcache_alloc(KMemCache *cache)
     return obj;
 }
 
+/* ============================================================
+ * Free
+ * ============================================================ */
+
 int kmemcache_free(KMemCache *cache, void *obj)
 {
-    Slab *slab = align_ptr_down(obj, (size_t)(PAGE_SIZE << cache->order));
-
-    if ((uintptr_t)obj < (uintptr_t)slab->start ||
-        (uintptr_t)obj >= (uintptr_t)slab->start + slab->cache->objects_per_slab * slab->cache->object_size)
-    {
+    if (!obj)
         return -1;
-    }
 
-    int was_full = (slab->in_use == cache->objects_per_slab);
+    SlabObj *o = ((SlabObj *)obj) - 1;
+    Slab *slab = o->slab;
 
-    slab->cache->in_use--;
-    slab->in_use--;
-    slab->free++;
-
-    if (was_full)
-        list_move(&slab->list, &cache->slabs_partial);
-
-    if (slab->in_use == 0)
-    {
-        int free_slabs = cache->free_slab_count + 1;
-
-        if (free_slabs >= MAX_FREE_SLABS)
-        {
-            slab_destroy(cache, slab);
-        }
-        else
-        {
-            list_move(&slab->list, &cache->slabs_free);
-            cache->free_slab_count++;
-        }
-    }
+    if (slab->magic != SLAB_MAGIC)
+        kpanic("kmemcache_free: bad slab %p", slab);
 
     if (cache->dtor)
         cache->dtor(obj);
 
-    *(void **)obj = slab->freelist;
-    slab->freelist = obj;
+    o->next = slab->freelist;
+    slab->freelist = o;
+
+    slab->in_use--;
+    slab->free++;
+    cache->in_use--;
+
+    if (slab->free == 1)
+        list_move(&slab->list, &cache->slabs_partial);
+
+    if (slab->in_use == 0) {
+        if (cache->free_slab_count >= MAX_FREE_SLABS) {
+            slab_destroy(cache, slab);
+        } else {
+            list_move(&slab->list, &cache->slabs_free);
+            cache->free_slab_count++;
+        }
+    }
 
     return 0;
 }

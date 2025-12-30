@@ -5,6 +5,7 @@
 #include <types.h>
 #include <tty.h>
 #include <stdio.h>
+#include <debug.h>
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_PIC_MASK 0x01

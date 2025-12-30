@@ -1,6 +1,7 @@
 #include <block_dev.h>
 #include <string.h>
 #include <stdio.h>
+#include <debug.h>
 
 BlockDevice *block_devs[MAX_BLOCK_DEVICES] = {0};
 static u32 block_dev_count = 0;

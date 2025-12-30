@@ -46,10 +46,7 @@ void tty_initialize()
 
 void tty_scroll()
 {
-	for(int i = 0; i < FONT_HEIGHT / 4; i++)
-	{
-		scroll_framebuffer(4);
-	}
+	scroll_framebuffer(FONT_HEIGHT);
 	
 	terminal_row--;
 }

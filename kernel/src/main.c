@@ -18,7 +18,19 @@
 #include <types.h>
 #include <tty.h>
 #include <vmm.h>
+#include <early_alloc.h>
 #include <buddy.h>
+#include <pgtable.h>
+#include <kmalloc.h>
+#include <panic.h>
+#include <kernelcfg.h>
+
+/* 
+ * feel dumb is temporary, the progress of commits on this
+ * project is isn't so feel proud for every commit, even tho the problem is not solved.
+ * 
+ * because its not solved yet. - Carlos, 03:46 30th December, 2025
+ */
 
 __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
 
@@ -31,14 +43,12 @@ __attribute__((used,
 
 __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
 
-#define KERNEL_STACK_SIZE 0x4000 /* 16 KiB */
-
-__attribute__((aligned(16)))
 u8 kernel_stack[KERNEL_STACK_SIZE];
 
 void kmain()
 {
 	asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
+
 
 	stop_interrupts();
 	save_boot_time();
@@ -61,6 +71,7 @@ void kmain()
 	init_cpuid();
 	tty_initialize();
 	pit_init();
+	early_alloc_init();
 	buddy_init();
 	init_gdt();
 	init_idt();

@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <types.h>
 #include <string.h>
-#include <buddy.h>
+#include <early_alloc.h>
 
 u32 *framebuffer;
 u64 height;

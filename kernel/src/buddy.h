@@ -4,43 +4,24 @@
 #include <types.h>
 #include <string.h>
 #include <limine.h>
+#include <list.h>
 
 #define MAX_ORDER 16
 
-#define MEMORY_REGION_USABLE 0
-#define MEMORY_REGION_RESERVED 1
+#define PAGE_FREE     (1 << 0)
+#define PAGE_RESERVED (1 << 1)
+#define PAGE_ALLOCATED (1 << 2)
 
-#define PAGES_TO_ORDER(pages) ( \
-    (pages) <= 1 ? 0 : \
-    (pages) <= 2 ? 1 : \
-    (pages) <= 4 ? 2 : \
-    (pages) <= 8 ? 3 : \
-    (pages) <= 16 ? 4 : \
-    (pages) <= 32 ? 5 : \
-    (pages) <= 64 ? 6 : \
-    (pages) <= 128 ? 7 : \
-    (pages) <= 256 ? 8 : \
-    (pages) <= 512 ? 9 : \
-    (pages) <= 1024 ? 10 : \
-    (pages) <= 2048 ? 11 : \
-    (pages) <= 4096 ? 12 : \
-    (pages) <= 8192 ? 13 : \
-    (pages) <= 16384 ? 14 : \
-    15 )
+typedef struct BuddyPage {
+    ListHead list; /* for linking free pages */
+    u8 order;
+    u8 flags;
+} BuddyPage;
 
-typedef struct MemoryRegion {
-    uintptr_t base;
-    size_t length;
-    uint32_t type;
-    uint32_t reserved;
-    struct MemoryRegion *next;
-} MemoryRegion;
-
-typedef struct BuddyBlock
-{
-    struct BuddyBlock *next;
-}
-BuddyBlock;
+typedef struct BuddyArea {
+    ListHead free_list;
+    int free_count;
+} BuddyArea;
 
 typedef struct
 {
@@ -61,19 +42,18 @@ typedef struct
      * order 13: 32mb blocks (8192 pages)
      * order 14: 64mb blocks (16384 pages)
      * order 15: 128mb blocks (32768 pages) */
-    BuddyBlock *free_list[MAX_ORDER];
-    u64 base;        /* physical base address of managed memory */
-    size_t size;     /* total size of managed memory in bytes */
-}
-BuddyAllocator;
 
-MemoryRegion *buddy_parse_mmap(void);
-void buddy_dump_regions(MemoryRegion *regions);
-size_t buddy_calculate_usable_memory(MemoryRegion *regions);
-MemoryRegion *buddy_get_regions();
+    BuddyPage *pages; /* array descriptor of all pages */
+    size_t page_count;
+
+    BuddyArea free_areas[MAX_ORDER + 1];
+} BuddyAllocator;
+
+extern BuddyAllocator buddy;
+
+void buddy_init();
 void *buddy_alloc(int order);
-void buddy_free(void *ptr, int order);
-void buddy_init(void);
+void buddy_free(void *addr, int order);
+unsigned int pages_to_order(unsigned int pages);
 
-extern MemoryRegion *regions;
-extern volatile struct limine_memmap_request memmap_request;
+extern u64 hhdm_offset;

@@ -38,12 +38,21 @@ static VfsConf vfs_conf = {0};
 
 static inline bool is_valid_entry(const Fat16Directory *entry) 
 {
-	return (entry->name[0] != FAT16_DIR_ENTRY_DELETED &&
+	if (entry->name[0] != FAT16_DIR_ENTRY_DELETED &&
 			entry->name[0] != FAT16_DIR_ENTRY_END &&
 			entry->name[0] != 0x00 &&
 			entry->name[0] != 0xAC &&
 			entry->file_size_bytes != 0xFFFFFFFF &&
-			entry->attributes != 0xFF);
+			entry->attributes != 0xFF)
+		return true;
+
+	/*check ascii characters*/
+	for (int i = 0; i < 11; i++) {
+		if (entry->name[i] < 32 || entry->name[i] > 127)
+			return false;
+	}
+
+	return false;
 }
 
 static u32 cluster_to_lba(Fat16 *fs, u16 cluster) 

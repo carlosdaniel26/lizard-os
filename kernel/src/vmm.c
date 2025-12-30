@@ -8,48 +8,100 @@
 #include <framebuffer.h>
 #include <pgtable.h>
 #include <buddy.h>
+#include <early_alloc.h>
+#include <kernelcfg.h>
+#include <debug.h>
 
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_address_request
-    kernel_address_request
-    = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
-extern u64 stack_start;
+#define DIV_UP(a, b) (((a) + (b)-1) / (b))
+
+extern u64 kernel_stack[];
 extern u32 kernel_start;
 extern u32 kernel_end;
 
 u64 *current_pml4 = NULL;
 u64 *kpml4 = NULL;
 extern u64 hhdm_offset;
+extern struct limine_executable_address_request kernel_address_request;
 
 void vmm_init(void)
 {
     kpml4 = pgtable_alloc_table();
 	current_pml4 = kpml4;
 
-    vmm_map_page((u64)kpml4, (u64)kpml4 - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
     /* get regions from buddy then maps all the regions */
-    for (MemoryRegion *region = regions; region != NULL; region = region->next)
-    {
-        if (region->type != MEMORY_REGION_USABLE)
-            continue;
 
-        u64 region_start = region->base;
-        u64 region_end = region->base + region->length;
-        u64 region_pages = (region_end - region_start + PAGE_SIZE - 1) / PAGE_SIZE;
-
-        pgtable_maprange(kpml4, region_start + hhdm_offset, region_start,
-                        region_pages, PAGE_PRESENT | PAGE_WRITABLE);
-    }
-    
     u64 vir = kernel_address_request.response->virtual_base;
     u64 phys = kernel_address_request.response->physical_base;
-    u64 kernel_size = (u64)&kernel_end - (u64)&kernel_start;
-    u64 kernel_pages = (kernel_size + PAGE_SIZE - 1) / PAGE_SIZE;
-    
-    pgtable_maprange(kpml4, vir, phys, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    u64 vstart = align_down((u64)&kernel_start, PAGE_SIZE);
+    u64 vend   = align_up((u64)&kernel_end, PAGE_SIZE);
+    u64 pstart = phys - ((u64)&kernel_start - vstart);
+
+    u64 kernel_pages = (vend - vstart) / PAGE_SIZE;
+
+    pgtable_maprange(kpml4, vstart, pstart, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    debug_printf("VMM: KERNEL_STACK_SIZE=0x%x, kernel_stack_start=0x%x, kernel_stack_end=0x%x\n", KERNEL_STACK_SIZE, (u64)&kernel_stack, (u64)&kernel_stack + KERNEL_STACK_SIZE);
+
+    debug_printf("Mapped kernel: virt=0x%x phys=0x%x pages=%x\n", vir, phys, kernel_pages);
+    debug_printf("kernel last page is on phys %x\n", phys + kernel_pages * PAGE_SIZE);
+    debug_printf("kernel last page is on virt %x\n", vir + kernel_pages * PAGE_SIZE);
+    debug_printf("is stack inside of kernel area? %s\n",
+                 ((&kernel_start <= ((u64)&kernel_stack)) &&
+                  (((u64)&kernel_stack + KERNEL_STACK_SIZE) <= (&kernel_end)))
+                     ? "yes"
+                     : "no");
+
+    /* is stack inside of the mapped area? */
+    if ((u64)&kernel_stack < vir ||
+        (u64)&kernel_stack[KERNEL_STACK_SIZE-1] > &kernel_end)
+    {
+        debug_printf("Error: kernel stack is outside of mapped kernel area!\n");
+    }
+    else
+    {
+        debug_printf("Kernel stack is inside of mapped kernel area.\n");
+        debug_printf("Kernel stack: 0x%x - 0x%x\n", (u64)&kernel_stack, (u64)&kernel_stack + KERNEL_STACK_SIZE);
+        debug_printf("Kernel stack last page: 0x%x\n", ((u64)&kernel_stack + KERNEL_STACK_SIZE - 1) & ~(PAGE_SIZE - 1));
+    }
+    if (&kernel_stack[KERNEL_STACK_SIZE] < hhdm_offset)
+    {
+        debug_printf("Error: kernel stack is below hhdm_offset!\n");
+    }
+
+    if (&kernel_stack < (u64 *)(&kernel_start))
+    {
+        debug_printf("Error: kernel stack is below physical kernel base!\n");
+    }
+    if ((u64)&kernel_stack + KERNEL_STACK_SIZE >
+        (u64)(&kernel_end))
+    {
+        debug_printf("Error: kernel stack is above physical kernel end!\n");
+    }
+
+    char *ptr = 0xffff8000bff7dfd0; /*fault addr */
+    char *page = align_down((uintptr_t)ptr, PAGE_SIZE);
+	extern u64 *kpml4;
+    if (pgtable_is_mapped(kpml4, (u64)page))
+    {
+        debug_printf("VMM: page 0x%x is mapped.\n", (u64)page);
+    }
+    else
+    {
+        debug_printf("VMM: page 0x%x is NOT mapped.\n", (u64)page);
+    }
     
     pgtable_maprange(kpml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
                     framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+
+    
+
+    /* map direct mapped memory */
+
+    u64 tables_needed = DIV_UP(highest_addr, PAGE_SIZE);
+    if (tables_needed > highest_addr)
+        kpanic("VMM: tables_needed overflow");
+    debug_printf("tables_needed: %u for max_addr: 0x%x for %u.%uGB memory \n", tables_needed, highest_addr, highest_addr / (1024 * 1024 * 1024), (highest_addr % (1024 * 1024 * 1024)) / (1024 * 1024));
+    pgtable_maprange(kpml4, hhdm_offset, 0, tables_needed, PAGE_PRESENT | PAGE_WRITABLE);
     pgtable_switch(kpml4);
     debug_printf("VMM: Initialized.\n");
 }

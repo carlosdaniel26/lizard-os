@@ -6,7 +6,8 @@
 #include <buddy.h>
 #include <stdio.h>
 
-/* times i forgot to automap: 3*/
+/* times i forgot to automap: 3.5*/
+/* the .5 is for now that the system is missing one page for some reason, so its kinda my fault */
 
 extern u64 hhdm_offset;
 
@@ -25,8 +26,7 @@ u64 *pgtable_alloc_table(void)
 void pgtable_free_table(u64 *table)
 {
     if (table == NULL) return;
-    void *phys_addr = (void *)((u64)table - hhdm_offset);
-    buddy_free(phys_addr, 0);
+    buddy_free(table, 0);
 }
 
 static int pgtable_table_empty(u64 *table)
@@ -87,10 +87,11 @@ void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 length, u64 flags)
 {
     /* check if maps ffffffff7f80ebb7, print yes or no and hlt*/
 
-    for (u64 i = 0; i < length; i++)
+    for (u64 i = 0; i <= length; i++)
     {
+        //debug_printf("Mapping page: virt=0x%x phys=0x%x\n", virt, phys);
         pgtable_map(pml4, virt, phys, flags);
-        virt += PAGE_SIZE;
+        virt += PAGE_SIZE; 
         phys += PAGE_SIZE;
     }
 }
@@ -145,4 +146,36 @@ void pgtable_switch(u64 *pml4)
 {
     register u64 phys = (u64)pml4 - hhdm_offset;
     __asm__ volatile("mov %0, %%cr3" ::"r"(phys));
+}
+
+int pgtable_is_mapped(u64 *pml4, u64 virt)
+{
+    virt = (u64)align_ptr_down(virt, PAGE_SIZE);
+
+    u64 pml4_i = (virt >> 39) & 0x1FF;
+    u64 pdpt_i = (virt >> 30) & 0x1FF;
+    u64 pd_i = (virt >> 21) & 0x1FF;
+    u64 pt_i = (virt >> 12) & 0x1FF;
+
+    u64 *pdpt, *pd, *pt;
+
+    if (! (pml4[pml4_i] & PAGE_PRESENT))
+        return 0;
+
+    pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+
+    if (!( pdpt[pdpt_i] & PAGE_PRESENT))
+        return 0;
+
+    pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
+
+    if (! (pd[pd_i] & PAGE_PRESENT))
+        return 0;
+
+    pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
+
+    if (! (pt[pt_i] & PAGE_PRESENT))
+        return 0;
+
+    return 1;
 }

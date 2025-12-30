@@ -33,8 +33,6 @@ static inline void clear()
 
 static inline void lzfetch()
 {
-	size_t total_memory = buddy_calculate_usable_memory(regions);
-
 	kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
 	kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
 	kprintf("|				   /\"\\		|\t\t\t\t\t\t\tKernel:	lz-kernel 0.1\n");
@@ -73,7 +71,7 @@ void free()
 	// u32 used_mb = (used_kb + 512) / 1024;
 	// u32 total_mb = (total_kb + 512) / 1024;
 
-	// #define print_mem(value_kb, value_mb)															   \
+	// #define print_mem(value_kb, value_mb)
 	// 	((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
 
 	// kprintf("Memory Available: ");

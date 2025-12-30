@@ -5,11 +5,13 @@
 #include <spinlock.h>
 
 #define KMEMCACHE_NAME_LEN 32
+#define SLAB_MAGIC 0xDEADBEEF
 
 typedef struct KMemCache {
     char name[KMEMCACHE_NAME_LEN];
 
     size_t object_size;             /* requested size */
+    size_t real_object_size;        /* actual size including metadata */
     size_t align;                   /* object alignment */
     size_t size;                    /* actual size including metadata */
     unsigned int in_use;            /* total allocated objects */
@@ -39,15 +41,18 @@ typedef struct Slab {
     unsigned int free;      		/* free objects */
 
     void *freelist;         		/* singly-linked list of free objs */
+    unsigned long magic;
 
     KMemCache *cache;
 } Slab;
 
-KMemCache *kmemcache_create(const char *name, size_t obj_size, void *ctor);
+typedef struct SlabObj {
+    struct Slab *slab;        /* owning slab */
+    struct SlabObj *next;     /* freelist linkage */
+} SlabObj;
+
+KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void *), void (*dtor)(void *));
 int kmemcache_destroy(KMemCache *cache);
 
 void *kmemcache_alloc(KMemCache *cache);
 int kmemcache_free(KMemCache *cache, void *obj);
-
-Slab *slab_create(KMemCache *cache);
-void slab_destroy(KMemCache *cache, Slab *slab);

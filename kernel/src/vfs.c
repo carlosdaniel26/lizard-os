@@ -3,6 +3,7 @@
 #include <vfs.h>
 #include <ata.h>
 #include <vfs_conf.h>
+#include <panic.h>
 
 VfsConf *vfs_conf_list;
 

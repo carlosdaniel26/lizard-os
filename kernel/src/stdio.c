@@ -5,23 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <tty.h>
-
-void kpanic(const char *str)
-{
-	extern u32 tty_color;
-
-	u32 temp = tty_color;
-
-	tty_color = VGA_COLOR_RED;
-	kprintf("[PANIC]");
-	tty_color = temp;
-
-	kprintf(str);
-
-	while (1)
-	{
-	}
-}
+#include <stdbool.h>
 
 bool kprint(const char *data, size_t length)
 {

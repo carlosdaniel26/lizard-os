@@ -6,7 +6,7 @@ void hlt()
 {
 	while (1)
 	{
-		asm("sti");
+		asm("cli");
 		asm("hlt");
 	}
 }
