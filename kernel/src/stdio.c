@@ -128,7 +128,26 @@ int kprintf(const char *restrict format, ...)
 			if (!kprint(str, sizeof(str) - 1))
 				return -1;
 			written++;
-		} else
+		} 
+		else if (*format == 'p')
+		{
+			format++;
+			void *ptr = va_arg(parameters, void *);
+			if (!maxrem)
+			{
+				/* TODO: Set errno to EOVERFLOW.*/
+				return -1;
+			}
+			u32 size = get_unsigned2hex_final_size((u64)ptr);
+			char str[size + 1];
+			memset(str, 0, sizeof(str));
+
+			unsigned_to_hexstring((u64)ptr, str);
+			if (!kprint(str, sizeof(str) - 1))
+				return -1;
+			written++;
+		}
+		else
 		{
 			format = format_begun_at;
 			size_t len = strlen(format);
