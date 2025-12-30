@@ -38,13 +38,15 @@ static VfsConf vfs_conf = {0};
 
 static inline bool is_valid_entry(const Fat16Directory *entry) 
 {
-	if (entry->name[0] != FAT16_DIR_ENTRY_DELETED &&
-			entry->name[0] != FAT16_DIR_ENTRY_END &&
-			entry->name[0] != 0x00 &&
-			entry->name[0] != 0xAC &&
-			entry->file_size_bytes != 0xFFFFFFFF &&
-			entry->attributes != 0xFF)
-		return true;
+	if (entry->name[0] == FAT16_DIR_ENTRY_DELETED &&
+			entry->name[0] == FAT16_DIR_ENTRY_END &&
+			entry->name[0] == 0x00 &&
+			entry->name[0] == 0xAC &&
+			entry->file_size_bytes == 0xFFFFFFFF &&
+			entry->attributes == 0xFF)
+	{
+		return false;
+	}
 
 	/*check ascii characters*/
 	for (int i = 0; i < 11; i++) {
@@ -52,7 +54,7 @@ static inline bool is_valid_entry(const Fat16Directory *entry)
 			return false;
 	}
 
-	return false;
+	return true;
 }
 
 static u32 cluster_to_lba(Fat16 *fs, u16 cluster) 
@@ -557,6 +559,9 @@ void test_fat16()
 	{
 		if (dir_entries[i].name[0] == 0)
 			break; /* No more entries */
+
+		if (!is_valid_entry(&dir_entries[i]))
+			continue;
 
 		char entry_name[13];
 		convert_83_to_string(dir_entries[i].name, dir_entries[i].extension, entry_name);
