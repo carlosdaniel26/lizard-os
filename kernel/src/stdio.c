@@ -6,6 +6,7 @@
 #include <string.h>
 #include <tty.h>
 #include <stdbool.h>
+#include <pit.h>
 
 bool kprint(const char *data, size_t length)
 {
@@ -143,6 +144,7 @@ int kprintf(const char *restrict format, ...)
 			memset(str, 0, sizeof(str));
 
 			unsigned_to_hexstring((u64)ptr, str);
+			kprint("0x", 2);
 			if (!kprint(str, sizeof(str) - 1))
 				return -1;
 			written++;

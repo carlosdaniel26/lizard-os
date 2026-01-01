@@ -55,4 +55,7 @@ KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void
 int kmemcache_destroy(KMemCache *cache);
 
 void *kmemcache_alloc(KMemCache *cache);
-int kmemcache_free(KMemCache *cache, void *obj);
+int kmemcache_free(void *obj);
+
+Slab *_get_slab(void *obj);
+int _is_valid_slab(Slab *slab);

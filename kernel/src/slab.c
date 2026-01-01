@@ -179,6 +179,8 @@ void *kmemcache_alloc(KMemCache *cache)
     if (cache->ctor)
         cache->ctor(obj);
 
+    debug_printf("cache %s allocated on slab %p an obj on %p\n", cache->name, slab, obj);
+
     return obj;
 }
 
@@ -186,13 +188,13 @@ void *kmemcache_alloc(KMemCache *cache)
  * Free
  * ============================================================ */
 
-int kmemcache_free(KMemCache *cache, void *obj)
+int kmemcache_free(void *obj)
 {
     if (!obj)
         return -1;
 
-    SlabObj *o = ((SlabObj *)obj) - 1;
-    Slab *slab = o->slab;
+    Slab *slab = _get_slab(obj);
+    KMemCache *cache = slab->cache;
 
     if (slab->magic != SLAB_MAGIC)
         kpanic("kmemcache_free: bad slab %p", slab);
@@ -200,6 +202,7 @@ int kmemcache_free(KMemCache *cache, void *obj)
     if (cache->dtor)
         cache->dtor(obj);
 
+    SlabObj *o = ((SlabObj *)obj) - 1;
     o->next = slab->freelist;
     slab->freelist = o;
 
@@ -219,5 +222,21 @@ int kmemcache_free(KMemCache *cache, void *obj)
         }
     }
 
+    debug_printf("freed %p on slab %p cache %s now %u in_use %u\n", obj, slab, cache->name, cache->in_use);
+
     return 0;
+}
+
+/* public helpers */
+Slab *_get_slab(void *obj)
+{
+    SlabObj *o = ((SlabObj *)obj) - 1;
+    Slab *slab = o->slab;
+
+    return slab;
+}
+
+int _is_valid_slab(Slab *slab)
+{
+    return (slab->magic == SLAB_MAGIC);
 }
