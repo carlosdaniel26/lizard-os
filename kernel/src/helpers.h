@@ -26,6 +26,7 @@ static inline uintptr_t align_up(uintptr_t x, size_t a)
 
 char toupper(char c);
 void hlt();
+void stop_cpu();
 int oct2bin(unsigned char *str, int size);
 char toupper(char c);
 int days_in_month(int month, int year);

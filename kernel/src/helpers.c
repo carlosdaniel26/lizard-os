@@ -6,6 +6,15 @@ void hlt()
 {
 	while (1)
 	{
+		asm("sti");
+		asm("hlt");
+	}
+}
+
+void stop_cpu()
+{
+	while(1)
+	{
 		asm("cli");
 		asm("hlt");
 	}

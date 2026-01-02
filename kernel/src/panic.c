@@ -21,5 +21,5 @@ void kpanic(const char *str, ...)
 
 	kprintf(str, args);
 
-	hlt();
+	stop_cpu();
 }
