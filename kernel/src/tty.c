@@ -121,15 +121,10 @@ void tty_breakline()
 
 void tty_tab()
 {
-	for (u8 i = terminal_column; i % 4 == TAB_SIZE; i++)
+	u8 spaces = TAB_SIZE - (terminal_column % TAB_SIZE);
+	for (u8 i = 0; i < spaces; i++)
 	{
 		tty_putchar(' ');
-
-		if (terminal_column == terminal_width)
-		{
-			terminal_column = 0;
-			terminal_row++;
-		}
 	}
 }
 
