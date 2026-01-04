@@ -3,7 +3,8 @@
 #include <rtc.h>
 #include <types.h>
 #include <stdio.h>
-#include <clock.h>
+#include <ktime.h>
+#include <helpers.h>
 
 /* Ports for RTC communication*/
 #define RTC_COMMAND_PORT 0x70
@@ -12,73 +13,16 @@
 /* PIC Ports*/
 #define PIC2_DATA 0xA1
 
-/* Normalize */
-#define NORMALIZE_RATE(rate)																	   \
-	if ((rate) < 2 || (rate) > 15)																   \
-	{																							   \
-		(rate) = 6; /* Default frequency (1024 Hz) */											   \
-	}
 
-const char *months_strings[] = {"Undefined", "January",	 "February", "March",  "April",
-								"May",		 "June",	 "July",	 "August", "September",
-								"October",	 "November", "December"};
-
-static struct RTC_timer RTC_clock;
-
-void isr_timer()
-{
-	outb(RTC_COMMAND_PORT, 0x0C);
-	inb(RTC_DATA_PORT);
-}
-
-static ClockTime rtc_to_clock()
-{
-	ClockTime time;
-
-	time.year = 2000 + RTC_clock.year;
-	time.month = RTC_clock.month;
-	time.day = RTC_clock.day_of_month;
-	time.hour = RTC_clock.hours;
-	time.minute = RTC_clock.minutes;
-	time.second = RTC_clock.seconds;
-	time.millisecond = 0;
-
-	/*
-     * Milliseconds are not provided by RTC, PIT is responsible for that.
-     * For now we set it to zero.
-     */
-
-	return time;
-}
-
-void enable_rtc_interrupts()
-{
-	u8 rate = 6;
-	/* 1. Unmask IRQ8 in the PIC*/
-	outb(PIC2_DATA, inb(PIC2_DATA) & ~0x01);
-
-	/* 2. Enable RTC periodic interrupt*/
-	outb(RTC_COMMAND_PORT, 0x8B);	   /* Select Register B*/
-	u8 prev = inb(RTC_DATA_PORT); /* Read current value*/
-	outb(RTC_COMMAND_PORT, 0x8B);	   /* Select again to write*/
-	outb(RTC_DATA_PORT, prev | 0x40);  /* Set bit 6 (enable periodic interrupt)*/
-
-	/* 3. Set the RTC update rate (frequency)*/
-	NORMALIZE_RATE(rate);
-
-	outb(RTC_COMMAND_PORT, 0x8A);			   /* Select Register A*/
-	prev = inb(RTC_DATA_PORT);				   /* Read current value*/
-	outb(RTC_COMMAND_PORT, 0x8A);			   /* Select again to write*/
-	outb(RTC_DATA_PORT, (prev & 0xF0) | rate); /* Write only the rate part*/
-
-	/* Clean RTC interrupts*/
-	outb(RTC_COMMAND_PORT, 0x0C);
-	inb(RTC_DATA_PORT); /* Read the data port to clear the interrupt*/
-}
 
 static u8 bcd_to_binary(u8 bcd)
 {
 	return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
+}
+
+static u8 binary_to_bcd(u8 binary)
+{
+    return ((binary / 10) << 4) | (binary % 10);
 }
 
 /* static void rtc_write(u8 reg, u8 value)*/
@@ -87,7 +31,7 @@ static u8 bcd_to_binary(u8 bcd)
 /*	outb(RTC_DATA_PORT, value);*/
 /* }*/
 
-int rtc_read_b(u8 reg)
+static inline int rtc_read_b(u8 reg)
 {
 	outb(RTC_COMMAND_PORT, reg);
 	int result = inb(RTC_DATA_PORT);
@@ -95,9 +39,35 @@ int rtc_read_b(u8 reg)
 	return bcd_to_binary(result);
 }
 
-static void rtc_refresh_time()
+static inline void rtc_write_b(u8 reg, u8 value)
 {
-	u8 *RTC_array = (u8 *)&RTC_clock;
+    outb(RTC_COMMAND_PORT, reg);
+    outb(RTC_DATA_PORT, binary_to_bcd(value));
+}
+
+void rtc_write(const RTCTimer *in)
+{
+    /* Disable updates while programming */
+    outb(RTC_COMMAND_PORT, 0x8B);      // select register B, disable NMI
+    u8 prev = inb(RTC_DATA_PORT);
+    outb(RTC_COMMAND_PORT, 0x8B);
+    outb(RTC_DATA_PORT, prev | 0x80);  // SET bit
+
+    rtc_write_b(0x00, in->seconds);
+    rtc_write_b(0x02, in->minutes);
+    rtc_write_b(0x04, in->hours);
+    rtc_write_b(0x07, in->day_of_month);
+    rtc_write_b(0x08, in->month);
+    rtc_write_b(0x09, in->year % 100);
+
+    /* Re-enable updates */
+    outb(RTC_COMMAND_PORT, 0x8B);
+    outb(RTC_DATA_PORT, prev & ~0x80);
+}
+
+void rtc_read(RTCTimer *out)
+{
+	u8 *RTC_array = (u8 *)&out;
 
 	for (u8 reg = 0; reg <= 0xD; reg++)
 	{
@@ -105,16 +75,4 @@ static void rtc_refresh_time()
 
 		RTC_array[reg] = rtc_read_b(reg);
 	}
-	
-}
-
-const char *get_month_string(int month_id)
-{
-	return months_strings[month_id];
-}
-
-void rtc_get_time(ClockTime *out)
-{
-	rtc_refresh_time();
-	*out = rtc_to_clock();
 }

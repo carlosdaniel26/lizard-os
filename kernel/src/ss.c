@@ -8,6 +8,8 @@
 #include <vga.h>
 #include <framebuffer.h>
 #include <buddy.h>
+#include <ktime.h>
+#include <debug.h>
 
 void kprint_prompt()
 {
@@ -33,11 +35,12 @@ static inline void clear()
 
 static inline void lzfetch()
 {
+	TimeSpec ts = timespec_uptime();
 	kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
 	kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
 	kprintf("|				   /\"\\		|\t\t\t\t\t\t\tKernel:	lz-kernel 0.1\n");
-	kprintf("|				  /o o\\	   |\t\t\t\t\t\t\tUptime:  %ud %uH:%uM:%us\n", g_uptime_days,
-			g_uptime_days, g_uptime_minutes, g_uptime_hours);
+	kprintf("|				  /o o\\	   |\t\t\t\t\t\t\tUptime:  %llud %lluH:%lluM:%llus\n",
+			(u64)ts.sec / 86400, (u64)(ts.sec / 3600) % 24, (u64)(ts.sec / 60) % 60, (u64)ts.sec % 60);
 	kprintf("|			 _\\/  \\	/ \\/_	 |\t\t\t\t\t\t\tShell:	 shit-shell v0.0.3\n");
 	kprintf("|			  \\\\._/  /_.//	|\t\t\t\t\t\t\tPackages: 5 (hardcoded)\n");
 	kprintf("|			  `--,	,----'	  |\t\t\t\t\t\t\tResolution: %ux%u\n", width, height);
@@ -91,23 +94,20 @@ void free()
 
 void uptime()
 {
-	kprintf("%ud %uH:%uM:%us\n", g_uptime_days, g_uptime_hours, g_uptime_minutes,
-			g_uptime_seconds);
+	kprintf("%llu\n", (u64)timespec_uptime().sec);
 }
 
 void ms()
 {
-	kprintf("[%u.%u]\n", g_uptime_seconds, g_uptime_milliseconds);
+	kprintf("%llu\n", (u64)time_uptime_ms());
 }
 
 static inline void date()
 {
-	ClockTime time;
-	
-	clock_get_local(&time);
+	TimeSpec time = time_now();
 
-	kprintf("%u/%u/%u %u:%u:%u\n", time.day, time.month,
-			time.year, time.hour, time.minute, time.second);
+	kprintf("%d/%d/%d %d:%d:%d\n", timespec_get_day(&time), timespec_get_month(&time),
+			timespec_get_year(&time), timespec_get_hour(&time), timespec_get_min(&time), timespec_get_sec(&time));
 }
 
 /* Main */

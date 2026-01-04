@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <task.h>
 #include <helpers.h>
+#include <ktime.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
 
@@ -48,14 +49,6 @@ void pit_init()
 
 	isr_table[PIT_ISR_INDEX] = &isr_pit;
 
-	/* Synchronize RTC and PIT to avoid time glitches */;
-	u8 initial_second = rtc_read_b(0x00);
-	u8 current_second = initial_second;
-
-	do {
-		current_second = rtc_read_b(0x00);
-	} while (initial_second == current_second);
-
 	pit_unmask();
 }
 
@@ -63,7 +56,7 @@ void isr_pit(CpuState *regs)
 {
 	pit_milliseconds++;
 
-	clock_increase_ms();
+	time_tick_ns(1000000);
 
 	scheduler(regs);
 	PIC_sendEOI(PIT_ISR_INDEX);

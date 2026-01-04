@@ -10,6 +10,7 @@
 #include <early_alloc.h>
 #include <buddy.h>
 #include <debug.h>
+#include <panic.h>
 
 #define DIV_ROUND_UP(x, y) (((x) + (y)-1) / (y))
 #define BUDDYMALLOC_MAGIC 0x424D414C  /* "BMAL" */

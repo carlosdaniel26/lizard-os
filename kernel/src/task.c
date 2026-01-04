@@ -6,7 +6,7 @@
 #include <buddy.h>
 #include <vmm.h>
 #include <ss.h>
-#include <clock.h>
+#include <ktime.h>
 #include <pgtable.h>
 
 static Task proc1 = {0};

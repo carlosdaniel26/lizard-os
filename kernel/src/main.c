@@ -24,6 +24,7 @@
 #include <kmalloc.h>
 #include <panic.h>
 #include <kernelcfg.h>
+#include <ktime.h>
 
 /* 
  * feel dumb is temporary, the progress of commits on this
@@ -51,7 +52,7 @@ void kmain()
 
 
 	stop_interrupts();
-	save_boot_time();
+	time_init_from_rtc();
 
 	if (LIMINE_BASE_REVISION_SUPPORTED == false)
 	{
