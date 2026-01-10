@@ -21,7 +21,7 @@
 
 extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 
-volatile u64 pit_milliseconds = 0;
+volatile u64 pit_ticks = 0; // Definition of pit_ticks
 
 static inline void pit_mask()
 {
@@ -54,9 +54,10 @@ void pit_init()
 
 void isr_pit(CpuState *regs)
 {
-	pit_milliseconds++;
+	pit_ticks++;
 
 	time_tick_ns(1000000);
+	task_tick();
 
 	scheduler(regs);
 	PIC_sendEOI(PIT_ISR_INDEX);

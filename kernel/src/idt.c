@@ -10,6 +10,10 @@
 #include <panic.h>
 #include <framebuffer.h>
 #include <kernelcfg.h>
+#include <syscall.h>
+
+#define SCHEDULER_ISR_INDEX 48
+#define SYSCALL_ISR_INDEX 0x80
 
 extern u8 kernel_stack[];
 
@@ -19,6 +23,16 @@ static idt_ptr idt_descriptor;
 void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 
 #define EXCEPTION_PAGE_FAULT 14
+
+void isr_scheduler(CpuState *regs)
+{
+	scheduler(regs);
+}
+
+void isr_syscall(CpuState *regs)
+{
+	syscall_handler_c(regs);
+}
 
 void isr_common_entry(u64 int_id, CpuState *regs)
 {
@@ -52,7 +66,7 @@ void isr_common_entry(u64 int_id, CpuState *regs)
 		}
 
 		                if (((u64)framebuffer <= faulting_address &&
-		                         faulting_address < ((u64)framebuffer + framebuffer_length)))		{
+		                         faulting_address < ((u64)framebuffer + framebuffer_length))){
 			kpanic("Page Fault in framebuffer space at address 0x%x, RIP: 0x%x, Error Code: 0x%x",
 					faulting_address, regs->rip, regs->rflags);
 		}
@@ -87,7 +101,6 @@ void set_idt_gate(int vector, void (*isr)(), u8 flags)
 static inline void idt_load()
 {
 	asm volatile("lidt %0\n"
-				 "sti\n"
 				 :
 				 : "m"(idt_descriptor)
 				 : "memory");
@@ -97,6 +110,11 @@ void init_idt()
 {
 	for (int i = 0; i < IDT_ENTRIES; i++)
 		set_idt_gate(i, isr_vectors[i], 0x8E);
+
+	set_idt_gate(SYSCALL_ISR_INDEX, isr_vectors[SYSCALL_ISR_INDEX], 0xEE);
+
+	isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
+	isr_table[SYSCALL_ISR_INDEX] = &isr_syscall;
 
 	idt_descriptor.limit = sizeof(idt) - 1;
 	idt_descriptor.base = (u64)&idt;

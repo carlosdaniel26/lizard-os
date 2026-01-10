@@ -25,11 +25,12 @@
 #include <panic.h>
 #include <kernelcfg.h>
 #include <ktime.h>
+#include <syscall.h>
 
-/* 
+/*
  * feel dumb is temporary, the progress of commits on this
  * project is isn't so feel proud for every commit, even tho the problem is not solved.
- * 
+ *
  * because its not solved yet. - Carlos, 03:46 30th December, 2025
  */
 
@@ -79,12 +80,13 @@ void kmain()
 	vmm_init();
 	kmalloc_init();
 	task_init();
+	syscall_init();
 	ata_detect_devices();
 	fat16_init();
-	test_fat16();
-	//vfs_init();
+	test_fat16();	//vfs_init();
 	PIC_remap();
 	init_keyboard();
 	enable_scheduler();
+	start_interrupts();
 	hlt();
 }

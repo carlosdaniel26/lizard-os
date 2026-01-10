@@ -8,10 +8,13 @@
 #include <ss.h>
 #include <ktime.h>
 #include <pgtable.h>
+#include <debug.h>
+#include <pit.h>
+#include <syscall.h>
 
 static Task proc1 = {0};
 static Task idle = {0};
-static Task *current_task = &idle;
+Task *current_task = &idle;
 
 u8 scheduler_enabled = 0;
 
@@ -25,7 +28,12 @@ void idle_func()
 
 void proc1_func()
 {
-	shit_shell_init();
+	int i = 0;
+	while(1)
+	{
+		debug_printf("hello %u", i++);
+		syscall1(0, 1000 * 2); // Syscall 0 is sys_sleep
+	}
 	hlt();
 }
 
@@ -112,7 +120,7 @@ void task_save_context(CpuState *regs)
 
 static inline void scheduler_trigger()
 {
-    asm volatile ("int $32"); // 32 is your PIT IRQ
+    asm volatile ("int $48");
 }
 
 void task_sleep(u32 ms)
@@ -120,8 +128,9 @@ void task_sleep(u32 ms)
 	if (!current_task)
 		return;
 
-	current_task->sleep_ticks = ms;
+	current_task->sleep_until = pit_ticks + ms;
 	current_task->state = TASK_STATE_WAITING;
+	scheduler_trigger();
 }
 
 /*
@@ -129,6 +138,11 @@ void task_sleep(u32 ms)
 */
 int task_switch(CpuState *prev_regs)
 {
+	Task *old_task = current_task;
+
+	if (old_task->state == TASK_STATE_RUNNING)
+		old_task->state = TASK_STATE_READY;
+
 	Task *next_task = current_task->next;
 
 	if (next_task == NULL)
@@ -143,13 +157,15 @@ int task_switch(CpuState *prev_regs)
 			next_task = &idle;
 	}
 
-	if (next_task == current_task)
+	if (next_task == old_task)
+	{
+		next_task->state = TASK_STATE_RUNNING;
 		return 0;
+	}
 
 	task_save_context(prev_regs);
 	task_load_context(prev_regs, next_task);
 
-	current_task->state = TASK_STATE_READY;
 	next_task->state = TASK_STATE_RUNNING;
 
 	current_task = next_task;
@@ -159,6 +175,21 @@ int task_switch(CpuState *prev_regs)
 
 	return 0;
 }
+
+void task_tick()
+{
+    Task *t = &idle;
+
+    while (t)
+    {
+        if (t->state == TASK_STATE_WAITING && pit_ticks >= t->sleep_until)
+        {
+            t->state = TASK_STATE_READY;
+        }
+        t = t->next;
+    }
+}
+
 
 void scheduler(CpuState *regs)
 {
@@ -181,4 +212,4 @@ void disable_scheduler()
 u8 scheduler_is_enabled()
 {
 	return scheduler_enabled;
-}
+} 
