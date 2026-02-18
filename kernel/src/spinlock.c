@@ -2,18 +2,29 @@
 
 void spinlock_init(spinlock_t *lock)
 {
-	lock->locked = 0;
+    if (lock)
+        lock->locked = 0;
 }
 
-void spinlock_acquire(spinlock_t *lock)
+void spinlock_lock(spinlock_t *lock)
 {
-	while (__atomic_test_and_set(&lock->locked, __ATOMIC_ACQUIRE))
-	{
-		__asm__ volatile("pause");
-	}
+    if (!lock) return;
+    
+    while (__atomic_test_and_set(&lock->locked, __ATOMIC_ACQUIRE)) {
+        while (lock->locked) {
+            __asm__ volatile("pause" ::: "memory");
+        }
+    }
 }
 
-void spinlock_release(spinlock_t *lock)
+void spinlock_unlock(spinlock_t *lock)
 {
-	__atomic_clear(&lock->locked, __ATOMIC_RELEASE);
+    if (!lock) return;
+    __atomic_clear(&lock->locked, __ATOMIC_RELEASE);
+}
+
+int spinlock_trylock(spinlock_t *lock)
+{
+    if (!lock) return 0;
+    return !__atomic_test_and_set(&lock->locked, __ATOMIC_ACQUIRE);
 }

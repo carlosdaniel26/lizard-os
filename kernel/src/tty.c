@@ -82,15 +82,15 @@ void tty_putentryat(char c, u32 color, size_t x, size_t y)
 
 char tty_putchar(char c)
 {
-	spinlock_acquire(&tty_lock);
+	spinlock_lock(&tty_lock);
 	if (c == '\n')
 	{
 		tty_breakline();
-		spinlock_release(&tty_lock);
+		spinlock_unlock(&tty_lock);
 		return c;
 	} else if (c == '\t')
 	{
-		spinlock_release(&tty_lock);
+		spinlock_unlock(&tty_lock);
 		tty_tab();
 		return c;
 	}
@@ -102,7 +102,7 @@ char tty_putchar(char c)
 		tty_breakline();
 	}
 
-	spinlock_release(&tty_lock);
+	spinlock_unlock(&tty_lock);
 
 	return c;
 }
@@ -142,7 +142,7 @@ void tty_write(const char *data, size_t size)
 	{
 		tty_putchar(data[i]);
 	}
-	// spinlock_release(&tty_lock);
+	// spinlock_unlock(&tty_lock);
 }
 
 void tty_writestring(const char *data)
