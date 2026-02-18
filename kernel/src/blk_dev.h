@@ -38,7 +38,7 @@ typedef struct BlockDevice	{
 extern BlockDevice *blk_devs[];
 
 /* Block layer management */
-int blk_dev_register(BlockDevice *dev);
+int blkdev_manager_register(BlockDevice *dev);
 int blk_dev_unregister(BlockDevice *dev);
 BlockDevice *blk_dev_find(const char *name);
 

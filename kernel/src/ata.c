@@ -144,7 +144,7 @@ void ata_detect_devices()
 		dev->read_only = false;
 		dev->present = true;
 
-		blk_dev_register(dev);
+		blkdev_manager_register(dev);
 	}
 }
 
