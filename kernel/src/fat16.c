@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <vfs.h>
 #include <vfs_conf.h>
-#include <block_dev.h>
+#include <blk_dev.h>
 #include <kmalloc.h>
 
 /* ===== CONSTANTS ===== */
@@ -71,7 +71,7 @@ static int read_fat_entry(Fat16 *fs, u16 cluster, u16 *next)
 	u32 entry_offset = fat_offset % fs->header.bytes_per_sector;
 
 	char sector[512];
-	if (block_dev_read(fs->dev, fat_sector, sector, 1) != 0)
+	if (blk_dev_read(fs->dev, fat_sector, sector, 1) != 0)
 		return -1;
 
 	memcpy(next, sector + entry_offset, sizeof(u16));
@@ -156,7 +156,7 @@ static inline int find_in_root(Fat16 *fs, const char *filename, Fat16Directory *
 
 	for (u32 sector = 0; sector < root_dir_sectors; sector++) 
 	{
-		if (block_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0)
+		if (blk_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0)
 			return -1;
 
 		for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -189,7 +189,7 @@ static inline int find_in_dir(Fat16 *fs, u16 start_cluster, const char *filename
 
 		for (u8 sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
 		{
-			if (block_dev_read(fs->dev, lba + sector, buffer, 1) != 0)
+			if (blk_dev_read(fs->dev, lba + sector, buffer, 1) != 0)
 				return -1;
 
 			for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -262,7 +262,7 @@ int fat16_read_file(Fat16* fs, Fat16Directory* entry, char* buffer)
 		
 		for (int i = 0; i < sectors_per_cluster && bytes_read < file_size; i++) 
 		{
-			if (block_dev_read(fs->dev, cluster_lba + i, sector_buffer, 1) != 0) {
+			if (blk_dev_read(fs->dev, cluster_lba + i, sector_buffer, 1) != 0) {
 				kprintf("Error reading sector %u\n", cluster_lba + i);
 				return -1;
 			}
@@ -306,7 +306,7 @@ int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, siz
 
 		for (u32 sector = 0; sector < root_dir_sectors; sector++) 
 		{
-			if (block_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0)
+			if (blk_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0)
 				return -1;
 
 			for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -344,7 +344,7 @@ int list_directory(Fat16 *fs, const char *path, Fat16Directory *out_entries, siz
 
 			for (u8 sector = 0; sector < fs->header.sectors_per_cluster; sector++) 
 			{
-				if (block_dev_read(fs->dev, lba + sector, buffer, 1) != 0)
+				if (blk_dev_read(fs->dev, lba + sector, buffer, 1) != 0)
 					return -1;
 
 				for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++) 
@@ -500,7 +500,7 @@ int fat16_open(Fat16 *fs, const char *path, Fat16Directory *out)
 
 void test_fat16()
 {
-	BlockDevice *dev = block_devs[0];
+	BlockDevice *dev = blk_devs[0];
 	
 	if (!dev || !dev->present)
 	{

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <types.h>
 
-#include <block_dev.h>
+#include <blk_dev.h>
 
 /* Map: [Reserved sector][FATs][Root directory][Data region] */
 

@@ -3,7 +3,7 @@
 #include <types.h>
 #include <stdio.h>
 #include <string.h>
-#include <block_dev.h>
+#include <blk_dev.h>
 #include <kmalloc.h>
 
 static u16 base[] = {ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
@@ -144,7 +144,7 @@ void ata_detect_devices()
 		dev->read_only = false;
 		dev->present = true;
 
-		block_dev_register(dev);
+		blk_dev_register(dev);
 	}
 }
 

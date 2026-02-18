@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define MAX_BLOCK_DEVICES 16
+#define MAX_blk_devS 16
 #define DEFAULT_NAME_SIZE 32
 
 typedef struct BlockDeviceOps {
@@ -35,17 +35,17 @@ typedef struct BlockDevice	{
 	bool present;
 } BlockDevice;
 
-extern BlockDevice *block_devs[];
+extern BlockDevice *blk_devs[];
 
 /* Block layer management */
-int block_dev_register(BlockDevice *dev);
-int block_dev_unregister(BlockDevice *dev);
-BlockDevice *block_device_find(const char *name);
+int blk_dev_register(BlockDevice *dev);
+int blk_dev_unregister(BlockDevice *dev);
+BlockDevice *blk_dev_find(const char *name);
 
 /* Utility functions */
-u64 block_dev_size(BlockDevice *dev);  /* in bytes */
-bool block_dev_ready(BlockDevice *dev);
+u64 blk_dev_size(BlockDevice *dev);  /* in bytes */
+bool blk_dev_ready(BlockDevice *dev);
 
 /* Public API */
-int block_dev_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
-int block_dev_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);
+int blk_dev_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
+int blk_dev_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);
