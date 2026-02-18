@@ -224,7 +224,7 @@ int fat16_mount(BlockDevice *dev, Fat16 *fs)
 	fs->dev = dev;
 	char buffer[512] = {0};
 	if (dev->ops->read(dev, 0, buffer, 1) != 0) {
-		kprintf("Error reading boot sector\n");
+		debug_printf("ERROR reading boot sector\n");
 		return -1;
 	}
 	memcpy(&fs->header, buffer, sizeof(FatHeader));
