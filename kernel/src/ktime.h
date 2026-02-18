@@ -10,6 +10,8 @@
 #define NSEC_PER_USEC  1000LL
 #define USEC_PER_MSEC  1000LL
 
+typedef i64 time_t;     /* epoch */
+
 typedef struct TimeSpec {
     i64  sec;
     i64  nsec;  /* [0, NSEC_PER_SEC) */
