@@ -19,7 +19,7 @@
 #### 1.2.3 Functions
 - Use `snake_case`.
 - Use acronyms when useful/usual, if its not usual, its not useful.
-- Use the module or file prefix to identify where that function comes from or what its related to, for example `int blkdev_manager_register(BlockDevice *dev)` the prefix `blk_dev` indicates that this function comes from `blk_dev.c`.
+- Use the module or file prefix to identify where that function comes from or what its related to, for example `int blkdev_manager_add(BlockDevice *dev)` the prefix `blk_dev` indicates that this function comes from `blk_dev.c`.
 - If you feel like the number of arguments is too big, even if it don't exceed the maximum of columns, feel free to use the next line and align it to the arguments column.
 
 #### 1.2.4 Local Variables

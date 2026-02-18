@@ -7,6 +7,8 @@
 
 #define DEFAULT_NAME_SIZE 32
 
+typedef u32 blk_dev_t;
+
 typedef struct BlockDeviceOps {
 	int (*read)();
 	int (*write)();
@@ -18,7 +20,7 @@ typedef struct BlockDeviceOps {
 typedef struct BlockDevice	{
 	ListHead list;
 	char name[DEFAULT_NAME_SIZE];
-	u32 id;
+	blk_dev_t id;
 
 	u64 total_sectors;
 	u32 sector_size;
@@ -37,7 +39,7 @@ typedef struct BlockDevice	{
 } BlockDevice;
 
 /* Block layer management */
-int blkdev_manager_register(BlockDevice *dev);
+int blkdev_manager_add(BlockDevice *dev);
 int blk_dev_unregister(BlockDevice *dev);
 BlockDevice *blk_dev_find(const char *name);
 

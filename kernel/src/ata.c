@@ -58,13 +58,12 @@ static inline void ata_select(ATADevice *dev)
 
 void ata_detect_devices()
 {
-	for (u8 i = PRIMARY; i <= PRIMARY; i++)
+	for (u8 ata_id = PRIMARY; ata_id <= PRIMARY; ata_id++)
 	{
 		ATADevice *ata_dev = zalloc(sizeof(ATADevice));
 
-		ata_dev->id = i;
-		ata_dev->io_base = base[i];
-		ata_dev->ctrl_base = ctrl[i];
+		ata_dev->io_base = base[ata_id];
+		ata_dev->ctrl_base = ctrl[ata_id];
 
 		ata_select(ata_dev);
 
@@ -132,10 +131,17 @@ void ata_detect_devices()
 			ata_dev->model[i * 2 + 1] = identify_data[27 + i] & 0xFF;
 		}
 		ata_dev->model[40] = '\0';
-		
+
+		char name[sizeof("ata0")];
+
+		name[0] = 'a';
+		name[1] = 't';
+		name[2] = 'a';
+		name[3] = '0' + ata_id;  /* id must be 0 or 1 */
+		name[4] = '\0';
+
 		BlockDevice *dev = zalloc(sizeof(BlockDevice));
-		strcpy(dev->name, ata_dev->model);
-		dev->id = i;
+		strcpy(dev->name, name);
 		dev->total_sectors = ata_dev->total_sectors;
 		dev->sector_size = ata_dev->sector_size;
 		dev->ops = &ata_block_ops;
@@ -144,7 +150,7 @@ void ata_detect_devices()
 		dev->read_only = false;
 		dev->present = true;
 
-		blkdev_manager_register(dev);
+		blkdev_manager_add(dev);
 	}
 }
 
