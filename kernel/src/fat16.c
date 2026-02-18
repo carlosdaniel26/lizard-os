@@ -501,7 +501,7 @@ int fat16_open(Fat16 *fs, const char *path, Fat16Directory *out)
 
 void test_fat16()
 {
-	BlockDevice *dev = blkdev_manager_get_by_name("ata0");
+	BlockDevice *dev = blkdev_manager_get_by_name("ata0p0");
 	
 	if (!dev || !dev->present)
 	{

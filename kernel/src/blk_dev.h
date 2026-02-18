@@ -38,6 +38,13 @@ typedef struct BlockDevice	{
 	bool present;
 } BlockDevice;
 
+typedef struct
+{
+    BlockDevice *parent;
+    u64 start_lba;
+    u64 sec_count;
+} PartitionPrivate;
+
 /* Block layer management */
 int blkdev_manager_add(BlockDevice *dev);
 int blk_dev_unregister(BlockDevice *dev);
@@ -50,3 +57,7 @@ bool blk_dev_ready(BlockDevice *dev);
 /* Public API */
 int blk_dev_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
 int blk_dev_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);
+
+int blk_dev_part_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
+int blk_dev_part_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);
+

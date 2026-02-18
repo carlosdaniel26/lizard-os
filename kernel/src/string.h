@@ -21,3 +21,4 @@ char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, size_t n);
 int sprintf(char *buffer, const char *format, ...);
 
+char *last_char(const char *s);

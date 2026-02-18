@@ -349,3 +349,13 @@ int sprintf(char *buffer, const char *format, ...)
 	va_end(args);
 	return buf_ptr - buffer;
 }
+
+char *last_char(const char *s)
+{
+    size_t len = strlen(s);
+
+    if (len == 0)
+        return NULL;
+
+    return &s[len - 1];
+}

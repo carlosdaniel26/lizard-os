@@ -3,6 +3,8 @@
 #include <debug.h>
 #include <stdio.h>
 #include <string.h>
+#include <kmalloc.h>
+#include <mbr.h>
 
 #define MAX_BLKDEVS 16
 
@@ -71,8 +73,11 @@ int blkdev_manager_add(BlockDevice *dev)
 
     list_add(&dev->list, &blk_devs);
 
+
     debug_printf("Registered block device: %s (sectors: %u, size: %u bytes)\n", dev->name, dev->total_sectors,
                  dev->sector_size);
+    
+    mbr_scan(dev);
 
     return 0;
 }
@@ -120,4 +125,47 @@ BlockDevice *blkdev_manager_get_by_name(const char *name)
     }
 
     return NULL;
+}
+
+int blkdev_create_partition(BlockDevice *parent, int part_num, 
+                            u64 start, u64 secs)
+{
+    BlockDevice *part = zalloc(sizeof(BlockDevice));
+	BlockDeviceOps *ops = zalloc(sizeof(BlockDeviceOps)); 
+
+	ops->read  = blk_dev_part_read;
+	ops->write = blk_dev_part_write;
+	
+	char name[DEFAULT_NAME_SIZE] = {};
+
+    size_t len = strlen(parent->name);
+
+    if (len > 0 && parent->name[len - 1] >= '0' &&
+               parent->name[len - 1] <= '9')
+    {
+        sprintf(name, "%s%c%d", parent->name, 'p', part_num);
+    }
+    else
+    {
+        sprintf(name, "%s%d",
+        parent->name, part_num);
+    }
+
+	strcpy(part->name, name);
+	part->total_sectors = secs;
+	part->sector_size = parent->sector_size;
+	part->ops = ops;
+	part->private_data = (void*)zalloc(sizeof(PartitionPrivate));
+	part->initialized = true;
+	part->read_only = false;
+	part->present = true;
+
+	PartitionPrivate *part_info = (PartitionPrivate*)part->private_data;
+	part_info->start_lba = start;
+	part_info->sec_count = secs;
+    part_info->parent = parent;
+
+    blkdev_manager_add(part);
+
+	return 0;
 }

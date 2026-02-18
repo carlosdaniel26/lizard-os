@@ -68,16 +68,26 @@ kernel: kernel-deps
 .PHONY: hdd
 hdd:
 	qemu-img create -f raw hda.img 512M
-	mkfs.fat -F 16 hda.img
 
-	sudo mkdir -p /mnt/lzos-fs
-	sudo mount -o loop hda.img /mnt/lzos-fs
+	# Create MBR partition table + one FAT16 partition
+	parted -s hda.img mklabel msdos
+	parted -s hda.img mkpart primary fat16 1MiB 100%
 
-	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'
-	sudo mkdir -p /mnt/lzos-fs/folder
-	sudo sh -c 'echo "MY SECRETS" > /mnt/lzos-fs/folder/file.txt'
+	# Map partitions to loop devices
+	sudo losetup -Pf hda.img
 
-	sudo umount /mnt/lzos-fs
+	# Find loop device (usually /dev/loop0)
+	LOOP=$$(losetup -j hda.img | cut -d: -f1); \
+	echo "Loop device: $$LOOP"; \
+	sudo mkfs.fat -F 16 $${LOOP}p1; \
+	sudo mkdir -p /mnt/lzos-fs; \
+	sudo mount $${LOOP}p1 /mnt/lzos-fs; \
+	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'; \
+	sudo mkdir -p /mnt/lzos-fs/folder; \
+	sudo sh -c 'echo "MY SECRETS" > /mnt/lzos-fs/folder/file.txt'; \
+	sudo umount /mnt/lzos-fs; \
+	sudo losetup -d $$LOOP
+
 # Build
 
 $(IMAGE_NAME).iso: limine/limine kernel
