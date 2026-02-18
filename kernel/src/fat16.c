@@ -9,6 +9,7 @@
 #include <blk_dev.h>
 #include <blkdev_manager.h>
 #include <kmalloc.h>
+#include <debug.h>
 
 /* ===== CONSTANTS ===== */
 
