@@ -3,8 +3,8 @@
 #include <types.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <list.h>
 
-#define MAX_blk_devS 16
 #define DEFAULT_NAME_SIZE 32
 
 typedef struct BlockDeviceOps {
@@ -16,6 +16,7 @@ typedef struct BlockDeviceOps {
 } BlockDeviceOps;
 
 typedef struct BlockDevice	{
+	ListHead list;
 	char name[DEFAULT_NAME_SIZE];
 	u32 id;
 
@@ -34,8 +35,6 @@ typedef struct BlockDevice	{
 
 	bool present;
 } BlockDevice;
-
-extern BlockDevice *blk_devs[];
 
 /* Block layer management */
 int blkdev_manager_register(BlockDevice *dev);
