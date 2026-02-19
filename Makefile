@@ -8,6 +8,9 @@ QEMUDEBUGFLAGS := -S -s
 QEMUHDAFLAGS := -drive file=hda.img,format=raw,if=ide
 QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt $(QEMUHDAFLAGS)
 
+SRC_DIRS := kernel/src
+FORMAT_FILES := $(shell find $(SRC_DIRS) -type f \( -name "*.c" -o -name "*.h" \))
+
 override IMAGE_NAME := lizard-os_$(ARCH)
 
 BUILD := build/$(ARCH)/kernel
@@ -87,6 +90,15 @@ hdd:
 	sudo sh -c 'echo "MY SECRETS" > /mnt/lzos-fs/folder/file.txt'; \
 	sudo umount /mnt/lzos-fs; \
 	sudo losetup -d $$LOOP
+
+.PHONY: format
+format:
+	@echo "Formatting source files.."
+	@clang-format -i $(FORMAT_FILES)
+
+	@# () to (void)
+	@find . -type f \( -name "*.c" -o -name "*.h" \) \
+  		-exec sed -i -E 's/\([[:space:]]*\)/\(void\)/g' {} +
 
 # Build
 
