@@ -1,19 +1,19 @@
-#include <slab.h>
+#include <buddy.h>
+#include <debug.h>
+#include <early_alloc.h>
+#include <helpers.h>
+#include <kmalloc.h>
 #include <list.h>
+#include <panic.h>
+#include <pgtable.h>
+#include <slab.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
-#include <pgtable.h>
-#include <helpers.h>
-#include <kmalloc.h>
-#include <early_alloc.h>
-#include <buddy.h>
-#include <debug.h>
-#include <panic.h>
 
-#define DIV_ROUND_UP(x, y) (((x) + (y)-1) / (y))
-#define BUDDYMALLOC_MAGIC 0x424D414C  /* "BMAL" */
+#define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
+#define BUDDYMALLOC_MAGIC 0x424D414C /* "BMAL" */
 
 typedef struct CacheNode {
     ListHead list;
@@ -38,7 +38,8 @@ void kmalloc_init(void)
     size_t sizes[] = {8, 16, 32, 64, 128, 256, 512, 1024, 2048}; // bytes
     char name[KMEMCACHE_NAME_LEN];
 
-    for (size_t i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++) {
+    for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++)
+    {
         CacheNode *node = kmemcache_alloc(kmalloc_node_cache);
         node->size = sizes[i];
 
@@ -50,24 +51,25 @@ void kmalloc_init(void)
 }
 
 void *kmalloc(size_t size)
-{   
+{
     ListHead *pos, *tmp;
     CacheNode *best = NULL;
 
-    list_for_each(pos, tmp, &kmalloc_cache_list) {
+    list_for_each(pos, tmp, &kmalloc_cache_list)
+    {
         CacheNode *node = container_of(pos, CacheNode, list);
-        if (node->size >= size && (!best || node->size < best->size))
-            best = node;
+        if (node->size >= size && (!best || node->size < best->size)) best = node;
     }
 
-    if (! best)
+    if (!best)
     {
         u64 required_space = sizeof(BuddyKmallocHeader) + size;
         unsigned pg_count = DIV_ROUND_UP(required_space, PAGE_SIZE);
         int order = pages_to_order(pg_count);
 
         BuddyKmallocHeader *header = buddy_alloc(order);
-        if (!header) {
+        if (!header)
+        {
             debug_printf("kmalloc: buddy_alloc failed for size %llu\n", required_space);
             return NULL;
         }
@@ -77,7 +79,7 @@ void *kmalloc(size_t size)
 
         debug_printf("kmalloc %p order %u\n", header, order);
 
-        return (void*)(header + 1);
+        return (void *)(header + 1);
     }
 
     void *addr = kmemcache_alloc(best->cache);
@@ -97,7 +99,8 @@ void kfree(void *ptr)
     {
         BuddyKmallocHeader *header = (BuddyKmallocHeader *)ptr - 1;
 
-        if (header->magic != BUDDYMALLOC_MAGIC) {
+        if (header->magic != BUDDYMALLOC_MAGIC)
+        {
             kpanic("kfree: BuddyKmallocHeader magic mismatch %p", ptr);
         }
 
@@ -110,7 +113,6 @@ void kfree(void *ptr)
 void *zalloc(size_t size)
 {
     void *ptr = kmalloc(size);
-    if (ptr)
-        memset(ptr, 0, size);
+    if (ptr) memset(ptr, 0, size);
     return ptr;
 }

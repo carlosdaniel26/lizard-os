@@ -1,13 +1,13 @@
 #pragma once
 
-#include <types.h>
 #include <task.h>
+#include <types.h>
 
 #define MAX_SYSCALLS 256
 
 typedef void (*syscall_handler)(CpuState *regs);
 
-void syscall_init();
+void syscall_init(void);
 void sys_sleep(CpuState *regs);
 void syscall_handler_c(CpuState *regs);
 

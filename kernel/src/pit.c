@@ -1,12 +1,12 @@
 #include <alias.h>
+#include <helpers.h>
 #include <idt.h>
 #include <io.h>
+#include <ktime.h>
 #include <pic.h>
 #include <pit.h>
 #include <stdio.h>
 #include <task.h>
-#include <helpers.h>
-#include <ktime.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
 
@@ -23,42 +23,42 @@ extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 
 volatile u64 pit_ticks = 0; // Definition of pit_ticks
 
-static inline void pit_mask()
+static inline void pit_mask(void)
 {
 #define PIC1_DATA 0x21
-	u8 mask = inb(PIC1_DATA);
-	mask |= 0x01;
-	outb(PIC1_DATA, mask);
+    u8 mask = inb(PIC1_DATA);
+    mask |= 0x01;
+    outb(PIC1_DATA, mask);
 }
 
-static inline void pit_unmask()
+static inline void pit_unmask(void)
 {
 #define PIC1_DATA 0x21
-	u8 mask = inb(PIC1_DATA);
-	mask |= 0x01;
-	mask ^= 0x01;
-	outb(PIC1_DATA, mask);
+    u8 mask = inb(PIC1_DATA);
+    mask |= 0x01;
+    mask ^= 0x01;
+    outb(PIC1_DATA, mask);
 }
 
-void pit_init()
+void pit_init(void)
 {
-	outb(PIT_COMMAND, 0b00110110); /* Mode 3, Channel 0, low/high byte acess*/
+    outb(PIT_COMMAND, 0b00110110); /* Mode 3, Channel 0, low/high byte acess*/
 
-	outb(PIT_CHANNEL0, PIT_DESIRED_FREQUENCY_HZ & 0xFF); /* Low Byte */
-	outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
+    outb(PIT_CHANNEL0, PIT_DESIRED_FREQUENCY_HZ & 0xFF); /* Low Byte */
+    outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
 
-	isr_table[PIT_ISR_INDEX] = &isr_pit;
+    isr_table[PIT_ISR_INDEX] = &isr_pit;
 
-	pit_unmask();
+    pit_unmask(void);
 }
 
 void isr_pit(CpuState *regs)
 {
-	pit_ticks++;
+    pit_ticks++;
 
-	time_tick_ns(1000000);
-	task_tick();
+    time_tick_ns(1000000);
+    task_tick(void);
 
-	scheduler(regs);
-	PIC_sendEOI(PIT_ISR_INDEX);
+    scheduler(regs);
+    PIC_sendEOI(PIT_ISR_INDEX);
 }
