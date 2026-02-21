@@ -59,11 +59,11 @@ typedef struct {
     size_t max_file_size;
 
     void *private_data;
-} FsType;
+} FsRegister;
 
 typedef struct {
     ListHead list;
-    const FsType *type;
+    const FsRegister *type;
     spinlock_t lock;
 
     void *private_data;
@@ -78,8 +78,8 @@ typedef struct {
 
 } FsInstance;
 
-int fstype_register(FsType *type);
-int fstype_unregister(FsType *type);
-FsType *fstype_find(const char *name);
-FsType *fstype_find_locked(const char *name);
-int fs_type_count();
+int fs_register(FsRegister *type);
+int fs_unregister(FsRegister *type);
+FsRegister *fs_find(const char *name);
+FsRegister *fs_find_locked(const char *name);
+int fs_type_count(void);
