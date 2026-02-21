@@ -7,11 +7,12 @@
 #define ptr_set_bit(value, bit) (*(value) |= (1UL << (bit)))
 #define ptr_unset_bit(value, bit) (*(value) &= ~(1UL << (bit)))
 
-#define start_interrupts(void) asm volatile("sti")
-#define stop_interrupts(void) asm volatile("cli")
+#define start_interrupts() asm volatile("sti")
+#define stop_interrupts() asm volatile("cli")
 
-#define die(void) asm("hlt")
-#define infinite_loop(void)                                                                                  \
-    while (1)                                                                                                \
-    {                                                                                                        \
-    }
+#define die() asm("hlt")
+#define infinite_loop()																			   \
+	while (1)																					   \
+	{																							   \
+	}
+

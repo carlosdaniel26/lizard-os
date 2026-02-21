@@ -1,9 +1,9 @@
-#include <stdio.h>
 #include <syscall.h>
+#include <stdio.h>
 
 static syscall_handler syscall_table[MAX_SYSCALLS];
 
-void syscall_init(void)
+void syscall_init()
 {
     // For now, we only have one syscall
     syscall_table[0] = &sys_sleep;
@@ -50,3 +50,4 @@ u64 syscall2(u64 syscall_num, u64 arg1, u64 arg2)
     asm volatile("int $0x80" : "=a"(ret) : "a"(syscall_num), "b"(arg1), "c"(arg2));
     return ret;
 }
+

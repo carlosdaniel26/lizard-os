@@ -1,10 +1,10 @@
-#include <buddy.h>
 #include <helpers.h>
-#include <pgtable.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <string.h>
 #include <types.h>
+#include <string.h>
+#include <pgtable.h>
+#include <buddy.h>
+#include <stdio.h>
 
 /* times i forgot to automap: 3.5*/
 /* the .5 is for now that the system is missing one page for some reason, so its kinda my fault */
@@ -20,7 +20,7 @@ u64 *pgtable_alloc_table(void)
 {
     char *page = buddy_alloc(0);
     memset(page, 0, PAGE_SIZE);
-    return (u64 *)page;
+    return (u64*)page;
 }
 
 void pgtable_free_table(u64 *table)
@@ -31,10 +31,8 @@ void pgtable_free_table(u64 *table)
 
 static int pgtable_table_empty(u64 *table)
 {
-    for (u64 i = 0; i < 512; i++)
-    {
-        if (table[i] & PAGE_PRESENT)
-        {
+    for (u64 i = 0; i < 512; i++) {
+        if (table[i] & PAGE_PRESENT) {
             return 0;
         }
     }
@@ -56,30 +54,27 @@ void pgtable_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
 
     if (!(pml4[pml4_i] & PAGE_PRESENT))
     {
-        pdpt = pgtable_alloc_table(void);
+        pdpt = pgtable_alloc_table();
         pml4[pml4_i] = ((u64)pdpt - hhdm_offset) | flags;
-    }
-    else
+    } else
     {
         pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
     }
 
     if (!(pdpt[pdpt_i] & PAGE_PRESENT))
     {
-        pd = pgtable_alloc_table(void);
+        pd = pgtable_alloc_table();
         pdpt[pdpt_i] = ((u64)pd - hhdm_offset) | flags;
-    }
-    else
+    } else
     {
         pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
     }
 
     if (!(pd[pd_i] & PAGE_PRESENT))
     {
-        pt = pgtable_alloc_table(void);
+        pt = pgtable_alloc_table();
         pd[pd_i] = ((u64)pt - hhdm_offset) | flags;
-    }
-    else
+    } else
     {
         pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
     }
@@ -94,9 +89,9 @@ void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 length, u64 flags)
 
     for (u64 i = 0; i <= length; i++)
     {
-        // debug_printf("Mapping page: virt=0x%x phys=0x%x\n", virt, phys);
+        //debug_printf("Mapping page: virt=0x%x phys=0x%x\n", virt, phys);
         pgtable_map(pml4, virt, phys, flags);
-        virt += PAGE_SIZE;
+        virt += PAGE_SIZE; 
         phys += PAGE_SIZE;
     }
 }
@@ -116,7 +111,9 @@ void pgtable_unmap(u64 *pml4, u64 virt)
     pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
     pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
 
-    if (!(pml4[pml4_i] & PAGE_PRESENT) || !(pdpt[pdpt_i] & PAGE_PRESENT) || !(pd[pd_i] & PAGE_PRESENT))
+    if (!(pml4[pml4_i] & PAGE_PRESENT) || 
+        !(pdpt[pdpt_i] & PAGE_PRESENT) || 
+        !(pd[pd_i] & PAGE_PRESENT))
         return;
 
     pt[pt_i] = 0;
@@ -128,14 +125,14 @@ void pgtable_unmap(u64 *pml4, u64 virt)
         pd[pd_i] = 0;
         pgtable_invlpg(pd);
         pgtable_free_table(pt);
-
-        if (pgtable_table_empty(pd))
+        
+        if (pgtable_table_empty(pd)) 
         {
             pdpt[pdpt_i] = 0;
             pgtable_invlpg(pdpt);
             pgtable_free_table(pd);
-
-            if (pgtable_table_empty(pdpt))
+            
+            if (pgtable_table_empty(pdpt)) 
             {
                 pml4[pml4_i] = 0;
                 pgtable_invlpg(pml4);
@@ -162,19 +159,23 @@ int pgtable_is_mapped(u64 *pml4, u64 virt)
 
     u64 *pdpt, *pd, *pt;
 
-    if (!(pml4[pml4_i] & PAGE_PRESENT)) return 0;
+    if (! (pml4[pml4_i] & PAGE_PRESENT))
+        return 0;
 
     pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
 
-    if (!(pdpt[pdpt_i] & PAGE_PRESENT)) return 0;
+    if (!( pdpt[pdpt_i] & PAGE_PRESENT))
+        return 0;
 
     pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
 
-    if (!(pd[pd_i] & PAGE_PRESENT)) return 0;
+    if (! (pd[pd_i] & PAGE_PRESENT))
+        return 0;
 
     pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
 
-    if (!(pt[pt_i] & PAGE_PRESENT)) return 0;
+    if (! (pt[pt_i] & PAGE_PRESENT))
+        return 0;
 
     return 1;
 }

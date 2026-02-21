@@ -1,13 +1,14 @@
 #pragma once
 
 #include <limine.h>
-#include <list.h>
-#include <string.h>
 #include <types.h>
+#include <string.h>
+#include <limine.h>
+#include <list.h>
 
 #define MAX_ORDER 16
 
-#define PAGE_FREE (1 << 0)
+#define PAGE_FREE     (1 << 0)
 #define PAGE_RESERVED (1 << 1)
 #define PAGE_ALLOCATED (1 << 2)
 
@@ -22,10 +23,11 @@ typedef struct BuddyArea {
     int free_count;
 } BuddyArea;
 
-typedef struct {
-    /* free lists for each order:
+typedef struct
+{
+    /* free lists for each order: 
      * order 0: 4kb blocks (1 page)
-     * order 1: 8kb blocks (2 pages)
+     * order 1: 8kb blocks (2 pages) 
      * order 2: 16kb blocks (4 pages)
      * order 3: 32kb blocks (8 pages)
      * order 4: 64kb blocks (16 pages)
@@ -49,7 +51,7 @@ typedef struct {
 
 extern BuddyAllocator buddy;
 
-void buddy_init(void);
+void buddy_init();
 void *buddy_alloc(int order);
 void buddy_free(void *addr, int order);
 unsigned int pages_to_order(unsigned int pages);

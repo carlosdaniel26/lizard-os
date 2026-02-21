@@ -2,17 +2,16 @@
 
 void spinlock_init(spinlock_t *lock)
 {
-    if (lock) lock->locked = 0;
+    if (lock)
+        lock->locked = 0;
 }
 
 void spinlock_lock(spinlock_t *lock)
 {
     if (!lock) return;
-
-    while (__atomic_test_and_set(&lock->locked, __ATOMIC_ACQUIRE))
-    {
-        while (lock->locked)
-        {
+    
+    while (__atomic_test_and_set(&lock->locked, __ATOMIC_ACQUIRE)) {
+        while (lock->locked) {
             __asm__ volatile("pause" ::: "memory");
         }
     }

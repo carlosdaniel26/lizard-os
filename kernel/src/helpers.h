@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
 #include <types.h>
+#include <stddef.h>
 
 #define BIT_SET(byte, index) (byte |= (1 << ((index) % 8)))
 #define BIT_CLEAR(byte, index) (byte &= ~(1 << ((index) % 8)))
@@ -25,8 +25,8 @@ static inline uintptr_t align_up(uintptr_t x, size_t a)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 char toupper(char c);
-void hlt(void);
-void stop_cpu(void);
+void hlt();
+void stop_cpu();
 int oct2bin(unsigned char *str, int size);
 char toupper(char c);
 int days_in_month(int month, int year);

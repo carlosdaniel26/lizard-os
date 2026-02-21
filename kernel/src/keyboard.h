@@ -1,4 +1,4 @@
 #pragma once
 
-void init_keyboard(void);
+void init_keyboard();
 void isr_keyboard(void *frame);

@@ -18,3 +18,4 @@ void outl(u16 port, u32 value);
 #define in_u32(port, value) inl((u16)(port))
 
 void io_wait(void);
+
