@@ -5,21 +5,31 @@
 
 int memcmp(const void *aptr, const void *bptr, size_t size)
 {
-    unsigned char *a = (unsigned char *)aptr;
-    unsigned char *b = (unsigned char *)bptr;
-
-    int diff = 0;
+    const unsigned char *a = (const unsigned char *)aptr;
+    const unsigned char *b = (const unsigned char *)bptr;
 
     for (size_t i = 0; i < size; i++)
     {
-        if (a[i] != b[i]) diff++;
+        if (a[i] < b[i]) return -1;
+        if (a[i] > b[i]) return 1;
     }
-    return diff;
+    return 0;
 }
 
 int strcmp(const void *aptr, const void *bptr)
 {
-    return memcmp(aptr, bptr, strlen(bptr));
+    const unsigned char *s1 = (const unsigned char *)aptr;
+    const unsigned char *s2 = (const unsigned char *)bptr;
+
+    while (*s1 && (*s1 == *s2))
+    {
+        s1++;
+        s2++;
+    }
+
+    if (*s1 < *s2) return -1;
+    if (*s1 > *s2) return 1;
+    return 0;
 }
 
 void *memcpy(void *dstptr, const void *srcptr, size_t size)
