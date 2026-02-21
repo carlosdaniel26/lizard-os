@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stddef.h>
-#include <types.h>
 #include <string.h>
+#include <types.h>
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
@@ -19,4 +19,3 @@ extern u64 width;
 extern u32 pitch;
 
 extern u32 framebuffer_length;
-

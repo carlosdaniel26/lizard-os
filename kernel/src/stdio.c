@@ -1,180 +1,170 @@
 #include <alias.h>
 #include <limits.h>
+#include <pit.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <tty.h>
-#include <stdbool.h>
-#include <pit.h>
 
 bool kprint(const char *data, size_t length)
 {
-	const unsigned char *bytes = (const unsigned char *)data;
-	for (size_t i = 0; i < length; i++)
-		if (tty_putchar(bytes[i]) == EOF)
-			return false;
-	return true;
+    const unsigned char *bytes = (const unsigned char *)data;
+    for (size_t i = 0; i < length; i++)
+        if (tty_putchar(bytes[i]) == EOF) return false;
+    return true;
 }
 
 int kprintf(const char *restrict format, ...)
 {
-	va_list parameters;
-	va_start(parameters, format);
+    va_list parameters;
+    va_start(parameters, format);
 
-	int written = 0;
+    int written = 0;
 
-	while (*format != '\0')
-	{
-		size_t maxrem = INT_MAX - written;
+    while (*format != '\0')
+    {
+        size_t maxrem = INT_MAX - written;
 
-		if (format[0] != '%' || format[1] == '%')
-		{
-			if (format[0] == '%')
-				format++;
-			size_t amount = 1;
-			while (format[amount] && format[amount] != '%')
-				amount++;
-			if (maxrem < amount)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			if (!kprint(format, amount))
-				return -1;
-			format += amount;
-			written += amount;
-			continue;
-		}
+        if (format[0] != '%' || format[1] == '%')
+        {
+            if (format[0] == '%') format++;
+            size_t amount = 1;
+            while (format[amount] && format[amount] != '%')
+                amount++;
+            if (maxrem < amount)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            if (!kprint(format, amount)) return -1;
+            format += amount;
+            written += amount;
+            continue;
+        }
 
-		const char *format_begun_at = format++;
+        const char *format_begun_at = format++;
 
-		if (*format == 'c')
-		{
-			format++;
-			char c = (char)va_arg(parameters, int /* char promotes to int */);
-			if (!maxrem)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			if (!kprint(&c, sizeof(c)))
-				return -1;
-			written++;
+        if (*format == 'c')
+        {
+            format++;
+            char c = (char)va_arg(parameters, int /* char promotes to int */);
+            if (!maxrem)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            if (!kprint(&c, sizeof(c))) return -1;
+            written++;
+        }
+        else if (*format == 's')
+        {
+            format++;
+            const char *str = va_arg(parameters, const char *);
+            size_t len = strlen(str);
+            if (maxrem < len)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            if (!kprint(str, len)) return -1;
+            written += len;
+        }
+        else if (strsIsEqual(format, "llu", 3))
+        {
+            format += 3;
+            u64 number = (u64)va_arg(parameters, u64);
+            if (!maxrem)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            u32 size = get_unsigned2string_final_size(number);
+            char str[size];
+            memset(str, 0, sizeof(str));
 
-		} else if (*format == 's')
-		{
-			format++;
-			const char *str = va_arg(parameters, const char *);
-			size_t len = strlen(str);
-			if (maxrem < len)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			if (!kprint(str, len))
-				return -1;
-			written += len;
+            unsigned_to_string((u64)number, str);
+            if (!kprint(str, sizeof(str))) return -1;
+            written += size;
+        }
+        else if (*format == 'u')
+        {
+            format++;
+            unsigned number = (unsigned)va_arg(parameters, long unsigned);
+            if (!maxrem)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            u32 size = get_unsigned2string_final_size(number);
+            char str[size];
+            memset(str, 0, sizeof(str));
 
-		} else if (strsIsEqual(format, "llu", 3))
-		{
-			format += 3;
-			u64 number = (u64)va_arg(parameters, u64);
-			if (!maxrem)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			u32 size = get_unsigned2string_final_size(number);
-			char str[size];
-			memset(str, 0, sizeof(str));
+            unsigned_to_string((u64)number, str);
+            if (!kprint(str, sizeof(str))) return -1;
+            written++;
+        }
+        else if (*format == 'x')
+        {
+            format++;
+            long long unsigned number = (long unsigned)va_arg(parameters, long unsigned);
+            if (!maxrem)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            u32 size = get_unsigned2hex_final_size(number);
+            char str[size + 1];
+            memset(str, 0, sizeof(str));
 
-			unsigned_to_string((u64)number, str);
-			if (!kprint(str, sizeof(str)))
-				return -1;
-			written += size;
+            unsigned_to_hexstring((u64)number, str);
+            if (!kprint(str, sizeof(str) - 1)) return -1;
+            written++;
+        }
+        else if (*format == 'p')
+        {
+            format++;
+            void *ptr = va_arg(parameters, void *);
+            if (!maxrem)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            u32 size = get_unsigned2hex_final_size((u64)ptr);
+            char str[size + 1];
+            memset(str, 0, sizeof(str));
 
-		} else if (*format == 'u')
-		{
-			format++;
-			unsigned number = (unsigned)va_arg(parameters, long unsigned);
-			if (!maxrem)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			u32 size = get_unsigned2string_final_size(number);
-			char str[size];
-			memset(str, 0, sizeof(str));
+            unsigned_to_hexstring((u64)ptr, str);
+            kprint("0x", 2);
+            if (!kprint(str, sizeof(str) - 1)) return -1;
+            written++;
+        }
+        else
+        {
+            format = format_begun_at;
+            size_t len = strlen(format);
+            if (maxrem < len)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            if (!kprint(format, len)) return -1;
+            written += len;
+            format += len;
+        }
+    }
 
-			unsigned_to_string((u64)number, str);
-			if (!kprint(str, sizeof(str)))
-				return -1;
-			written++;
-
-		} else if (*format == 'x')
-		{
-			format++;
-			long long unsigned number = (long unsigned)va_arg(parameters, long unsigned);
-			if (!maxrem)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			u32 size = get_unsigned2hex_final_size(number);
-			char str[size + 1];
-			memset(str, 0, sizeof(str));
-
-			unsigned_to_hexstring((u64)number, str);
-			if (!kprint(str, sizeof(str) - 1))
-				return -1;
-			written++;
-		} 
-		else if (*format == 'p')
-		{
-			format++;
-			void *ptr = va_arg(parameters, void *);
-			if (!maxrem)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			u32 size = get_unsigned2hex_final_size((u64)ptr);
-			char str[size + 1];
-			memset(str, 0, sizeof(str));
-
-			unsigned_to_hexstring((u64)ptr, str);
-			kprint("0x", 2);
-			if (!kprint(str, sizeof(str) - 1))
-				return -1;
-			written++;
-		}
-		else
-		{
-			format = format_begun_at;
-			size_t len = strlen(format);
-			if (maxrem < len)
-			{
-				/* TODO: Set errno to EOVERFLOW.*/
-				return -1;
-			}
-			if (!kprint(format, len))
-				return -1;
-			written += len;
-			format += len;
-		}
-	}
-
-	va_end(parameters);
-	return written;
+    va_end(parameters);
+    return written;
 }
 
 void dd(const char *restrict format, ...)
 {
-	va_list args;
-	va_start(args, format);
-	kprintf(format, args);
-	va_end(args);
+    va_list args;
+    va_start(args, format);
+    kprintf(format, args);
+    va_end(args);
 
-	die();
+    die();
 }

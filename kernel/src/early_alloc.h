@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
 #include <limine.h>
+#include <stddef.h>
 #include <types.h>
 
 void early_alloc_init();

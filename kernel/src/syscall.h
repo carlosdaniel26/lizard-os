@@ -1,7 +1,7 @@
 #pragma once
 
-#include <types.h>
 #include <task.h>
+#include <types.h>
 
 #define MAX_SYSCALLS 256
 

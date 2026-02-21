@@ -1,13 +1,20 @@
 #include <alias.h>
 #include <ata.h>
+#include <buddy.h>
 #include <cpuid.h>
+#include <early_alloc.h>
 #include <fat16.h>
 #include <framebuffer.h>
 #include <gdt.h>
 #include <helpers.h>
 #include <idt.h>
+#include <kernelcfg.h>
 #include <keyboard.h>
+#include <kmalloc.h>
+#include <ktime.h>
 #include <limine.h>
+#include <panic.h>
+#include <pgtable.h>
 #include <pic.h>
 #include <pit.h>
 #include <rtc.h>
@@ -15,17 +22,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <types.h>
-#include <tty.h>
-#include <vmm.h>
-#include <early_alloc.h>
-#include <buddy.h>
-#include <pgtable.h>
-#include <kmalloc.h>
-#include <panic.h>
-#include <kernelcfg.h>
-#include <ktime.h>
 #include <syscall.h>
+#include <tty.h>
+#include <types.h>
+#include <vmm.h>
 
 /*
  * feel dumb is temporary, the progress of commits on this
@@ -37,11 +37,9 @@
 __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request
-	framebuffer_request
-	= {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
+    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
 
-__attribute__((used,
-			   section(".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
+__attribute__((used, section(".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
 
 __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
 
@@ -49,44 +47,42 @@ u8 kernel_stack[KERNEL_STACK_SIZE];
 
 void kmain()
 {
-	asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
+    asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
 
+    stop_interrupts();
+    time_init_from_rtc();
 
-	stop_interrupts();
-	time_init_from_rtc();
+    if (LIMINE_BASE_REVISION_SUPPORTED == false)
+    {
+        hlt();
+    }
 
-	if (LIMINE_BASE_REVISION_SUPPORTED == false)
-	{
-		hlt();
-	}
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
+    {
+        hlt();
+    }
 
-	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
-	{
-		hlt();
-	}
+    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
-	struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-
-	stop_interrupts();
-	setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address,
-					  framebuffer->pitch);
-	init_cpuid();
-	tty_initialize();
-	pit_init();
-	early_alloc_init();
-	buddy_init();
-	init_gdt();
-	init_idt();
-	vmm_init();
-	kmalloc_init();
-	task_init();
-	syscall_init();
-	ata_detect_devices();
-	fat16_init();
-	test_fat16();	//vfs_init();
-	PIC_remap();
-	init_keyboard();
-	enable_scheduler();
-	start_interrupts();
-	hlt();
+    stop_interrupts();
+    setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
+    init_cpuid();
+    tty_initialize();
+    pit_init();
+    early_alloc_init();
+    buddy_init();
+    init_gdt();
+    init_idt();
+    vmm_init();
+    kmalloc_init();
+    task_init();
+    syscall_init();
+    ata_detect_devices();
+    fat16_init();
+    test_fat16(); // vfs_init();
+    PIC_remap();
+    init_keyboard();
+    enable_scheduler();
+    start_interrupts();
+    hlt();
 }

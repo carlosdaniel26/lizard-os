@@ -1,113 +1,114 @@
 #include <ata.h>
+#include <buddy.h>
 #include <cpuid.h>
+#include <debug.h>
+#include <framebuffer.h>
 #include <helpers.h>
+#include <ktime.h>
 #include <rtc.h>
 #include <stdio.h>
 #include <string.h>
 #include <tty.h>
 #include <vga.h>
-#include <framebuffer.h>
-#include <buddy.h>
-#include <ktime.h>
-#include <debug.h>
 
 void kprint_prompt()
 {
-	tty_bg_color = VGA_COLOR_BLACK;
-	tty_color = VGA_COLOR_GREEN;
-	tty_writestring("root: ");
-	tty_color = VGA_COLOR_WHITE;
-	cmd_start_column = terminal_column;
-	cmd_start_row = terminal_row;
+    tty_bg_color = VGA_COLOR_BLACK;
+    tty_color = VGA_COLOR_GREEN;
+    tty_writestring("root: ");
+    tty_color = VGA_COLOR_WHITE;
+    cmd_start_column = terminal_column;
+    cmd_start_row = terminal_row;
 }
 
 void shit_shell_init()
 {
-	kprint_prompt();
+    kprint_prompt();
 }
 
 /* Commands */
 
 static inline void clear()
 {
-	tty_clean();
+    tty_clean();
 }
 
 static inline void lzfetch()
 {
-	TimeSpec ts = timespec_uptime();
-	kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
-	kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
-	kprintf("|				   /\"\\		|\t\t\t\t\t\t\tKernel:	lz-kernel 0.1\n");
-	kprintf("|				  /o o\\	   |\t\t\t\t\t\t\tUptime:  %llud %lluH:%lluM:%llus\n",
-			(u64)ts.sec / 86400, (u64)(ts.sec / 3600) % 24, (u64)(ts.sec / 60) % 60, (u64)ts.sec % 60);
-	kprintf("|			 _\\/  \\	/ \\/_	 |\t\t\t\t\t\t\tShell:	 shit-shell v0.0.3\n");
-	kprintf("|			  \\\\._/  /_.//	|\t\t\t\t\t\t\tPackages: 5 (hardcoded)\n");
-	kprintf("|			  `--,	,----'	  |\t\t\t\t\t\t\tResolution: %ux%u\n", width, height);
-	kprintf("|				/	/		  |\t\t\t\t\t\t\tFont:	   bitmap_8x16\n");
-	kprintf("|	  ^		   /	\\		   |\t\t\t\t\t\t\tTerminal: tty0\n");
-	kprintf("|	 /|		  (		 )		  |\t\t\t\t\t\t\tTheme:	   CalangoGreen\n");
-	kprintf("|	/ |		,__\\	 /__,	   |\t\t\t\t\t\t\tCPU:		%s\n", g_cpuid.brand_name);
-	kprintf("|	\\ \\	_//---,	 ,--\\\\_	  |\t\t\t\t\t\t\tRAM:	   %u.%uMB\n", 0);
-	kprintf("|	 \\ \\	 /\\  /	 /	 /\\	  | \n");
-	kprintf("|	  \\ \\.___,/  /			|\n");
-	kprintf("|	   \\.______,/			   |\n");
-	kprintf("|							  |\n");
-	kprintf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    TimeSpec ts = timespec_uptime();
+    kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
+    kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
+    kprintf("|				   /\"\\		|\t\t\t\t\t\t\tKernel:	lz-kernel 0.1\n");
+    kprintf("|				  /o o\\	   |\t\t\t\t\t\t\tUptime:  %llud %lluH:%lluM:%llus\n",
+            (u64)ts.sec / 86400, (u64)(ts.sec / 3600) % 24, (u64)(ts.sec / 60) % 60, (u64)ts.sec % 60);
+    kprintf("|			 _\\/  \\	/ \\/_	 |\t\t\t\t\t\t\tShell:	 shit-shell v0.0.3\n");
+    kprintf("|			  \\\\._/  /_.//	|\t\t\t\t\t\t\tPackages: 5 (hardcoded)\n");
+    kprintf("|			  `--,	,----'	  |\t\t\t\t\t\t\tResolution: %ux%u\n", width, height);
+    kprintf("|				/	/		  |\t\t\t\t\t\t\tFont:	   bitmap_8x16\n");
+    kprintf("|	  ^		   /	\\		   |\t\t\t\t\t\t\tTerminal: tty0\n");
+    kprintf("|	 /|		  (		 )		  |\t\t\t\t\t\t\tTheme:	   CalangoGreen\n");
+    kprintf("|	/ |		,__\\	 /__,	   |\t\t\t\t\t\t\tCPU:		%s\n", g_cpuid.brand_name);
+    kprintf("|	\\ \\	_//---,	 ,--\\\\_	  |\t\t\t\t\t\t\tRAM:	   %u.%uMB\n", 0);
+    kprintf("|	 \\ \\	 /\\  /	 /	 /\\	  | \n");
+    kprintf("|	  \\ \\.___,/  /			|\n");
+    kprintf("|	   \\.______,/			   |\n");
+    kprintf("|							  |\n");
+    kprintf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
-	tty_color = VGA_COLOR_WHITE;
-	tty_bg_color = VGA_COLOR_BLACK;
+    tty_color = VGA_COLOR_WHITE;
+    tty_bg_color = VGA_COLOR_BLACK;
 }
 
 void free()
 {
-	// #define BLOCK_SIZE 4096
+    // #define BLOCK_SIZE 4096
 
-	// u32 free_blocks = pmm_free_block_count();
-	// u32 used_blocks = pmm_used_block_count();
+    // u32 free_blocks = pmm_free_block_count();
+    // u32 used_blocks = pmm_used_block_count();
 
-	// u32 free_kb = (free_blocks * BLOCK_SIZE) / 1024;
-	// u32 used_kb = (used_blocks * BLOCK_SIZE) / 1024;
-	// u32 total_kb = (usable_blocks * BLOCK_SIZE) / 1024;
+    // u32 free_kb = (free_blocks * BLOCK_SIZE) / 1024;
+    // u32 used_kb = (used_blocks * BLOCK_SIZE) / 1024;
+    // u32 total_kb = (usable_blocks * BLOCK_SIZE) / 1024;
 
-	// u32 free_mb = (free_kb + 512) / 1024;
-	// u32 used_mb = (used_kb + 512) / 1024;
-	// u32 total_mb = (total_kb + 512) / 1024;
+    // u32 free_mb = (free_kb + 512) / 1024;
+    // u32 used_mb = (used_kb + 512) / 1024;
+    // u32 total_mb = (total_kb + 512) / 1024;
 
-	// #define print_mem(value_kb, value_mb)
-	// 	((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
+    // #define print_mem(value_kb, value_mb)
+    // 	((value_mb > 10) ? (kprintf("%u MB", value_mb)) : (kprintf("%u KB", value_kb)))
 
-	// kprintf("Memory Available: ");
-	// print_mem(free_kb, free_mb);
-	// kprintf(" (%u blocos)\n", free_blocks);
+    // kprintf("Memory Available: ");
+    // print_mem(free_kb, free_mb);
+    // kprintf(" (%u blocos)\n", free_blocks);
 
-	// kprintf("Used Memory: ");
-	// print_mem(used_kb, used_mb);
-	// kprintf(" (%u blocos)\n", used_blocks);
+    // kprintf("Used Memory: ");
+    // print_mem(used_kb, used_mb);
+    // kprintf(" (%u blocos)\n", used_blocks);
 
-	// kprintf("Total Memory: ");
-	// print_mem(total_kb, total_mb);
-	// kprintf(" (%u blocos)\n", total_blocks);
+    // kprintf("Total Memory: ");
+    // print_mem(total_kb, total_mb);
+    // kprintf(" (%u blocos)\n", total_blocks);
 
-	// #undef print_mem
+    // #undef print_mem
 }
 
 void uptime()
 {
-	kprintf("%llu\n", (u64)timespec_uptime().sec);
+    kprintf("%llu\n", (u64)timespec_uptime().sec);
 }
 
 void ms()
 {
-	kprintf("%llu\n", (u64)time_uptime_ms());
+    kprintf("%llu\n", (u64)time_uptime_ms());
 }
 
 static inline void date()
 {
-	TimeSpec time = time_now();
+    TimeSpec time = time_now();
 
-	kprintf("%d/%d/%d %d:%d:%d\n", timespec_get_day(&time), timespec_get_month(&time),
-			timespec_get_year(&time), timespec_get_hour(&time), timespec_get_min(&time), timespec_get_sec(&time));
+    kprintf("%d/%d/%d %d:%d:%d\n", timespec_get_day(&time), timespec_get_month(&time),
+            timespec_get_year(&time), timespec_get_hour(&time), timespec_get_min(&time),
+            timespec_get_sec(&time));
 }
 
 /* Main */
@@ -115,29 +116,32 @@ static inline void date()
 
 void runcmd(const char *command)
 {
-	if (CMD_IS(command, "clear"))
-	{
-		clear();
-	} else if (CMD_IS(command, "lzfetch"))
-	{
-		lzfetch();
-	} else if (CMD_IS(command, "free"))
-	{
-		free();
-	} else if (CMD_IS(command, "date"))
-	{
-		date();
-	}
-	else if (CMD_IS(command, "uptime"))
-	{
-		uptime();
-	} 
-	else if (CMD_IS(command, "ms"))
-	{
-		ms();
-	}
-	else
-	{
-		kprintf("Command not found: %s\n", command);
-	}
+    if (CMD_IS(command, "clear"))
+    {
+        clear();
+    }
+    else if (CMD_IS(command, "lzfetch"))
+    {
+        lzfetch();
+    }
+    else if (CMD_IS(command, "free"))
+    {
+        free();
+    }
+    else if (CMD_IS(command, "date"))
+    {
+        date();
+    }
+    else if (CMD_IS(command, "uptime"))
+    {
+        uptime();
+    }
+    else if (CMD_IS(command, "ms"))
+    {
+        ms();
+    }
+    else
+    {
+        kprintf("Command not found: %s\n", command);
+    }
 }

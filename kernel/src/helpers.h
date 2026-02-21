@@ -1,7 +1,7 @@
 #pragma once
 
-#include <types.h>
 #include <stddef.h>
+#include <types.h>
 
 #define BIT_SET(byte, index) (byte |= (1 << ((index) % 8)))
 #define BIT_CLEAR(byte, index) (byte &= ~(1 << ((index) % 8)))

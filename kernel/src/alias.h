@@ -11,8 +11,7 @@
 #define stop_interrupts() asm volatile("cli")
 
 #define die() asm("hlt")
-#define infinite_loop()																			   \
-	while (1)																					   \
-	{																							   \
-	}
-
+#define infinite_loop()                                                                                      \
+    while (1)                                                                                                \
+    {                                                                                                        \
+    }
