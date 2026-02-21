@@ -96,10 +96,6 @@ format:
 	@echo "Formatting source files.."
 	@clang-format -i $(FORMAT_FILES)
 
-	@# () to (void)
-	@find . -type f \( -name "*.c" -o -name "*.h" \) \
-  		-exec sed -i -E 's/\([[:space:]]*\)/\(void\)/g' {} +
-
 # Build
 
 $(IMAGE_NAME).iso: limine/limine kernel
