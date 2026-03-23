@@ -14,6 +14,23 @@
 
 #define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
 
+#define KMALLOC_SIZES(X)                                                                                     \
+    X(8)                                                                                                     \
+    X(16)                                                                                                    \
+    X(32)                                                                                                    \
+    X(64)                                                                                                    \
+    X(128)                                                                                                   \
+    X(256)                                                                                                   \
+    X(512)                                                                                                   \
+    X(1024)                                                                                                  \
+    X(2048)                                                                                                  \
+    X(4096)                                                                                                  \
+    X(8192)                                                                                                  \
+    X(16384)                                                                                                 \
+    X(32768)                                                                                                 \
+    X(65536)                                                                                                 \
+    X(131072)
+
 typedef struct CacheNode {
     ListHead list;
     KMemCache *cache;
@@ -26,21 +43,25 @@ static KMemCache *kmalloc_node_cache = NULL;
 void kmalloc_init(void)
 {
     InitListHead(&kmalloc_cache_list);
+
     kmalloc_node_cache = kmemcache_create("kmalloc_node", sizeof(CacheNode), NULL, NULL);
 
-    size_t sizes[] = {8, 16, 32, 64, 128, 256, 512, 1024, 2048}; // bytes
     char name[KMEMCACHE_NAME_LEN];
 
-    for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++)
-    {
-        CacheNode *node = kmemcache_alloc(kmalloc_node_cache);
-        node->size = sizes[i];
+#define CREATE_CACHE(sz)                                                                                     \
+    do                                                                                                       \
+    {                                                                                                        \
+        CacheNode *node = kmemcache_alloc(kmalloc_node_cache);                                               \
+        node->size = (sz);                                                                                   \
+        sprintf(name, "kmalloc_%u", (unsigned)(sz));                                                         \
+        node->cache = kmemcache_create(name, (sz), NULL, NULL);                                              \
+        list_add(&node->list, &kmalloc_cache_list);                                                          \
+    }                                                                                                        \
+    while (0);
 
-        sprintf(name, "kmalloc_%u", (unsigned)sizes[i]);
-        node->cache = kmemcache_create(name, sizes[i], NULL, NULL);
+    KMALLOC_SIZES(CREATE_CACHE);
 
-        list_add(&node->list, &kmalloc_cache_list);
-    }
+#undef CREATE_CACHE
 }
 
 void *kmalloc(size_t size)
