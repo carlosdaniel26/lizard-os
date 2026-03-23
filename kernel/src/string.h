@@ -20,5 +20,7 @@ void unsigned_to_hexstring(u64 value, char *str);
 char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, size_t n);
 int sprintf(char *buffer, const char *format, ...);
+char *strtok(char *str, const char *delim);
+char *strtok_r(char *str, const char *delim, char **saveptr);
 
 char *last_char(const char *s);

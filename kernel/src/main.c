@@ -39,6 +39,9 @@ __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_R
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request
     framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
 
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_file_request
+    executable_file_request = {.id = LIMINE_EXECUTABLE_FILE_REQUEST, .revision = 0};
+
 __attribute__((used, section(".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
 
 __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
@@ -68,6 +71,16 @@ void kmain()
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
     init_cpuid();
     tty_initialize();
+
+    if (executable_file_request.response != NULL && executable_file_request.response->executable_file != NULL)
+    {
+        kprintf("Kernel cmdline: %s\n", executable_file_request.response->executable_file->string);
+    }
+    else
+    {
+        kprintf("Kernel cmdline not found\n");
+    }
+
     pit_init();
     early_alloc_init();
     buddy_init();

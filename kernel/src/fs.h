@@ -5,24 +5,9 @@
 #include <spinlock.h>
 #include <types.h>
 
-typedef struct FsInstance FsInstance;
 typedef struct Dentry Dentry;
-
-typedef struct {
-    int (*statfs)(SuperBlock *sb, void *out);
-    int (*sync)(SuperBlock *sb);
-} SuperOps;
-
-typedef struct {
-    ListHead list;
-    char name[32];
-
-    struct Dentry *(*mount)(SuperBlock *sb, const void *data);
-    void (*kill_sb)(SuperBlock *sb);
-
-    u32 flags;
-    void *private_data;
-} FsType;
+typedef struct Inode Inode;
+typedef struct FsType FsType;
 
 typedef struct SuperBlock {
     ListHead list;
@@ -38,6 +23,22 @@ typedef struct SuperBlock {
     u64 total_blocks;
     u64 free_blocks;
 } SuperBlock;
+
+typedef struct {
+    int (*statfs)(SuperBlock *sb, void *out);
+    int (*sync)(SuperBlock *sb);
+} SuperOps;
+
+typedef struct FsType {
+    ListHead list;
+    char name[32];
+
+    struct Dentry *(*mount)(SuperBlock *sb, const void *data);
+    void (*kill_sb)(SuperBlock *sb);
+
+    u32 flags;
+    void *private_data;
+} FsType;
 
 typedef struct InodeOps {
     int (*lookup)(Inode *dir, Dentry *dentry);
