@@ -12,7 +12,7 @@ SPINLOCK(fstype_lock);
 
 LIST_HEAD(fs_instances);
 
-int fs_register(FsRegister *fstype)
+int fs_register(FsType *fstype)
 {
     if (!fstype || !fstype->name[0])
     {
@@ -35,7 +35,7 @@ int fs_register(FsRegister *fstype)
     return 0;
 }
 
-int fs_unregister(FsRegister *fstype)
+int fs_unregister(FsType *fstype)
 {
     if (!fstype)
     {
@@ -52,13 +52,13 @@ int fs_unregister(FsRegister *fstype)
     return 0;
 }
 
-FsRegister *fs_find_locked(const char *name)
+FsType *fs_find_locked(const char *name)
 {
     ListHead *pos, *tmp;
 
     list_for_each(pos, tmp, &fs_types)
     {
-        FsRegister *type = container_of(pos, FsRegister, list);
+        FsType *type = container_of(pos, FsType, list);
 
         if (strcmp(type->name, name) == 0)
         {
@@ -69,10 +69,10 @@ FsRegister *fs_find_locked(const char *name)
     return NULL;
 }
 
-FsRegister *fs_find(const char *name)
+FsType *fs_find(const char *name)
 {
     spinlock_lock(&fstype_lock);
-    FsRegister *type = fs_find_locked(name);
+    FsType *type = fs_find_locked(name);
     spinlock_unlock(&fstype_lock);
 
     return type;
