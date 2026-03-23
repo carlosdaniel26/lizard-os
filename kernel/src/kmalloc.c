@@ -7,7 +7,7 @@
 #include <panic.h>
 #include <pgtable.h>
 #include <slab.h>
-#include <stddef.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <types.h>

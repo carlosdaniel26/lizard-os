@@ -3,7 +3,7 @@
 #include <pit.h>
 #include <rtc.h>
 #include <stdbool.h>
-#include <stddef.h>
+
 #include <types.h>
 #include <vga.h>
 

@@ -1,5 +1,5 @@
 #include <ktime.h>
-#include <stddef.h>
+
 #include <types.h>
 
 static TimeSpec wall_clock; /* CLOCK_REALTIME */

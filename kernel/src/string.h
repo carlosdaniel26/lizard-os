@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
+
 #include <types.h>
 
 int memcmp(const void *, const void *, size_t size);

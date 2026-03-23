@@ -2,7 +2,6 @@
 
 #include <list.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <types.h>
 
 #define DEFAULT_NAME_SIZE 32

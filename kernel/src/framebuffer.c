@@ -1,6 +1,6 @@
 #include <early_alloc.h>
 #include <framebuffer.h>
-#include <stddef.h>
+
 #include <string.h>
 #include <types.h>
 

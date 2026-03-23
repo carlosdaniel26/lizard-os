@@ -61,7 +61,7 @@ typedef struct {
     void *private_data;
 } FsRegister;
 
-typedef struct {
+typedef struct FsInstance {
     ListHead list;
     const FsRegister *type;
     spinlock_t lock;

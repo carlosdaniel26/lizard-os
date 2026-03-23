@@ -20,7 +20,7 @@
 #include <rtc.h>
 #include <ss.h>
 #include <stdbool.h>
-#include <stddef.h>
+
 #include <stdio.h>
 #include <syscall.h>
 #include <tty.h>

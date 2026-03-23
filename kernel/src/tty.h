@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <stddef.h>
+
 #include <types.h>
 #include <vga.h>
 

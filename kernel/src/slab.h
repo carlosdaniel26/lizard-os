@@ -2,7 +2,7 @@
 
 #include <list.h>
 #include <spinlock.h>
-#include <stddef.h>
+
 
 #define KMEMCACHE_NAME_LEN 32
 #define SLAB_MAGIC 0xDEADBEEF
