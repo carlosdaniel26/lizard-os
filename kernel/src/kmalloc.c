@@ -13,19 +13,12 @@
 #include <types.h>
 
 #define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
-#define BUDDYMALLOC_MAGIC 0x424D414C /* "BMAL" */
 
 typedef struct CacheNode {
     ListHead list;
     KMemCache *cache;
     size_t size;
 } CacheNode;
-
-typedef struct BuddyKmallocHeader {
-    uint32_t magic; /* BUDDYMALLOC_MAGIC */
-    uint8_t order;
-    uint8_t padding[3];
-} BuddyKmallocHeader;
 
 static LIST_HEAD(kmalloc_cache_list);
 static KMemCache *kmalloc_node_cache = NULL;
@@ -61,28 +54,10 @@ void *kmalloc(size_t size)
         if (node->size >= size && (!best || node->size < best->size)) best = node;
     }
 
-    if (!best)
-    {
-        u64 required_space = sizeof(BuddyKmallocHeader) + size;
-        unsigned pg_count = DIV_ROUND_UP(required_space, PAGE_SIZE);
-        int order = pages_to_order(pg_count);
-
-        BuddyKmallocHeader *header = buddy_alloc(order);
-        if (!header)
-        {
-            debug_printf("kmalloc: buddy_alloc failed for size %llu\n", required_space);
-            return NULL;
-        }
-
-        header->magic = BUDDYMALLOC_MAGIC;
-        header->order = order;
-
-        debug_printf("kmalloc %p order %u\n", header, order);
-
-        return (void *)(header + 1);
-    }
+    if (!best) kpanic("kmalloc: no suitable cache for size %u", (unsigned)size);
 
     void *addr = kmemcache_alloc(best->cache);
+
     return addr;
 }
 
@@ -95,18 +70,9 @@ void kfree(void *ptr)
     {
         kmemcache_free(ptr);
     }
-    else /* no, it came from buddy */
+    else
     {
-        BuddyKmallocHeader *header = (BuddyKmallocHeader *)ptr - 1;
-
-        if (header->magic != BUDDYMALLOC_MAGIC)
-        {
-            kpanic("kfree: BuddyKmallocHeader magic mismatch %p", ptr);
-        }
-
-        unsigned int order = header->order;
-        debug_printf("kfree %p block %p order %u\n", ptr, header, order);
-        buddy_free(header, order);
+        kpanic("kfree: invalid pointer %p", ptr);
     }
 }
 
