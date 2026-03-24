@@ -63,7 +63,7 @@ typedef struct ATADevice {
     u64 total_bytes;
 } ATADevice;
 
-void ata_detect_devices();
+int ata_detect_devices();
 
 void isr_ata_primary();
 void isr_ata_secondary();

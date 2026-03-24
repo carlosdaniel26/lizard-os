@@ -3,13 +3,13 @@
 #include <blkdev_manager.h>
 #include <debug.h>
 #include <fat16.h>
+#include <fs.h>
 #include <helpers.h>
 #include <kmalloc.h>
-#include <stdbool.h>
+#include <setup.h>
 #include <stdio.h>
 #include <string.h>
 #include <vfs.h>
-#include <vfs_conf.h>
 
 /* ===== CONSTANTS ===== */
 
@@ -34,7 +34,6 @@
 #define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
 
 static const char name[] = "fat16";
-static VfsConf vfs_conf = {0};
 
 /* ===== INTERNAL HELPERS ===== */
 
@@ -486,105 +485,34 @@ int fat16_open(Fat16 *fs, const char *path, Fat16Directory *out)
     return 0;
 }
 
-void test_fat16()
+Dentry *fat16_mount_fs(SuperBlock *sb, const void *data)
 {
-    BlockDevice *dev = blkdev_manager_get_by_name("ata0p0");
-
-    if (!dev || !dev->present)
+    (void)data;
+    Dentry *root = dentry_alloc("/");
+    if (!root)
     {
-        kprintf("No Block device found\n");
-        return;
+        kprintf("Failed to allocate root dentry for FAT16\n");
+        return NULL;
     }
 
-    /* Read FAT16 Reader */
-    Fat16 fs = {0};
-
-    fat16_mount(dev, &fs);
-
-    kprintf("FAT16 Info: Root LBA=%u, FAT LBA=%u, DATA LBA=%u\n", fs.root_dir_lba, fs.fat_start_lba,
-            fs.data_region_lba);
-
-    Fat16Directory entry;
-
-    char file_name[64] = "/FOLDER/FILE.TXT";
-
-    /* Test simple file first */
-    kprintf("\n=== Testing %s ===\n", file_name);
-    if (fat16_open(&fs, file_name, &entry) != 0)
-    {
-        kprintf("File %s not found\n", file_name);
-    }
-    else
-    {
-        kprintf("\n\n==========================");
-        kprintf("\nSUCCESS: FILE NAME: %s, SIZE: %u bytes, CLUSTER: %u\n", entry.name, entry.file_size_bytes,
-                entry.first_cluster_low);
-
-        char *file_content = (char *)kmalloc(entry.file_size_bytes + 1);
-        if (!file_content)
-        {
-            kprintf("ERROR: Failed to allocate memory for file content\n");
-            return;
-        }
-
-        if (fat16_read_file(&fs, &entry, file_content) == 0)
-        {
-            file_content[entry.file_size_bytes] = '\0';
-
-            kprintf("\n=== FILE CONTENT ===\n");
-            kprintf("%s\n", file_content);
-            kprintf("=== END OF FILE CONTENT ===\n");
-        }
-        else
-        {
-            kprintf("ERROR: Failed to read file content\n");
-        }
-
-        kfree(file_content);
-    }
-
-    Fat16Directory dir_entries[32];
-    list_directory(&fs, "/", dir_entries, 32);
-
-    kprintf("\n=== ROOT DIRECTORY ENTRIES:\n");
-    for (size_t i = 0; i < 32; i++)
-    {
-        if (dir_entries[i].name[0] == 0) break; /* No more entries */
-
-        if (!is_valid_entry(&dir_entries[i])) continue;
-
-        char entry_name[13];
-        convert_83_to_string(dir_entries[i].name, dir_entries[i].extension, entry_name);
-
-        kprintf("Entry: %s, Size: %u bytes, Attr: 0x%x\n", entry_name, dir_entries[i].file_size_bytes,
-                dir_entries[i].attributes);
-    }
-
-    kprintf("\n=== END OF ROOT DIRECTORY ENTRIES ===\n");
+    sb->root = root;
+    return root;
 }
 
-/* Vfs Interface*/
-
-static int vfs_mount(Vfs *vfs, const char *path, uintptr_t fs_data)
+int fat16_init()
 {
-    (void)fs_data;
-    (void)path;
+    FsType *type = (FsType *)zalloc(sizeof(FsType));
 
-    vfs->next = NULL;
-    vfs->vnode_covered = NULL;
-    vfs->flags = 0x00;
-    vfs->block_size = 512;
-    vfs->data = (uintptr_t)zalloc(sizeof(Fat16));
+    if (!type)
+    {
+        kprintf("Failed to allocate memory for FAT16 filesystem type\n");
+        return -1;
+    }
 
-    return 0;
+    strcpy(type->name, name);
+    type->mount = fat16_mount_fs;
+
+    return fs_register(type);
 }
 
-void fat16_init()
-{
-    vfs_conf.name = (char *)&name;
-    vfs_register(&vfs_conf); /* Config typenum, next */
-    vfs_conf.flags = 0x00;
-
-    /* Operations */
-    vfs_conf.ops.vfs_mount = &vfs_mount;
-}
+fs_initcall(fat16_init);

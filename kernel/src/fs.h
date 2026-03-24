@@ -5,9 +5,27 @@
 #include <spinlock.h>
 #include <types.h>
 
-typedef struct Dentry Dentry;
+#define FS_DETECT (1 << 0)
+
 typedef struct Inode Inode;
 typedef struct FsType FsType;
+
+typedef struct Dentry {
+    ListHead sibling;
+    ListHead children;
+
+    char name[NAME_MAX];
+    u32 name_len;
+
+    struct Dentry *parent;
+
+    Inode *inode;
+
+    spinlock_t lock;
+    atomic_t refcount;
+
+    u32 flags;
+} Dentry;
 
 typedef struct SuperBlock {
     ListHead list;
@@ -64,3 +82,9 @@ int fs_unregister(FsType *type);
 FsType *fs_find(const char *name);
 FsType *fs_find_locked(const char *name);
 int fs_type_count(void);
+
+Dentry *dentry_alloc(const char *name);
+void dentry_get(Dentry *d);
+void dentry_put(Dentry *d);
+Dentry *dentry_lookup(Dentry *parent, const char *name);
+void dentry_add(Dentry *parent, Dentry *child);

@@ -82,3 +82,33 @@ int fs_type_count()
 {
     return (int)atomic_read(&fstype_count);
 }
+
+FsType *fs_detect(const char *name)
+{
+    ListHead *pos, *tmp;
+
+    list_for_each(pos, tmp, &fs_types)
+    {
+        FsType *type = container_of(pos, FsType, list);
+
+        if (type->flags & FS_DETECT)
+        {
+            return type;
+        }
+    }
+
+    return NULL;
+}
+
+Dentry *dentry_alloc(const char *name)
+{
+    Dentry *d = (Dentry *)zalloc(sizeof(Dentry));
+    if (!d) return NULL;
+
+    strncpy(d->name, name, NAME_MAX);
+    d->name_len = strlen(name);
+    atomic_init(&d->refcount, 1);
+    spinlock_init(&d->lock);
+
+    return d;
+}

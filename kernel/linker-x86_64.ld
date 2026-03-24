@@ -46,6 +46,18 @@ SECTIONS
         __setup_start = .;
         KEEP(*(.kernel_params))
         __setup_end = .;
+
+        /* Initcalls */
+        . = ALIGN(8);
+        __initcall_start = .;
+        KEEP(*(.initcall1.init))
+        KEEP(*(.initcall2.init))
+        KEEP(*(.initcall3.init))
+        KEEP(*(.initcall4.init))
+        KEEP(*(.initcall5.init))
+        KEEP(*(.initcall6.init))
+        KEEP(*(.initcall7.init))
+        __initcall_end = .;
     } :rodata
 
     /* Move to the next memory page for .data */

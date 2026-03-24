@@ -91,13 +91,10 @@ void kmain()
     init_idt();
     vmm_init();
     kmalloc_init();
+    do_initcalls();
     task_init();
     syscall_init();
-    ata_detect_devices();
-    fat16_init();
-    test_fat16(); // vfs_init();
     PIC_remap();
-    init_keyboard();
     enable_scheduler();
     start_interrupts();
     hlt();

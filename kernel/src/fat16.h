@@ -4,6 +4,7 @@
 #include <types.h>
 
 #include <blk_dev.h>
+#include <fs.h>
 
 /* Map: [Reserved sector][FATs][Root directory][Data region] */
 
@@ -81,5 +82,6 @@ typedef struct Fat16 {
 
 int fat16_detect(BlockDevice *dev);
 int fat16_mount(BlockDevice *dev, Fat16 *fs);
-void test_fat16();
-void fat16_init();
+int fat16_init();
+
+Dentry *fat16_mount_fs(SuperBlock *sb, const void *data);

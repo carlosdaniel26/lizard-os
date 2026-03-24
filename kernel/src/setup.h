@@ -14,7 +14,17 @@
 
 #include <types.h>
 
-typedef int (*setup_fn)(char *val);
+typedef int (*initcall_t)();
+
+#define __define_initcall(fn, level)                                                                         \
+    static initcall_t __initcall_##fn##level __attribute__((section(".initcall" #level ".init"), used)) = fn
+
+#define core_initcall(fn) __define_initcall(fn, 1)
+#define fs_initcall(fn) __define_initcall(fn, 5)
+#define device_initcall(fn) __define_initcall(fn, 6)
+#define late_initcall(fn) __define_initcall(fn, 7)
+
+typedef int (*setup_fn)(char *);
 
 typedef struct SetupEntry {
     const char *str;
@@ -25,3 +35,5 @@ typedef struct SetupEntry {
     static const SetupEntry __setup_##fn __attribute__((section(".kernel_params"), used)) = {name, fn}
 
 void parse_cmdline(char *cmdline);
+
+void do_initcalls();

@@ -1,40 +1,29 @@
 #include <ata.h>
+#include <blkdev_manager.h>
+#include <fs.h>
 #include <panic.h>
 #include <setup.h>
 #include <stdio.h>
 #include <types.h>
 #include <vfs.h>
-#include <vfs_conf.h>
 
-VfsConf *vfs_conf_list;
+static Dentry *vfs_root;
 
-static Vfs root = {0};
+Dentry *vfs_get_root(void)
+{
+    dentry_get(vfs_root);
+    return vfs_root;
+}
+
+static void set_root(char *dev_str)
+{
+    BlockDevice *part = blkdev_manager_get_by_name(dev_str);
+    if (part == NULL)
+    {
+        panic("Failed to find root device %s", dev_str);
+    }
+}
 
 void vfs_init()
 {
-    /* Setup root */
-    if (vfs_conf_list == NULL) kpanic("NO ROOT TO MOUNT");
-
-    root.ops = &vfs_conf_list->ops;
-    root.ops->vfs_mount(&root, "/", NULL);
 }
-
-static int root_setup(char *val)
-{
-    (char *)val;
-    kprintf("root = %s\n", val);
-    return 1;
-}
-
-static int debug_setup(char *val)
-{
-    (char *)val;
-
-    kprintf("debug enabled\n");
-    while (1)
-        ;
-    return 1;
-}
-
-__setup("root=", root_setup);
-__setup("debug", debug_setup);

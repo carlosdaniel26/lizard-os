@@ -2,6 +2,7 @@
 #include <blk_dev.h>
 #include <io.h>
 #include <kmalloc.h>
+#include <setup.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
@@ -51,7 +52,7 @@ static inline void ata_select(ATADevice *dev)
     io_wait();
 }
 
-void ata_detect_devices()
+int ata_detect_devices()
 {
     for (u8 ata_id = PRIMARY; ata_id <= PRIMARY; ata_id++)
     {
@@ -150,7 +151,11 @@ void ata_detect_devices()
 
         blkdev_manager_add(dev);
     }
+
+    return 0;
 }
+
+device_initcall(ata_detect_devices);
 
 /* Block Device */
 static int block_read(BlockDevice *dev, u64 sector, void *buffer, size_t count)
