@@ -1,11 +1,10 @@
 #pragma once
 
 #include <atomic.h>
+#include <blkdev_manager.h>
 #include <list.h>
 #include <spinlock.h>
 #include <types.h>
-
-#define FS_DETECT (1 << 0)
 
 typedef struct Inode Inode;
 typedef struct FsType FsType;
@@ -82,6 +81,7 @@ int fs_unregister(FsType *type);
 FsType *fs_find(const char *name);
 FsType *fs_find_locked(const char *name);
 int fs_type_count(void);
+FsType *fs_detect(BlockDevice *dev);
 
 Dentry *dentry_alloc(const char *name);
 void dentry_get(Dentry *d);

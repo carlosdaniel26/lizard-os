@@ -1,5 +1,6 @@
 #include <atomic.h>
 #include <fs.h>
+#include <kmalloc.h>
 #include <list.h>
 #include <spinlock.h>
 #include <string.h>
@@ -83,7 +84,7 @@ int fs_type_count()
     return (int)atomic_read(&fstype_count);
 }
 
-FsType *fs_detect(const char *name)
+FsType *fs_detect(BlockDevice *dev)
 {
     ListHead *pos, *tmp;
 
@@ -91,10 +92,7 @@ FsType *fs_detect(const char *name)
     {
         FsType *type = container_of(pos, FsType, list);
 
-        if (type->flags & FS_DETECT)
-        {
-            return type;
-        }
+        return type;
     }
 
     return NULL;

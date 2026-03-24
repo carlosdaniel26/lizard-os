@@ -54,6 +54,9 @@ void kmain()
 {
     asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
 
+    static char k_cmdline[1024] = {0};
+    strcpy(k_cmdline, executable_file_request.response->executable_file->string);
+
     stop_interrupts();
     time_init_from_rtc();
 
@@ -76,14 +79,13 @@ void kmain()
 
     if (executable_file_request.response != NULL && executable_file_request.response->executable_file != NULL)
     {
-        kprintf("Kernel cmdline: %s\n", executable_file_request.response->executable_file->string);
+        kprintf("Kernel cmdline: %s\n", k_cmdline);
     }
     else
     {
         kprintf("Kernel cmdline not found\n");
     }
 
-    parse_cmdline(executable_file_request.response->executable_file->string);
     pit_init();
     early_alloc_init();
     buddy_init();
@@ -92,6 +94,7 @@ void kmain()
     vmm_init();
     kmalloc_init();
     do_initcalls();
+    parse_cmdline(k_cmdline);
     task_init();
     syscall_init();
     PIC_remap();
