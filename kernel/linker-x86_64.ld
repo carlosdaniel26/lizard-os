@@ -43,6 +43,9 @@ SECTIONS
 
     .rodata : {
         *(.rodata .rodata.*)
+        __setup_start = .;
+        KEEP(*(.kernel_params))
+        __setup_end = .;
     } :rodata
 
     /* Move to the next memory page for .data */

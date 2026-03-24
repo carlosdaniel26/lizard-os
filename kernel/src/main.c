@@ -21,10 +21,12 @@
 #include <ss.h>
 #include <stdbool.h>
 
+#include <setup.h>
 #include <stdio.h>
 #include <syscall.h>
 #include <tty.h>
 #include <types.h>
+#include <vfs.h>
 #include <vmm.h>
 
 /*
@@ -81,6 +83,7 @@ void kmain()
         kprintf("Kernel cmdline not found\n");
     }
 
+    parse_cmdline(executable_file_request.response->executable_file->string);
     pit_init();
     early_alloc_init();
     buddy_init();

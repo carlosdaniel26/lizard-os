@@ -32,6 +32,20 @@ int strcmp(const void *aptr, const void *bptr)
     return 0;
 }
 
+int strncmp(const void *aptr, const void *bptr, size_t size)
+{
+    const unsigned char *s1 = (const unsigned char *)aptr;
+    const unsigned char *s2 = (const unsigned char *)bptr;
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (s1[i] < s2[i]) return -1;
+        if (s1[i] > s2[i]) return 1;
+        if (s1[i] == '\0') break;
+    }
+    return 0;
+}
+
 void *memcpy(void *dstptr, const void *srcptr, size_t size)
 {
     unsigned char *d = (unsigned char *)dstptr;

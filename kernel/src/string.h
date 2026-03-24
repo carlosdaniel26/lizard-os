@@ -6,6 +6,7 @@
 
 int memcmp(const void *, const void *, size_t size);
 int strcmp(const void *aptr, const void *bptr);
+int strncmp(const void *aptr, const void *bptr, size_t size);
 void *memcpy(void *dstptr, const void *srcptr, size_t size);
 void *memmove(void *, const void *, size_t size);
 void *memset(void *, int value, size_t size);

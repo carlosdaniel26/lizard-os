@@ -1,5 +1,6 @@
 #include <ata.h>
 #include <panic.h>
+#include <setup.h>
 #include <stdio.h>
 #include <types.h>
 #include <vfs.h>
@@ -17,3 +18,23 @@ void vfs_init()
     root.ops = &vfs_conf_list->ops;
     root.ops->vfs_mount(&root, "/", NULL);
 }
+
+static int root_setup(char *val)
+{
+    (char *)val;
+    kprintf("root = %s\n", val);
+    return 1;
+}
+
+static int debug_setup(char *val)
+{
+    (char *)val;
+
+    kprintf("debug enabled\n");
+    while (1)
+        ;
+    return 1;
+}
+
+__setup("root=", root_setup);
+__setup("debug", debug_setup);
