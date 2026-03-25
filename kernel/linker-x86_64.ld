@@ -43,6 +43,8 @@ SECTIONS
 
     .rodata : {
         *(.rodata .rodata.*)
+
+        . = ALIGN(16);
         __setup_start = .;
         KEEP(*(.kernel_params))
         __setup_end = .;
@@ -50,13 +52,12 @@ SECTIONS
         /* Initcalls */
         . = ALIGN(8);
         __initcall_start = .;
-        KEEP(*(.initcall1.init))
-        KEEP(*(.initcall2.init))
-        KEEP(*(.initcall3.init))
-        KEEP(*(.initcall4.init))
-        KEEP(*(.initcall5.init))
-        KEEP(*(.initcall6.init))
-        KEEP(*(.initcall7.init))
+        KEEP(*(SORT(.initcall0.*.init)))   /* early */
+        KEEP(*(SORT(.initcall1.*.init)))   /* memory, all sublevels */
+        KEEP(*(SORT(.initcall2.*.init)))   /* core + postcore */
+        KEEP(*(SORT(.initcall5.*.init)))   /* fs */
+        KEEP(*(SORT(.initcall6.*.init)))   /* device */
+        KEEP(*(SORT(.initcall7.*.init)))   /* late */
         __initcall_end = .;
     } :rodata
 
