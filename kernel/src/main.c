@@ -86,18 +86,19 @@ void kmain()
         kprintf("Kernel cmdline not found\n");
     }
 
-    pit_init();
-    early_alloc_init();
-    buddy_init();
+    PIC_remap();
     init_gdt();
     init_idt();
+    early_alloc_init();
+    buddy_init();
     vmm_init();
     kmalloc_init();
     do_initcalls();
     parse_cmdline(k_cmdline);
     task_init();
     syscall_init();
-    PIC_remap();
+    pit_init();
+
     enable_scheduler();
     start_interrupts();
     hlt();
