@@ -16,6 +16,32 @@ int memcmp(const void *aptr, const void *bptr, size_t size)
     return 0;
 }
 
+int tolower(int c)
+{
+    if (c >= 'A' && c <= 'Z') return c + ('a' - 'A');
+    return c;
+}
+
+int toupper(int c)
+{
+    if (c >= 'a' && c <= 'z') return c - ('a' - 'A');
+    return c;
+}
+
+int strcasecmp(const char *s1, const char *s2)
+{
+    const unsigned char *u1 = (const unsigned char *)s1;
+    const unsigned char *u2 = (const unsigned char *)s2;
+
+    while (*u1 && tolower(*u1) == tolower(*u2))
+    {
+        u1++;
+        u2++;
+    }
+
+    return tolower(*u1) - tolower(*u2);
+}
+
 int strcmp(const void *aptr, const void *bptr)
 {
     const unsigned char *s1 = (const unsigned char *)aptr;

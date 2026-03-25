@@ -24,9 +24,9 @@ static inline uintptr_t align_up(uintptr_t x, size_t a)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-char toupper(char c);
+
 void hlt();
 void stop_cpu();
 int oct2bin(unsigned char *str, int size);
-char toupper(char c);
+
 int days_in_month(int month, int year);

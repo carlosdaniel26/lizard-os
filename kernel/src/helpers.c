@@ -33,12 +33,7 @@ int oct2bin(unsigned char *str, int size)
     return n;
 }
 
-char toupper(char c)
-{
-    if (c >= 'a' && c <= 'z') return c - 32;
 
-    return c;
-}
 
 int days_in_month(int month, int year)
 {

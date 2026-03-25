@@ -98,15 +98,88 @@ FsType *fs_detect(BlockDevice *dev)
     return NULL;
 }
 
+Inode *inode_alloc(SuperBlock *sb)
+{
+    Inode *inode = (Inode *)zalloc(sizeof(Inode));
+    if (!inode) return NULL;
+    inode->sb = sb;
+    return inode;
+}
+
+void inode_free(Inode *inode)
+{
+    if (!inode) return;
+    kfree(inode);
+}
+
 Dentry *dentry_alloc(const char *name)
 {
     Dentry *d = (Dentry *)zalloc(sizeof(Dentry));
     if (!d) return NULL;
-
-    strncpy(d->name, name, NAME_MAX);
-    d->name_len = strlen(name);
-    atomic_init(&d->refcount, 1);
-    spinlock_init(&d->lock);
-
+    strncpy(d->name, name, sizeof(d->name) - 1);
+    d->name[sizeof(d->name) - 1] = '\0';
     return d;
+}
+
+void dentry_get(Dentry *d)
+{
+    if (d) atomic_inc(&d->refcount);
+}
+
+void dentry_put(Dentry *d)
+{
+    if (!d) return;
+    if (atomic_dec_and_test(&d->refcount))
+    {
+        kfree(d);
+    }
+}
+
+void dentry_add(Dentry *parent, Dentry *child)
+{
+    if (!parent || !child) return;
+    spinlock_lock(&parent->lock);
+    list_add_tail(&child->sibling, &parent->children);
+    child->parent = parent;
+    spinlock_unlock(&parent->lock);
+}
+
+Dentry *dentry_lookup(Dentry *parent, const char *name)
+{
+    if (!parent) return NULL;
+    spinlock_lock(&parent->lock);
+    ListHead *pos, *tmp;
+    list_for_each(pos, tmp, &parent->children)
+    {
+        Dentry *d = container_of(pos, Dentry, sibling);
+        if (strcmp(d->name, name) == 0)
+        {
+            dentry_get(d);
+            spinlock_unlock(&parent->lock);
+            return d;
+        }
+    }
+    spinlock_unlock(&parent->lock);
+    return NULL;
+}
+
+Dentry *vfs_lookup(Dentry *parent, const char *name)
+{
+    Dentry *d = dentry_lookup(parent, name);
+    if (d) return d;
+
+    d = dentry_alloc(name);
+    if (!d) return NULL;
+
+    if (parent->inode && parent->inode->i_ops && parent->inode->i_ops->lookup)
+    {
+        if (parent->inode->i_ops->lookup(parent->inode, d) == 0)
+        {
+            dentry_add(parent, d);
+            return d;
+        }
+    }
+
+    dentry_put(d);
+    return NULL;
 }

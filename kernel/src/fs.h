@@ -65,12 +65,27 @@ typedef struct InodeOps {
     int (*rename)(Inode *old, Inode *new);
 } InodeOps;
 
+typedef struct File {
+    Inode *inode;
+    u64 offset;
+    u32 flags;
+    void *private_data;
+} File;
+
+typedef struct FileOps {
+    int (*open)(Inode *inode, File *file);
+    ssize_t (*read)(File *file, char *buf, size_t count, off_t offset);
+    ssize_t (*write)(File *file, const char *buf, size_t count, off_t offset);
+    int (*readdir)(File *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
+    int (*release)(Inode *inode, File *file);
+} FileOps;
+
 typedef struct Inode {
     u32 mode;
     u64 size;
 
     InodeOps *i_ops;
-    struct FileOps *f_ops;
+    FileOps *f_ops;
 
     SuperBlock *sb;
     void *private_data;
@@ -88,3 +103,6 @@ void dentry_get(Dentry *d);
 void dentry_put(Dentry *d);
 Dentry *dentry_lookup(Dentry *parent, const char *name);
 void dentry_add(Dentry *parent, Dentry *child);
+
+Inode *inode_alloc(SuperBlock *sb);
+void inode_free(Inode *inode);

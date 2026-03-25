@@ -6,12 +6,16 @@
 
 int memcmp(const void *, const void *, size_t size);
 int strcmp(const void *aptr, const void *bptr);
+int strcasecmp(const char *s1, const char *s2);
 int strncmp(const void *aptr, const void *bptr, size_t size);
 void *memcpy(void *dstptr, const void *srcptr, size_t size);
 void *memmove(void *, const void *, size_t size);
 void *memset(void *, int value, size_t size);
 size_t strlen(const char *);
 char *strchr(const char *str, int ch);
+
+int tolower(int c);
+int toupper(int c);
 bool strsIsEqual(const char *str1, const char *str2, size_t size);
 void unsigned_to_string(u64 value, char *str);
 unsigned get_unsigned2string_final_size(u64 value);
