@@ -21,7 +21,6 @@
 static Slab *slab_create(KMemCache *cache)
 {
     void *mem = buddy_alloc(cache->order);
-    debug_printf("slab_create: allocating slab for cache '%s'\n", cache->name);
     if (!mem) return NULL;
 
     size_t slab_size = (size_t)PAGE_SIZE << cache->order;
@@ -56,9 +55,6 @@ static Slab *slab_create(KMemCache *cache)
         o->next = slab->freelist;
         slab->freelist = o;
     }
-
-    debug_printf("%s: created slab %p for cache '%s' with %u objects\n", cache->name, slab, cache->name,
-                 objs);
 
     return slab;
 }
@@ -117,10 +113,6 @@ KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void
     cache->slabs_partial.next = cache->slabs_partial.prev = &cache->slabs_partial;
     cache->slabs_free.next = cache->slabs_free.prev = &cache->slabs_free;
 
-    debug_printf("kmemcache_create: '%s' obj=%u real=%u align=%u order=%u objs=%u\n", cache->name,
-                 (unsigned)cache->object_size, (unsigned)cache->real_object_size, (unsigned)cache->align,
-                 cache->order, cache->objects_per_slab);
-
     return cache;
 }
 
@@ -162,8 +154,6 @@ void *kmemcache_alloc(KMemCache *cache)
 
     if (cache->ctor) cache->ctor(obj);
 
-    debug_printf("cache %s allocated on slab %p an obj on %p\n", cache->name, slab, obj);
-
     return obj;
 }
 
@@ -204,8 +194,6 @@ int kmemcache_free(void *obj)
             cache->free_slab_count++;
         }
     }
-
-    debug_printf("freed %p on slab %p cache %s now %u in_use %u\n", obj, slab, cache->name, cache->in_use);
 
     return 0;
 }

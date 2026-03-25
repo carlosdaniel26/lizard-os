@@ -84,7 +84,6 @@ void *kmalloc(size_t size)
 
 void kfree(void *ptr)
 {
-    debug_printf("kfree %p\n", ptr);
     /* belongs to a slab? */
     Slab *slab = _get_slab(ptr);
     if (_is_valid_slab(slab))

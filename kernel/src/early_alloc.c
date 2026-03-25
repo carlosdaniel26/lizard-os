@@ -34,9 +34,6 @@ void early_alloc_init()
     {
         struct limine_memmap_entry *entry = response->entries[i];
 
-        debug_printf("MEMMAP ENTRY: base=0x%x length=0x%x type=%u\n", entry->base, entry->length,
-                     entry->type);
-
         if (entry->type == LIMINE_MEMMAP_USABLE)
         {
             if (entry->length > largest_size)
@@ -46,11 +43,8 @@ void early_alloc_init()
             }
 
             if (entry->base + entry->length > highest_addr)
-
             {
                 highest_addr = entry->base + entry->length;
-                debug_printf("highest_addr: 0x%x = base 0x%x + length 0x%x\n", highest_addr, entry->base,
-                             entry->length);
             }
         }
     }
