@@ -19,7 +19,7 @@ static inline char *next_arg(char *cmdline)
     return cmdline;
 }
 
-void parse_cmdline(char *cmdline)
+void setup_params(char *cmdline)
 {
     while (*cmdline)
     {
@@ -52,16 +52,5 @@ void parse_cmdline(char *cmdline)
                 if (ptr->fn(val)) break;
             }
         }
-    }
-}
-
-void do_initcalls()
-{
-    extern const initcall_t __initcall_start[];
-    extern const initcall_t __initcall_end[];
-
-    for (const initcall_t *fn = __initcall_start; fn < __initcall_end; fn++)
-    {
-        (*fn)();
     }
 }

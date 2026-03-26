@@ -21,6 +21,7 @@
 #include <ss.h>
 #include <stdbool.h>
 
+#include <init.h>
 #include <setup.h>
 #include <stdio.h>
 #include <syscall.h>
@@ -94,7 +95,7 @@ void kmain()
     vmm_init();
     kmalloc_init();
     do_initcalls();
-    parse_cmdline(k_cmdline);
+    setup_params(k_cmdline);
     task_init();
     syscall_init();
     pit_init();

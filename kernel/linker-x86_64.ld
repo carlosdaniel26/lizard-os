@@ -19,8 +19,6 @@ SECTIONS
 {
     /* We want to be placed in the topmost 2GiB of the address space, for optimisations */
     /* and because that is what the Limine spec mandates. */
-    /* Any address in this region will do, but often 0xffffffff80000000 is chosen as */
-    /* that is the beginning of the region. */
     . = 0xffffffff80000000;
     kernel_start = .;
 
@@ -33,22 +31,26 @@ SECTIONS
 
     /* Move to the next memory page for .text */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
-
     .text : {
         *(.text .text.*)
     } :text
 
     /* Move to the next memory page for .rodata */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
-
     .rodata : {
         *(.rodata .rodata.*)
 
         . = ALIGN(16);
+        /* Kernel parameters section for __setup macro */
         __setup_start = .;
         KEEP(*(.kernel_params))
         __setup_end = .;
 
+        . = ALIGN(8);
+        __init.const_start = .;
+        KEEP(*(.init.const))
+        __init.const_end = .;
+        
         /* Initcalls */
         . = ALIGN(8);
         __initcall_start = .;
@@ -63,9 +65,15 @@ SECTIONS
 
     /* Move to the next memory page for .data */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
-
     .data : {
+        __data_start = .;
         *(.data .data.*)
+        __data_end = .;
+
+        . = ALIGN(8);
+        __init.data_start = .;
+        KEEP(*(.init.data))
+        __init.data_end = .;
     } :data
 
     /* NOTE: .bss needs to be the last thing mapped to :data, otherwise lots of */
