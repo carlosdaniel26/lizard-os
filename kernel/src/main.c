@@ -39,9 +39,6 @@
 
 __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
 
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request
-    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
-
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_file_request
     executable_file_request = {.id = LIMINE_EXECUTABLE_FILE_REQUEST, .revision = 0};
 
