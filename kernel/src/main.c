@@ -48,56 +48,34 @@ __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_RE
 
 u8 kernel_stack[KERNEL_STACK_SIZE];
 
+// Refactored initcalls from kmain
+__initcall(time_init_from_rtc, 1, 01);
+__initcall(init_framebuffer, 1, 02);
+__initcall(init_cpuid, 1, 03);
+__initcall(tty_initialize, 1, 04);
+__initcall(PIC_remap, 1, 05);
+__initcall(init_gdt, 1, 06);
+__initcall(init_idt, 1, 07);
+__initcall(early_alloc_init, 1, 08);
+__initcall(buddy_init, 1, 09);
+__initcall(vmm_init, 1, 10);
+__initcall(kmalloc_init, 1, 11);
+__initcall(setup_params, 1, 12);
+__initcall(task_init, 1, 13);
+__initcall(syscall_init, 1, 14);
+__initcall(pit_init, 1, 15);
+__initcall(init_keyboard, 1, 17);
+__initcall(enable_scheduler, 1, 16);
+
 void kmain()
 {
+    stop_interrupts();
+
     asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
 
     static char k_cmdline[1024] = {0};
     strcpy(k_cmdline, executable_file_request.response->executable_file->string);
 
-    stop_interrupts();
-    time_init_from_rtc();
-
-    if (LIMINE_BASE_REVISION_SUPPORTED == false)
-    {
-        hlt();
-    }
-
-    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
-    {
-        hlt();
-    }
-
-    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-
-    stop_interrupts();
-    setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
-    init_cpuid();
-    tty_initialize();
-
-    if (executable_file_request.response != NULL && executable_file_request.response->executable_file != NULL)
-    {
-        kprintf("Kernel cmdline: %s\n", k_cmdline);
-    }
-    else
-    {
-        kprintf("Kernel cmdline not found\n");
-    }
-
-    PIC_remap();
-    init_gdt();
-    init_idt();
-    early_alloc_init();
-    buddy_init();
-    vmm_init();
-    kmalloc_init();
     do_initcalls();
-    setup_params(k_cmdline);
-    task_init();
-    syscall_init();
-    pit_init();
-
-    enable_scheduler();
-    start_interrupts();
     hlt();
 }

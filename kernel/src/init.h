@@ -8,8 +8,8 @@ typedef int (*initcall_t)();
 #define __initconst __attribute__((section(".init.const"), used))
 
 #define __initcall(fn, level, subl)                                                                          \
-    static initcall_t __initcall_##fn##level##subl                                                           \
-        __attribute__((section(".initcall" #level ".sublevel" #subl "_" #fn), used)) = fn
+    initcall_t __initcall_##fn##level##subl                                                           \
+        __attribute__((section(".initcall" #level ".sublevel" #subl "_" #fn ".init"), used)) = fn
 
 // Standard initcall macros, defaulting to sublevel 00
 #define core_initcall(fn) __initcall(fn, 1, 00)

@@ -15,7 +15,7 @@ int init_keyboard()
 {
     PIC_unmaskIRQ(KEYBOARD_PIC_MASK);
     set_idt_gate(33, isr_keyboard, 0x8E);
-    debug_printf("Keyboard: Initialized.\n");
+    kprintf("keyboard initialized\n");
     return 0;
 }
 

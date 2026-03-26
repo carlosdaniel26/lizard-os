@@ -31,7 +31,7 @@ void proc1_func()
     int i = 0;
     while (1)
     {
-        debug_printf("hello %u", i++);
+        kprintf("hello %u", i++);
         syscall1(0, 1000 * 2); // Syscall 0 is sys_sleep
     }
     hlt();
