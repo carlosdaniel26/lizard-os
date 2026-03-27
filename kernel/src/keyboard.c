@@ -15,16 +15,16 @@
 int init_keyboard()
 {
     PIC_unmaskIRQ(KEYBOARD_PIC_MASK);
-    set_idt_gate(33, isr_keyboard, 0x8E);
+    isr_table[33] = &isr_keyboard;
     kprintf("keyboard initialized\n");
     return 0;
 }
 
 device_initcall(init_keyboard);
 
-void isr_keyboard()
+void isr_keyboard(CpuState *regs)
 {
-
+    (regs);
     while (inb(0x64) & 0x01)
     {
         u8 scancode = inb(KEYBOARD_DATA_PORT);
