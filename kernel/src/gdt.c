@@ -1,4 +1,5 @@
 #include <gdt.h>
+#include <init.h>
 
 global_descriptor gdt[5];
 gdt_ptr gdt_pointer;
@@ -45,7 +46,7 @@ static inline void gdt_load()
                  : "memory", "rax", "ax");
 }
 
-void init_gdt()
+static int init_gdt()
 {
     gdt[0] = create_gdt_gate(0, 0, 0x00, 0x00); // Null
     gdt[1] = create_gdt_gate(0, 0, 0x9A, 0xA0); // Code: exec/read, ring 0
@@ -54,4 +55,8 @@ void init_gdt()
     gdt[4] = create_gdt_gate(0, 0, 0xF2, 0xA0); // Data: user
 
     gdt_load();
+
+    return 0;
 }
+
+core_initcall(init_gdt);

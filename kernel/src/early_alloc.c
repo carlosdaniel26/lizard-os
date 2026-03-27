@@ -6,6 +6,7 @@
 #include <panic.h>
 #include <pgtable.h>
 
+#include <init.h>
 #include <stdio.h>
 #include <types.h>
 
@@ -22,7 +23,7 @@ uintptr_t early_base;
 uintptr_t early_end;
 uintptr_t early_current;
 
-void early_alloc_init()
+static int early_alloc_init()
 {
     struct limine_memmap_response *response = memmap_request.response;
     if (!response || !response->entry_count) kpanic("NO MEMORY MAP FROM LIMINE");
@@ -54,7 +55,11 @@ void early_alloc_init()
     early_current = early_base;
 
     hhdm_offset = (uintptr_t)hhdm_request.response->offset;
+
+    return 0;
 }
+
+early_initcall(early_alloc_init);
 
 void *early_alloc(size_t size, size_t align)
 {

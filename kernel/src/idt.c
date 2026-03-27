@@ -1,6 +1,7 @@
 #include <early_alloc.h>
 #include <framebuffer.h>
 #include <idt.h>
+#include <init.h>
 #include <isr_vector.h>
 #include <kernelcfg.h>
 #include <keyboard.h>
@@ -101,7 +102,7 @@ static inline void idt_load()
     asm volatile("lidt %0\n" : : "m"(idt_descriptor) : "memory");
 }
 
-void init_idt()
+int init_idt()
 {
     for (int i = 0; i < IDT_ENTRIES; i++)
         set_idt_gate(i, isr_vectors[i], 0x8E);
@@ -115,4 +116,8 @@ void init_idt()
     idt_descriptor.base = (u64)&idt;
 
     idt_load();
+
+    return 0;
 }
+
+core_initcall(init_idt);

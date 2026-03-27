@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include <types.h>
 #include <vga.h>
 
@@ -23,7 +22,6 @@ extern u32 tty_bg_color;
 extern size_t cmd_start_column;
 extern size_t cmd_start_row;
 
-void tty_initialize();
 void tty_clean();
 void tty_putentryat(char c, u32 color, size_t x, size_t y);
 char tty_putchar(char c);

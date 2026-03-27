@@ -4,7 +4,6 @@
 
 #include <types.h>
 
-void early_alloc_init();
 void *early_alloc(size_t size, size_t align);
 extern u64 highest_addr;
 

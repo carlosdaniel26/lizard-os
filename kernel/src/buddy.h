@@ -49,7 +49,6 @@ typedef struct {
 
 extern BuddyAllocator buddy;
 
-void buddy_init();
 void *buddy_alloc(int order);
 void buddy_free(void *addr, int order);
 unsigned int pages_to_order(unsigned int pages);

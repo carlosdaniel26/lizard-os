@@ -21,5 +21,4 @@ typedef struct {
 } __attribute__((packed)) idt_ptr;
 
 void isr_common_entry(u64 int_id, CpuState *regs);
-void init_idt();
 void set_idt_gate(int vector, void (*isr)(), u8 flags);

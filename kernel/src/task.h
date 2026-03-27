@@ -50,8 +50,6 @@ typedef struct Task {
     struct Task *next;
 } Task;
 
-void task_init();
-
 void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority);
 void task_save_context(CpuState *regs);
 void task_load_context(CpuState *regs, Task *task);

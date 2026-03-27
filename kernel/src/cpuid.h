@@ -110,7 +110,6 @@ typedef struct CPUID {
 
 extern CPUID g_cpuid;
 
-void init_cpuid();
 void cpuid(u32 code, u32 *output);
 void cpuid_get_brand();
 bool check_apic();

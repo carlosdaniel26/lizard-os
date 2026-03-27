@@ -1,5 +1,6 @@
 #include <ktime.h>
 
+#include <init.h>
 #include <types.h>
 
 static TimeSpec wall_clock; /* CLOCK_REALTIME */
@@ -42,7 +43,7 @@ TimeSpec rtc_to_timespec(const RTCTimer *t)
     return ts;
 }
 
-void time_init_from_rtc(void)
+int time_init(void)
 {
     RTCTimer rtc;
     rtc_read(&rtc);
@@ -53,7 +54,11 @@ void time_init_from_rtc(void)
 
     boot_wall = wall_clock;
     boot_mono = mono_clock;
+
+    return 0;
 }
+
+device_initcall(time_init);
 
 void time_tick_ns(u64 delta_ns)
 {

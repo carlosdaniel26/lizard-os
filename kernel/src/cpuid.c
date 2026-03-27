@@ -1,4 +1,5 @@
 #include <cpuid.h>
+#include <init.h>
 #include <stdbool.h>
 #include <string.h>
 #include <tty.h>
@@ -13,10 +14,13 @@ void cpuid(u32 code, u32 *output)
                          : "a"(code));
 }
 
-void init_cpuid()
+static int init_cpuid()
 {
     cpuid_get_brand();
+    return 0;
 }
+
+core_initcall(init_cpuid);
 
 void cpuid_get_brand()
 {

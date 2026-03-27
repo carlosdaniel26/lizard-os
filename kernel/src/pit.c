@@ -1,6 +1,7 @@
 #include <alias.h>
 #include <helpers.h>
 #include <idt.h>
+#include <init.h>
 #include <io.h>
 #include <ktime.h>
 #include <pic.h>
@@ -40,7 +41,7 @@ static inline void pit_unmask()
     outb(PIC1_DATA, mask);
 }
 
-void pit_init()
+int pit_init()
 {
     outb(PIT_COMMAND, 0b00110110); /* Mode 3, Channel 0, low/high byte acess*/
 
@@ -50,7 +51,11 @@ void pit_init()
     isr_table[PIT_ISR_INDEX] = &isr_pit;
 
     pit_unmask();
+
+    return 0;
 }
+
+device_initcall(pit_init);
 
 void isr_pit(CpuState *regs)
 {

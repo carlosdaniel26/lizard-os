@@ -1,6 +1,7 @@
 #include <early_alloc.h>
 #include <framebuffer.h>
 
+#include <init.h>
 #include <string.h>
 #include <types.h>
 
@@ -270,15 +271,15 @@ void clear_framebuffer()
     }
 }
 
-int init_framebuffer()
+static int init_framebuffer()
 {
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-
-    asm volatile("cli");
     setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
 
     return 0;
 }
+
+early_initcall(init_framebuffer);
 
 void setup_framebuffer(u64 w, u64 h, u32 *fb, u32 pth)
 {

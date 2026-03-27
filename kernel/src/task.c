@@ -1,6 +1,7 @@
 #include <buddy.h>
 #include <debug.h>
 #include <helpers.h>
+#include <init.h>
 #include <ktime.h>
 #include <pgtable.h>
 #include <pit.h>
@@ -37,11 +38,15 @@ void proc1_func()
     hlt();
 }
 
-void task_init()
+int task_init()
 {
     task_create(&idle, &idle_func, "idle", 1);
     task_create(&proc1, &proc1_func, "proc1", 1);
+
+    return 0;
 }
+
+subsys_initcall(task_init);
 
 void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority)
 {
@@ -198,6 +203,8 @@ void enable_scheduler()
 {
     scheduler_enabled = 1;
 }
+
+late_initcall(enable_scheduler);
 
 void disable_scheduler()
 {

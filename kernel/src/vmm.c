@@ -8,6 +8,7 @@
 #include <panic.h>
 #include <pgtable.h>
 
+#include <init.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
@@ -24,7 +25,7 @@ u64 *kpml4 = NULL;
 extern u64 hhdm_offset;
 extern struct limine_executable_address_request kernel_address_request;
 
-void vmm_init(void)
+static int vmm_init(void)
 {
     kpml4 = pgtable_alloc_table();
     current_pml4 = kpml4;
@@ -54,7 +55,11 @@ void vmm_init(void)
     if (tables_needed > highest_addr) kpanic("VMM: tables_needed overflow");
     pgtable_maprange(kpml4, hhdm_offset, 0, tables_needed, PAGE_PRESENT | PAGE_WRITABLE);
     pgtable_switch(kpml4);
+
+    return 0;
 }
+
+postcore_initcall(vmm_init);
 
 void vmm_map_page(u64 virt, u64 phys, u64 flags)
 {

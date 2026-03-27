@@ -23,5 +23,3 @@ typedef struct SetupEntry {
 
 #define __setup(name, fn)                                                                                    \
     static const SetupEntry __setup_##fn __attribute__((section(".kernel_params"), used)) = {name, fn}
-
-int setup_params();

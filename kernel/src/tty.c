@@ -1,10 +1,12 @@
 #include <framebuffer.h>
+#include <init.h>
 #include <spinlock.h>
 #include <ss.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <tty.h>
+
 #include <vga.h>
 
 size_t terminal_width;
@@ -27,7 +29,7 @@ u32 *fb;
 
 static spinlock_t tty_lock;
 
-void tty_initialize()
+static int tty_init()
 {
     terminal_width = width;
     terminal_height = height;
@@ -42,7 +44,11 @@ void tty_initialize()
     tty_color = TTY_DEFAULT_COLOR;
 
     spinlock_init(&tty_lock);
+
+    return 0;
 }
+
+early_initcall(tty_init);
 
 void tty_scroll()
 {

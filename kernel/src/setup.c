@@ -27,7 +27,7 @@ static inline char *next_arg(char *cmdline)
     return cmdline;
 }
 
-int setup_params()
+static int setup_params()
 {
     char *cmdline = cmdline_req.response->cmdline;
     while (*cmdline)
@@ -65,3 +65,5 @@ int setup_params()
 
     return 0;
 }
+
+early_initcall(setup_params);

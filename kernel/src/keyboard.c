@@ -1,5 +1,6 @@
 #include <debug.h>
 #include <idt.h>
+#include <init.h>
 #include <io.h>
 #include <keyboard.h>
 #include <pic.h>

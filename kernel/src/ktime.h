@@ -111,7 +111,6 @@ static inline TimeSpec timespec_sub(TimeSpec a, TimeSpec b)
 
 TimeSpec rtc_to_timespec(const RTCTimer *t);
 
-void time_init_from_rtc(void);
 void time_tick_ns(u64 delta_ns);
 TimeSpec timespec_uptime(void);
 i64 time_uptime_ns(void);

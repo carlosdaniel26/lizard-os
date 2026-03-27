@@ -1,13 +1,17 @@
+#include <init.h>
 #include <stdio.h>
 #include <syscall.h>
 
 static syscall_handler syscall_table[MAX_SYSCALLS];
 
-void syscall_init()
+static int syscall_init()
 {
     // For now, we only have one syscall
     syscall_table[0] = &sys_sleep;
+    return 0;
 }
+
+device_initcall(syscall_init);
 
 void sys_sleep(CpuState *regs)
 {

@@ -7,7 +7,6 @@
 
 typedef void (*syscall_handler)(CpuState *regs);
 
-void syscall_init();
 void sys_sleep(CpuState *regs);
 void syscall_handler_c(CpuState *regs);
 

@@ -1,4 +1,5 @@
 #include <idt.h>
+#include <init.h>
 #include <io.h>
 #include <types.h>
 
@@ -22,7 +23,7 @@
  * By default, the interrupts are (0-15), while the CPU exceptions have a range between (0-31).
  * Here we remap the IRQs to 32-47.
  */
-void PIC_remap()
+static int PIC_remap()
 {
     /* Start initialization of PIC */
     outb(PIC1_COMMAND, PIC_INIT_COMMAND); /* Master PIC*/
@@ -45,7 +46,11 @@ void PIC_remap()
     /* mask interrupts on the PIC */
     outb(PIC1_DATA, 0x00);
     outb(PIC2_DATA, 0x00);
+
+    return 0;
 }
+
+core_initcall(PIC_remap);
 
 void PIC_sendEOI(u8 irq)
 {

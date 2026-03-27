@@ -1,6 +1,7 @@
 #include <buddy.h>
 #include <early_alloc.h>
 #include <helpers.h>
+#include <init.h>
 #include <limine.h>
 #include <panic.h>
 #include <pgtable.h>
@@ -64,7 +65,7 @@ static inline void buddy_add_block(BuddyPage *page, uint8_t order)
     buddy.free_areas[order].free_count++;
 }
 
-void buddy_init()
+int buddy_init()
 {
     buddy.page_count = detect_page_count();
     buddy.pages = early_alloc(buddy.page_count * sizeof(BuddyPage), 0);
@@ -168,7 +169,11 @@ void buddy_init()
 
     for (u64 pfn = kernel_start_pfn; pfn < kernel_end_pfn; pfn++)
         buddy.pages[pfn].flags = PAGE_RESERVED;
+
+    return 0;
 }
+
+core_initcall(buddy_init);
 
 void *buddy_alloc(int order)
 {

@@ -17,4 +17,3 @@ typedef struct gdt_ptr {
 } __attribute__((packed)) gdt_ptr;
 
 global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity);
-void init_gdt();
