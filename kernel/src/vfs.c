@@ -1,6 +1,7 @@
 #include <ata.h>
 #include <blkdev_manager.h>
 #include <fs.h>
+#include <init.h>
 #include <kmalloc.h>
 #include <panic.h>
 #include <setup.h>
@@ -9,6 +10,7 @@
 #include <types.h>
 #include <vfs.h>
 
+__initdata char rootdev_str[64] = {0};
 static Dentry *vfs_root;
 
 Dentry *vfs_get_root(void)
@@ -17,7 +19,7 @@ Dentry *vfs_get_root(void)
     return vfs_root;
 }
 
-static int set_root(char *dev_str)
+static int setup_root(char *dev_str)
 {
     if (strncmp(dev_str, "UUID=", sizeof("UUID=") - 1) == 0)
     {
@@ -32,16 +34,24 @@ static int set_root(char *dev_str)
         kpanic("LABEL-based root device specification is not supported yet");
     }
 
-    BlockDevice *part = blkdev_manager_get_by_name(dev_str);
-    if (part == NULL)
+    strncpy(rootdev_str, dev_str, sizeof(rootdev_str) - 1);
+
+    return 0;
+}
+
+__setup("root=", setup_root);
+
+int set_root(BlockDevice *dev)
+{
+    if (dev == NULL)
     {
-        kpanic("Failed to find root device %s", dev_str);
+        kpanic("Root device is NULL");
     }
 
-    FsType *type = fs_detect(part);
+    FsType *type = fs_detect(dev);
     if (type == NULL)
     {
-        kpanic("Failed to detect filesystem on %s", dev_str);
+        kpanic("Failed to detect filesystem on %s", dev->name);
     }
 
     SuperBlock *sb = (SuperBlock *)zalloc(sizeof(SuperBlock));
@@ -52,19 +62,22 @@ static int set_root(char *dev_str)
 
     sb->type = type;
 
-    vfs_root = type->mount(sb, part);
+    vfs_root = type->mount(sb, dev);
     if (vfs_root == NULL)
     {
         kpanic("Failed to mount root filesystem");
     }
 
-    kprintf("VFS: Mounted root (%s) on %s\n", type->name, dev_str);
-
-    return 0;
+    kprintf("VFS: Mounted root (%s) on %s\n", type->name, dev->name);
 }
-
-__setup("root=", set_root);
 
 void vfs_init()
 {
+    BlockDevice *dev = blkdev_get_by_name(rootdev_str);
+    if (dev == NULL)
+    {
+        kpanic("Failed to find root device %s", rootdev_str);
+    }
+
+    setup_root(rootdev_str);
 }

@@ -55,8 +55,10 @@ SECTIONS
         . = ALIGN(8);
         __initcall_start = .;
         KEEP(*(SORT(.initcall0.*.init)))   /* early */
-        KEEP(*(SORT(.initcall1.*.init)))   /* memory, all sublevels */
-        KEEP(*(SORT(.initcall2.*.init)))   /* core + postcore */
+        KEEP(*(SORT(.initcall1.*.init)))   /* core */
+        KEEP(*(SORT(.initcall2.*.init)))   /* postcore */
+        KEEP(*(SORT(.initcall3.*.init)))   /* arch */
+        KEEP(*(SORT(.initcall4.*.init)))   /* subsys */
         KEEP(*(SORT(.initcall5.*.init)))   /* fs */
         KEEP(*(SORT(.initcall6.*.init)))   /* device */
         KEEP(*(SORT(.initcall7.*.init)))   /* late */

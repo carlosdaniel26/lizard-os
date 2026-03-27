@@ -1,8 +1,16 @@
+#include <init.h>
+#include <limine.h>
 #include <setup.h>
 #include <string.h>
 
+#define MAX_CMDLINE_LEN 1024
+__initdata char boot_cmdline[MAX_CMDLINE_LEN] = {0};
+
 extern const struct SetupEntry __setup_start[];
 extern const struct SetupEntry __setup_end[];
+
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_cmdline_request
+    cmdline_req = {.id = LIMINE_EXECUTABLE_CMDLINE_REQUEST, .revision = 0};
 
 static inline char *skip_spaces(char *s)
 {
@@ -19,8 +27,9 @@ static inline char *next_arg(char *cmdline)
     return cmdline;
 }
 
-void setup_params(char *cmdline)
+int setup_params()
 {
+    char *cmdline = cmdline_req.response->cmdline;
     while (*cmdline)
     {
         cmdline = skip_spaces(cmdline);
@@ -53,4 +62,6 @@ void setup_params(char *cmdline)
             }
         }
     }
+
+    return 0;
 }

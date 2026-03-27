@@ -24,4 +24,4 @@ typedef struct SetupEntry {
 #define __setup(name, fn)                                                                                    \
     static const SetupEntry __setup_##fn __attribute__((section(".kernel_params"), used)) = {name, fn}
 
-void setup_params(char *cmdline);
+int setup_params();

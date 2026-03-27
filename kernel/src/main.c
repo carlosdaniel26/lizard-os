@@ -39,9 +39,6 @@
 
 __attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
 
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_file_request
-    executable_file_request = {.id = LIMINE_EXECUTABLE_FILE_REQUEST, .revision = 0};
-
 __attribute__((used, section(".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
 
 __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
@@ -49,37 +46,33 @@ __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_RE
 u8 kernel_stack[KERNEL_STACK_SIZE];
 
 // Refactored initcalls from kmain
-__initcall(init_framebuffer, 1, 01);
-__initcall(tty_initialize, 1, 02);
+early_initcall(setup_params);
+early_initcall(init_framebuffer);
+early_initcall(tty_initialize);
+early_initcall(early_alloc_init);
 
-__initcall(init_cpuid, 1, 03);
-__initcall(PIC_remap, 1, 04);
-__initcall(init_gdt, 1, 05);
-__initcall(init_idt, 1, 06);
+core_initcall(init_cpuid);
+core_initcall(PIC_remap);
+core_initcall(init_gdt);
+core_initcall(init_idt);
+core_initcall(buddy_init);
 
-__initcall(early_alloc_init, 1, 07);
-__initcall(buddy_init, 1, 08);
-__initcall(vmm_init, 1, 09);
-__initcall(kmalloc_init, 1, 10);
+postcore_initcall(vmm_init);
 
-__initcall(setup_params, 1, 11);
-__initcall(task_init, 1, 12);
+subsys_initcall(task_init);
 
-__initcall(pit_init, 1, 13);
-__initcall(init_keyboard, 1, 14);
-__initcall(time_init_from_rtc, 1, 15);
+device_initcall(pit_init);
+device_initcall(init_keyboard);
+device_initcall(time_init_from_rtc);
 
-__initcall(syscall_init, 1, 16);
-__initcall(enable_scheduler, 1, 17);
+device_initcall(syscall_init);
+device_initcall(enable_scheduler);
 
 void kmain()
 {
     stop_interrupts();
 
     asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
-
-    static char k_cmdline[1024] = {0};
-    strcpy(k_cmdline, executable_file_request.response->executable_file->string);
 
     do_initcalls();
     hlt();
