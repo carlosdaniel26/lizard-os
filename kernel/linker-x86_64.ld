@@ -54,14 +54,63 @@ SECTIONS
         /* Initcalls */
         . = ALIGN(8);
         __initcall_start = .;
-        KEEP(*(SORT(.initcall0.*.init)))   /* early */
-        KEEP(*(SORT(.initcall1.*.init)))   /* core */
-        KEEP(*(SORT(.initcall2.*.init)))   /* postcore */
-        KEEP(*(SORT(.initcall3.*.init)))   /* arch */
-        KEEP(*(SORT(.initcall4.*.init)))   /* subsys */
-        KEEP(*(SORT(.initcall5.*.init)))   /* fs */
-        KEEP(*(SORT(.initcall6.*.init)))   /* device */
-        KEEP(*(SORT(.initcall7.*.init)))   /* late */
+
+        /* Level 0 - early */
+        . = ALIGN(8);
+        __initcall0_start = .;
+        KEEP(*(SORT(.initcall0.*)))
+        KEEP(*(.initcall0))
+        __initcall0_end = .;
+
+        /* Level 1 - core */
+        . = ALIGN(8);
+        __initcall1_start = .;
+        KEEP(*(SORT(.initcall1.*)))
+        KEEP(*(.initcall1))
+        __initcall1_end = .;
+
+        /* Level 2 - postcore */
+        . = ALIGN(8);
+        __initcall2_start = .;
+        KEEP(*(SORT(.initcall2.*)))
+        KEEP(*(.initcall2))
+        __initcall2_end = .;
+
+        /* Level 3 - arch */
+        . = ALIGN(8);
+        __initcall3_start = .;
+        KEEP(*(SORT(.initcall3.*)))
+        KEEP(*(.initcall3))
+        __initcall3_end = .;
+
+        /* Level 4 - subsys */
+        . = ALIGN(8);
+        __initcall4_start = .;
+        KEEP(*(SORT(.initcall4.*)))
+        KEEP(*(.initcall4))
+        __initcall4_end = .;
+
+        /* Level 5 - fs */
+        . = ALIGN(8);
+        __initcall5_start = .;
+        KEEP(*(SORT(.initcall5.*)))
+        KEEP(*(.initcall5))
+        __initcall5_end = .;
+
+        /* Level 6 - device */
+        . = ALIGN(8);
+        __initcall6_start = .;
+        KEEP(*(SORT(.initcall6.*)))
+        KEEP(*(.initcall6))
+        __initcall6_end = .;
+
+        /* Level 7 - late */
+        . = ALIGN(8);
+        __initcall7_start = .;
+        KEEP(*(SORT(.initcall7.*)))
+        KEEP(*(.initcall7))
+        __initcall7_end = .;
+
         __initcall_end = .;
     } :rodata
 
