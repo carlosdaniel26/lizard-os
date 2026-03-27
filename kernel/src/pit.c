@@ -20,8 +20,6 @@
 
 #define PIT_ISR_INDEX 32
 
-extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
-
 volatile u64 pit_ticks = 0; // Definition of pit_ticks
 
 static inline void pit_mask()

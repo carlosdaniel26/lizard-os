@@ -22,3 +22,5 @@ typedef struct {
 
 void isr_common_entry(u64 int_id, CpuState *regs);
 void set_idt_gate(int vector, void (*isr)(), u8 flags);
+
+extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
