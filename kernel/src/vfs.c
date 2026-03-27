@@ -73,7 +73,7 @@ int set_root(BlockDevice *dev)
 
 void vfs_init()
 {
-    BlockDevice *dev = blkdev_get_by_name(rootdev_str);
+    BlockDevice *dev = blkdev_manager_get_by_name(rootdev_str);
     if (dev == NULL)
     {
         kpanic("Failed to find root device %s", rootdev_str);
@@ -81,3 +81,5 @@ void vfs_init()
 
     setup_root(rootdev_str);
 }
+
+late_initcall(vfs_init);

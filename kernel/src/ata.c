@@ -1,5 +1,6 @@
 #include <ata.h>
 #include <blk_dev.h>
+#include <init.h>
 #include <io.h>
 #include <kmalloc.h>
 #include <setup.h>
