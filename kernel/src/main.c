@@ -23,6 +23,7 @@
 
 #include <init.h>
 #include <setup.h>
+#include <stack.h>
 #include <stdio.h>
 #include <syscall.h>
 #include <tty.h>
@@ -70,10 +71,7 @@ device_initcall(enable_scheduler);
 
 void kmain()
 {
-    stop_interrupts();
-
-    asm volatile("mov %0, %%rsp" : : "r"(&kernel_stack[KERNEL_STACK_SIZE]) : "memory");
-
+    stack_init(kernel_stack, KERNEL_STACK_SIZE);
     do_initcalls();
     hlt();
 }
