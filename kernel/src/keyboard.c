@@ -22,9 +22,8 @@ int init_keyboard()
 
 device_initcall(init_keyboard);
 
-__attribute__((interrupt)) void isr_keyboard(void *frame)
+void isr_keyboard()
 {
-    (void)frame;
 
     while (inb(0x64) & 0x01)
     {

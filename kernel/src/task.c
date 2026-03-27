@@ -16,6 +16,7 @@
 static Task proc1 = {0};
 static Task idle = {0};
 Task *current_task = &idle;
+CpuState *ptrace = {0};
 
 u8 scheduler_enabled = 0;
 
@@ -70,58 +71,58 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
     task->state = TASK_STATE_READY;
 }
 
-void task_load_context(CpuState *regs, Task *task)
+void task_load_context(Task *task)
 {
     CpuState *saved = &task->regs;
 
-    regs->rax = saved->rax;
-    regs->rdi = saved->rdi;
-    regs->rsi = saved->rsi;
-    regs->rdx = saved->rdx;
-    regs->rcx = saved->rcx;
-    regs->r8 = saved->r8;
-    regs->r9 = saved->r9;
-    regs->r10 = saved->r10;
-    regs->r11 = saved->r11;
-    regs->rbx = saved->rbx;
-    // regs->rbp = saved->rbp;
-    regs->r12 = saved->r12;
-    regs->r13 = saved->r13;
-    regs->r14 = saved->r14;
-    regs->r15 = saved->r15;
+    ptrace->rax = saved->rax;
+    ptrace->rdi = saved->rdi;
+    ptrace->rsi = saved->rsi;
+    ptrace->rdx = saved->rdx;
+    ptrace->rcx = saved->rcx;
+    ptrace->r8 = saved->r8;
+    ptrace->r9 = saved->r9;
+    ptrace->r10 = saved->r10;
+    ptrace->r11 = saved->r11;
+    ptrace->rbx = saved->rbx;
+    // ptrace->rbp = saved->rbp;
+    ptrace->r12 = saved->r12;
+    ptrace->r13 = saved->r13;
+    ptrace->r14 = saved->r14;
+    ptrace->r15 = saved->r15;
 
-    regs->rip = saved->rip;
-    // regs->cs	 = saved->cs;
-    // regs->rflags = saved->rflags;
-    regs->rsp = saved->rsp;
-    // regs->ss	 = saved->ss;
+    ptrace->rip = saved->rip;
+    // ptrace->cs	 = saved->cs;
+    // ptrace->rflags = saved->rflags;
+    ptrace->rsp = saved->rsp;
+    // ptrace->ss	 = saved->ss;
 }
 
-void task_save_context(CpuState *regs)
+void task_save_context()
 {
     CpuState *saved = &current_task->regs;
 
-    saved->rax = regs->rax;
-    saved->rdi = regs->rdi;
-    saved->rsi = regs->rsi;
-    saved->rdx = regs->rdx;
-    saved->rcx = regs->rcx;
-    saved->r8 = regs->r8;
-    saved->r9 = regs->r9;
-    saved->r10 = regs->r10;
-    saved->r11 = regs->r11;
-    saved->rbx = regs->rbx;
-    saved->rbp = regs->rbp;
-    saved->r12 = regs->r12;
-    saved->r13 = regs->r13;
-    saved->r14 = regs->r14;
-    saved->r15 = regs->r15;
+    saved->rax = ptrace->rax;
+    saved->rdi = ptrace->rdi;
+    saved->rsi = ptrace->rsi;
+    saved->rdx = ptrace->rdx;
+    saved->rcx = ptrace->rcx;
+    saved->r8 = ptrace->r8;
+    saved->r9 = ptrace->r9;
+    saved->r10 = ptrace->r10;
+    saved->r11 = ptrace->r11;
+    saved->rbx = ptrace->rbx;
+    saved->rbp = ptrace->rbp;
+    saved->r12 = ptrace->r12;
+    saved->r13 = ptrace->r13;
+    saved->r14 = ptrace->r14;
+    saved->r15 = ptrace->r15;
 
-    saved->rip = regs->rip;
-    // saved->cs  = regs->cs;
-    // saved->rflags = regs->rflags;
-    saved->rsp = regs->rsp;
-    // saved->ss  = regs->ss;
+    saved->rip = ptrace->rip;
+    // saved->cs  = ptrace->cs;
+    // saved->rflags = ptrace->rflags;
+    saved->rsp = ptrace->rsp;
+    // saved->ss  = ptrace->ss;
 }
 
 static inline void scheduler_trigger()
@@ -141,7 +142,7 @@ void task_sleep(u32 ms)
 /*
  * Clean this code up to make sleep work properly
  */
-int task_switch(CpuState *prev_regs)
+int task_switch()
 {
     Task *old_task = current_task;
 
@@ -165,15 +166,15 @@ int task_switch(CpuState *prev_regs)
         return 0;
     }
 
-    task_save_context(prev_regs);
-    task_load_context(prev_regs, next_task);
+    task_save_context();
+    task_load_context(next_task);
 
     next_task->state = TASK_STATE_RUNNING;
 
     current_task = next_task;
 
-    prev_regs->rip = current_task->regs.rip;
-    prev_regs->rsp = current_task->regs.rsp;
+    ptrace->rip = current_task->regs.rip;
+    ptrace->rsp = current_task->regs.rsp;
 
     return 0;
 }
@@ -192,11 +193,11 @@ void task_tick()
     }
 }
 
-void scheduler(CpuState *regs)
+void scheduler()
 {
     if (!scheduler_enabled) return;
 
-    task_switch(regs);
+    task_switch();
 }
 
 void enable_scheduler()

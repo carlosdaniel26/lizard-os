@@ -37,11 +37,12 @@ void isr_syscall(CpuState *regs)
 
 void isr_common_entry(u64 int_id, CpuState *regs)
 {
+    ptrace = regs;
     PIC_sendEOI(15);
 
     if (isr_table[int_id])
     {
-        isr_table[int_id](regs);
+        isr_table[int_id];
         return;
     }
 

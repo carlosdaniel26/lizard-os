@@ -51,14 +51,14 @@ typedef struct Task {
 } Task;
 
 void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority);
-void task_save_context(CpuState *regs);
-void task_load_context(CpuState *regs, Task *task);
+void task_save_context();
+void task_load_context(Task *task);
 void task_tick();
-int task_switch(CpuState *prev_regs);
+int task_switch();
 struct task *task_current();
 void task_exit();
 
-void scheduler(CpuState *regs);
+void scheduler();
 void enable_scheduler();
 void disable_scheduler();
 u8 scheduler_is_enabled();
@@ -66,3 +66,5 @@ void task_sleep(u32 ms);
 
 extern u8 scheduler_enabled;
 extern Task *current_task;
+
+extern CpuState *ptrace;
