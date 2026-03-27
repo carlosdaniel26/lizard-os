@@ -1,3 +1,4 @@
+#include "syscall.h"
 #include <buddy.h>
 #include <debug.h>
 #include <helpers.h>
@@ -8,17 +9,18 @@
 #include <ss.h>
 #include <stdio.h>
 #include <string.h>
-#include <syscall.h>
 #include <task.h>
 #include <types.h>
 #include <vmm.h>
 
-static Task proc1 = {0};
-static Task idle = {0};
-Task *current_task = &idle;
+Task proc1 = {0};
+Task idle = {0};
+
 CpuState *ptrace = {0};
 
-u8 scheduler_enabled = 0;
+LIST_HEAD(task_list);
+
+Task *current_task = NULL;
 
 void idle_func()
 {
@@ -44,6 +46,8 @@ int task_init()
     task_create(&idle, &idle_func, "idle", 1);
     task_create(&proc1, &proc1_func, "proc1", 1);
 
+    current_task = &idle;
+
     return 0;
 }
 
@@ -61,12 +65,7 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
     memset((void *)ptr, 0, 4096);
 
     task->regs.rsp = ptr + 4096;
-    Task *i;
-    for (i = current_task; i->next != NULL; i = i->next)
-        ;
-
-    i->next = task;
-    task->next = NULL;
+    list_add(&task->list, &task_list);
 
     task->state = TASK_STATE_READY;
 }
@@ -142,39 +141,12 @@ void task_sleep(u32 ms)
 /*
  * Clean this code up to make sleep work properly
  */
-int task_switch()
+int task_switch_to(Task *next_task)
 {
-    Task *old_task = current_task;
-
-    if (old_task->state == TASK_STATE_RUNNING) old_task->state = TASK_STATE_READY;
-
-    Task *next_task = current_task->next;
-
-    if (next_task == NULL) next_task = &idle;
-
-    /* Find the next READY task */
-    while (next_task->state != TASK_STATE_READY)
-    {
-        next_task = next_task->next;
-
-        if (next_task == NULL) next_task = &idle;
-    }
-
-    if (next_task == old_task)
-    {
-        next_task->state = TASK_STATE_RUNNING;
-        return 0;
-    }
-
     task_save_context();
     task_load_context(next_task);
 
-    next_task->state = TASK_STATE_RUNNING;
-
     current_task = next_task;
-
-    ptrace->rip = current_task->regs.rip;
-    ptrace->rsp = current_task->regs.rsp;
 
     return 0;
 }
@@ -182,37 +154,40 @@ int task_switch()
 void task_tick()
 {
     Task *t = &idle;
+    ListHead *pos, *tmp;
 
-    while (t)
+    /* Wake up sleeping tasks */
+    list_for_each(pos, tmp, &task_list)
     {
+        t = (Task *)pos;
         if (t->state == TASK_STATE_WAITING && pit_ticks >= t->sleep_until)
         {
             t->state = TASK_STATE_READY;
         }
-        t = t->next;
     }
 }
 
-void scheduler()
+Task *next_ready_task()
 {
-    if (!scheduler_enabled) return;
+    ListHead *pos = current_task->list.next;
 
-    task_switch();
-}
+    /* task_list <--> .. <--> task <--> .. <--> task_list
+     * so first we iterate the task to the right */
+    while (pos != &task_list)
+    {
+        Task *t = container_of(pos, Task, list);
+        if (t->state == TASK_STATE_READY && t != &idle) return t;
+        pos = pos->next;
+    }
 
-void enable_scheduler()
-{
-    scheduler_enabled = 1;
-}
+    /* then from task_list to right until reach the task again*/
+    pos = task_list.next;
+    while (pos != &current_task->list)
+    {
+        Task *t = container_of(pos, Task, list);
+        if (t->state == TASK_STATE_READY && t != &idle) return t;
+        pos = pos->next;
+    }
 
-late_initcall(enable_scheduler);
-
-void disable_scheduler()
-{
-    scheduler_enabled = 0;
-}
-
-u8 scheduler_is_enabled()
-{
-    return scheduler_enabled;
+    return NULL;
 }

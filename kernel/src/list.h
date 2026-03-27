@@ -67,6 +67,17 @@ static inline int list_empty(const struct ListHead *head)
     return head->next == head;
 }
 
+static inline ListHead *list_next(const ListHead *pos, const ListHead *head)
+{
+    ListHead *next = pos->next;
+    if (next == head)
+    {
+        next = next->next;
+    }
+
+    return next;
+}
+
 #define list_for_each(pos, tmp, head)                                                                        \
     for (pos = (head)->next, tmp = pos->next; pos != (head); pos = tmp, tmp = pos->next)
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list.h>
 #include <stdbool.h>
 #include <types.h>
 
@@ -37,6 +38,7 @@ typedef struct __attribute__((packed)) CpuState {
 #define TASK_STATE_TERMINATED 3
 
 typedef struct Task {
+    ListHead list;
     char name[TASK_NAME_MAX_LEN];
 
     u8 state;
@@ -46,8 +48,6 @@ typedef struct Task {
     u32 priority;
     u32 ticks_remaining;
     u32 sleep_until; /* Absolute wake-up time in ms */
-
-    struct Task *next;
 } Task;
 
 void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority);
@@ -56,15 +56,14 @@ void task_load_context(Task *task);
 void task_tick();
 int task_switch();
 struct task *task_current();
+Task *next_ready_task();
 void task_exit();
 
-void scheduler();
-void enable_scheduler();
-void disable_scheduler();
-u8 scheduler_is_enabled();
 void task_sleep(u32 ms);
 
 extern u8 scheduler_enabled;
 extern Task *current_task;
+extern ListHead task_list;
 
 extern CpuState *ptrace;
+extern Task idle;

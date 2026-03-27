@@ -59,7 +59,7 @@ void isr_pit(CpuState *regs)
 {
     pit_ticks++;
 
-    time_tick_ns(1000000);
+    time_tick_ns(1000000); /* 1 ms = 1,000,000 ns */
     task_tick();
 
     scheduler(regs);
