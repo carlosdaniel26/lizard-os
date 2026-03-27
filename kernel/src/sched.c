@@ -1,9 +1,25 @@
+#include <idt.h>
 #include <init.h>
 #include <sched.h>
 #include <task.h>
 #include <types.h>
 
+#define SCHEDULER_ISR_INDEX 48
+
 u8 scheduler_enabled = 0;
+
+static int sched_init()
+{
+    isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
+    return 0;
+}
+
+subsys_initcall(sched_init);
+
+void isr_scheduler(CpuState *regs)
+{
+    scheduler(regs);
+}
 
 void scheduler()
 {

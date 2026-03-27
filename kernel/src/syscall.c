@@ -1,13 +1,26 @@
 #include <init.h>
+#include <isr_vector.h>
 #include <stdio.h>
 #include <syscall.h>
 
+#define SYSCALL_ISR_INDEX 0x80
+
 static syscall_handler syscall_table[MAX_SYSCALLS];
+
+void isr_syscall(CpuState *regs)
+{
+    syscall_handler_c(regs);
+}
 
 static int syscall_init()
 {
     // For now, we only have one syscall
     syscall_table[0] = &sys_sleep;
+
+    set_idt_gate(SYSCALL_ISR_INDEX, isr_vectors[SYSCALL_ISR_INDEX], 0xEE);
+
+    isr_table[SYSCALL_ISR_INDEX] = &isr_syscall;
+
     return 0;
 }
 

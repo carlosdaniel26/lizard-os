@@ -13,9 +13,6 @@
 #include <tty.h>
 #include <types.h>
 
-#define SCHEDULER_ISR_INDEX 48
-#define SYSCALL_ISR_INDEX 0x80
-
 extern u8 kernel_stack[];
 
 static idt_entry idt[IDT_ENTRIES];
@@ -24,16 +21,6 @@ static idt_ptr idt_descriptor;
 void (*isr_table[IDT_ENTRIES])(CpuState *regs);
 
 #define EXCEPTION_PAGE_FAULT 14
-
-void isr_scheduler(CpuState *regs)
-{
-    scheduler(regs);
-}
-
-void isr_syscall(CpuState *regs)
-{
-    syscall_handler_c(regs);
-}
 
 void isr_common_entry(u64 int_id, CpuState *regs)
 {
@@ -107,11 +94,6 @@ int init_idt()
 {
     for (int i = 0; i < IDT_ENTRIES; i++)
         set_idt_gate(i, isr_vectors[i], 0x8E);
-
-    set_idt_gate(SYSCALL_ISR_INDEX, isr_vectors[SYSCALL_ISR_INDEX], 0xEE);
-
-    isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
-    isr_table[SYSCALL_ISR_INDEX] = &isr_syscall;
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base = (u64)&idt;
