@@ -49,23 +49,28 @@ __attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_RE
 u8 kernel_stack[KERNEL_STACK_SIZE];
 
 // Refactored initcalls from kmain
-__initcall(time_init_from_rtc, 1, 01);
-__initcall(init_framebuffer, 1, 02);
+__initcall(init_framebuffer, 1, 01);
+__initcall(tty_initialize, 1, 02);
+
 __initcall(init_cpuid, 1, 03);
-__initcall(tty_initialize, 1, 04);
-__initcall(PIC_remap, 1, 05);
-__initcall(init_gdt, 1, 06);
-__initcall(init_idt, 1, 07);
-__initcall(early_alloc_init, 1, 08);
-__initcall(buddy_init, 1, 09);
-__initcall(vmm_init, 1, 10);
-__initcall(kmalloc_init, 1, 11);
-__initcall(setup_params, 1, 12);
-__initcall(task_init, 1, 13);
-__initcall(syscall_init, 1, 14);
-__initcall(pit_init, 1, 15);
-__initcall(init_keyboard, 1, 17);
-__initcall(enable_scheduler, 1, 16);
+__initcall(PIC_remap, 1, 04);
+__initcall(init_gdt, 1, 05);
+__initcall(init_idt, 1, 06);
+
+__initcall(early_alloc_init, 1, 07);
+__initcall(buddy_init, 1, 08);
+__initcall(vmm_init, 1, 09);
+__initcall(kmalloc_init, 1, 10);
+
+__initcall(setup_params, 1, 11);
+__initcall(task_init, 1, 12);
+
+__initcall(pit_init, 1, 13);
+__initcall(init_keyboard, 1, 14);
+__initcall(time_init_from_rtc, 1, 15);
+
+__initcall(syscall_init, 1, 16);
+__initcall(enable_scheduler, 1, 17);
 
 void kmain()
 {
