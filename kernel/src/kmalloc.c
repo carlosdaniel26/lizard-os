@@ -37,6 +37,7 @@ typedef struct CacheNode {
     size_t size;
 } CacheNode;
 
+static bool kmalloc_initialized = false;
 static LIST_HEAD(kmalloc_cache_list);
 static KMemCache *kmalloc_node_cache = NULL;
 
@@ -62,10 +63,16 @@ void kmalloc_init(void)
     KMALLOC_SIZES(CREATE_CACHE);
 
 #undef CREATE_CACHE
+    kmalloc_initialized = true;
 }
 
 void *kmalloc(size_t size)
 {
+    if (!kmalloc_initialized)
+    {
+        kmalloc_init();
+    }
+
     ListHead *pos, *tmp;
     CacheNode *best = NULL;
 
@@ -84,6 +91,11 @@ void *kmalloc(size_t size)
 
 void kfree(void *ptr)
 {
+    if (!ptr) return;
+    if (!kmalloc_initialized)
+    {
+        kpanic("kfree: kmalloc not initialized");
+    }
     /* belongs to a slab? */
     Slab *slab = _get_slab(ptr);
     if (_is_valid_slab(slab))
