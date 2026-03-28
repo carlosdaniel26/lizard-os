@@ -44,8 +44,8 @@ static int PIC_remap()
     outb(PIC2_DATA, PIC_MODE_CONFIG);
 
     /* mask interrupts on the PIC */
-    outb(PIC1_DATA, 0x00);
-    outb(PIC2_DATA, 0x00);
+    outb(PIC1_DATA, 0xFF); /* mask all */
+    outb(PIC2_DATA, 0xFF); /* mask all */
 
     return 0;
 }
