@@ -22,7 +22,7 @@
 
 volatile u64 pit_ticks = 0; // Definition of pit_ticks
 
-static inline void pit_mask()
+void pit_stop()
 {
 #define PIC1_DATA 0x21
     u8 mask = inb(PIC1_DATA);
@@ -30,7 +30,7 @@ static inline void pit_mask()
     outb(PIC1_DATA, mask);
 }
 
-static inline void pit_unmask()
+void pit_start()
 {
 #define PIC1_DATA 0x21
     u8 mask = inb(PIC1_DATA);
@@ -47,8 +47,6 @@ int pit_init()
     outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
 
     isr_table[PIT_ISR_INDEX] = &isr_pit;
-
-    pit_unmask();
 
     return 0;
 }

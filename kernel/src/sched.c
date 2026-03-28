@@ -11,6 +11,10 @@ u8 scheduler_enabled = 0;
 static int sched_init()
 {
     isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
+
+    task_create(&idle, &idle_func, "idle", 0); /* init idle */
+    current_task = &idle;
+
     return 0;
 }
 
@@ -47,8 +51,6 @@ void enable_scheduler()
 {
     scheduler_enabled = 1;
 }
-
-late_initcall(enable_scheduler);
 
 void disable_scheduler()
 {

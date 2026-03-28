@@ -13,7 +13,6 @@
 #include <types.h>
 #include <vmm.h>
 
-Task proc1 = {0};
 Task idle = {0};
 
 CpuState *ptrace = {0};
@@ -26,28 +25,6 @@ void idle_func()
 {
     yield();
 }
-
-void proc1_func()
-{
-    int i = 0;
-    while (1)
-    {
-        kprintf("hello %u", i++);
-        syscall1(0, 1000 * 2); // Syscall 0 is sys_sleep
-    }
-}
-
-int task_init()
-{
-    task_create(&idle, &idle_func, "idle", 1);
-    task_create(&proc1, &proc1_func, "proc1", 1);
-
-    current_task = &idle;
-
-    return 0;
-}
-
-subsys_initcall(task_init);
 
 void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority)
 {

@@ -60,6 +60,7 @@ Task *next_ready_task();
 void task_exit();
 
 void task_sleep(u32 ms);
+void idle_func();
 
 extern u8 scheduler_enabled;
 extern Task *current_task;
