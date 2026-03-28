@@ -33,5 +33,8 @@ void kmain()
     do_initcalls(__initcall6_start, __initcall6_end); /* device */
     do_initcalls(__initcall7_start, __initcall7_end); /* late */
 
+    pit_start();
+    enable_scheduler();
+
     yield();
 }

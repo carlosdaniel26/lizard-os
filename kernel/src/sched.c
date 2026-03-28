@@ -13,7 +13,6 @@ static int sched_init()
     isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
 
     task_create(&idle, &idle_func, "idle", 0); /* init idle */
-    current_task = &idle;
 
     return 0;
 }
@@ -28,6 +27,12 @@ void isr_scheduler(CpuState *regs)
 void scheduler()
 {
     if (!scheduler_enabled) return;
+
+    if (NULL == current_task)
+    {
+        task_load_context(&idle);
+        return;
+    }
 
     Task *task = next_ready_task();
 
@@ -45,6 +50,7 @@ void scheduler()
     }
 
     task_switch_to(task);
+    current_task = task;
 }
 
 void enable_scheduler()
