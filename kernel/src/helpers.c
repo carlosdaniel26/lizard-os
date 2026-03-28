@@ -2,7 +2,7 @@
 #include <rtc.h>
 #include <types.h>
 
-void hlt()
+void yield()
 {
     while (1)
     {
@@ -32,8 +32,6 @@ int oct2bin(unsigned char *str, int size)
     }
     return n;
 }
-
-
 
 int days_in_month(int month, int year)
 {

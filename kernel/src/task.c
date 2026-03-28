@@ -24,10 +24,7 @@ Task *current_task = NULL;
 
 void idle_func()
 {
-    while (1)
-    {
-        hlt();
-    }
+    yield();
 }
 
 void proc1_func()
@@ -38,7 +35,6 @@ void proc1_func()
         kprintf("hello %u", i++);
         syscall1(0, 1000 * 2); // Syscall 0 is sys_sleep
     }
-    hlt();
 }
 
 int task_init()

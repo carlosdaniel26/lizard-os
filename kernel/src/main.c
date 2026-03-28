@@ -22,6 +22,7 @@ u8 kernel_stack[KERNEL_STACK_SIZE];
 void kmain()
 {
     stack_init(kernel_stack, KERNEL_STACK_SIZE);
+
     do_initcalls(__initcall0_start, __initcall0_end);
     do_initcalls(__initcall1_start, __initcall1_end);
     do_initcalls(__initcall2_start, __initcall2_end);
@@ -30,5 +31,6 @@ void kmain()
     do_initcalls(__initcall5_start, __initcall5_end);
     do_initcalls(__initcall6_start, __initcall6_end);
     do_initcalls(__initcall7_start, __initcall7_end);
-    hlt();
+
+    yield();
 }

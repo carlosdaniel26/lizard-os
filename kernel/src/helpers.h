@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <types.h>
 
 #define BIT_SET(byte, index) (byte |= (1 << ((index) % 8)))
@@ -24,8 +23,7 @@ static inline uintptr_t align_up(uintptr_t x, size_t a)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-
-void hlt();
+void yield();
 void stop_cpu();
 int oct2bin(unsigned char *str, int size);
 
