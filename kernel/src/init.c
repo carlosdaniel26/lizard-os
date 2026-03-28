@@ -1,11 +1,8 @@
 #include <init.h>
 
-void do_initcalls()
+void do_initcalls(initcall_t *start, initcall_t *end)
 {
-    extern const initcall_t __initcall_start[];
-    extern const initcall_t __initcall_end[];
-
-    for (const initcall_t *fn = &__initcall_start; fn < &__initcall_end; fn++)
+    for (const initcall_t *fn = start; fn < end; fn++)
     {
         (*fn)();
     }

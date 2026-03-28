@@ -29,4 +29,22 @@ typedef int (*initcall_t)();
 #define device_initcall_prio(fn, sublevel) __initcall(fn, 6, sublevel)
 #define late_initcall_prio(fn, sublevel) __initcall(fn, 7, sublevel)
 
-void do_initcalls();
+void do_initcalls(initcall_t *start, initcall_t *end);
+
+extern const initcall_t __initcall0_start[];
+extern const initcall_t __initcall1_start[];
+extern const initcall_t __initcall2_start[];
+extern const initcall_t __initcall3_start[];
+extern const initcall_t __initcall4_start[];
+extern const initcall_t __initcall5_start[];
+extern const initcall_t __initcall6_start[];
+extern const initcall_t __initcall7_start[];
+
+extern const initcall_t __initcall0_end[];
+extern const initcall_t __initcall1_end[];
+extern const initcall_t __initcall2_end[];
+extern const initcall_t __initcall3_end[];
+extern const initcall_t __initcall4_end[];
+extern const initcall_t __initcall5_end[];
+extern const initcall_t __initcall6_end[];
+extern const initcall_t __initcall7_end[];
