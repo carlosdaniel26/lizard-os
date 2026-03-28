@@ -77,7 +77,14 @@ void PIC_unmaskIRQ(u8 irq)
         irq -= 8;
     }
 
-    value = inb(port);
-    value &= ~(1 << irq);
-    outb(value, port);
+    value = inb(port);    // read current mask
+    value &= ~(1 << irq); // clear the bit to unmask
+    outb(port, value);    // write back to PIC
+}
+
+void PIC_unmaskVector(u8 vector)
+{
+    if (vector < 32 || vector > 47) return;
+
+    PIC_unmaskIRQ(vector - 32); /* convert IDT vector -> IRQ */
 }

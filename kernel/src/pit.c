@@ -18,7 +18,7 @@
 #define PIT_TARGET_HZ 1000 /* 1000 Hz = 1 ms tick */
 #define PIT_DESIRED_FREQUENCY_HZ (PIT_FREQUENCY_HZ / PIT_TARGET_HZ)
 
-#define PIT_ISR_INDEX 32
+#define PIT_VECTOR_INDEX 32
 
 volatile u64 pit_ticks = 0; // Definition of pit_ticks
 
@@ -32,11 +32,7 @@ void pit_stop()
 
 void pit_start()
 {
-#define PIC1_DATA 0x21
-    u8 mask = inb(PIC1_DATA);
-    mask |= 0x01;
-    mask ^= 0x01;
-    outb(PIC1_DATA, mask);
+    PIC_unmaskVector(PIT_VECTOR_INDEX);
 }
 
 int pit_init()
@@ -46,7 +42,7 @@ int pit_init()
     outb(PIT_CHANNEL0, PIT_DESIRED_FREQUENCY_HZ & 0xFF); /* Low Byte */
     outb(PIT_CHANNEL0, (PIT_DESIRED_FREQUENCY_HZ >> 8)); /* High Byte */
 
-    isr_table[PIT_ISR_INDEX] = &isr_pit;
+    isr_table[PIT_VECTOR_INDEX] = &isr_pit;
 
     return 0;
 }
@@ -61,5 +57,5 @@ void isr_pit(CpuState *regs)
     task_tick();
 
     scheduler(regs);
-    PIC_sendEOI(PIT_ISR_INDEX);
+    PIC_sendEOI(PIT_VECTOR_INDEX);
 }

@@ -10,12 +10,12 @@
 #include <types.h>
 
 #define KEYBOARD_DATA_PORT 0x60
-#define KEYBOARD_PIC_MASK 0x01
+#define KEYBOARD_VECTOR 33
 
 int init_keyboard()
 {
-    PIC_unmaskIRQ(KEYBOARD_PIC_MASK);
-    isr_table[33] = &isr_keyboard;
+    PIC_unmaskVector(KEYBOARD_VECTOR);
+    isr_table[KEYBOARD_VECTOR] = &isr_keyboard;
     kprintf("keyboard initialized\n");
     return 0;
 }
