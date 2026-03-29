@@ -27,7 +27,7 @@ char text_buffer[1000 * 1000];
 
 u32 *fb;
 
-static spinlock_t tty_lock;
+static struct spinlock_t tty_lock;
 
 static int tty_init()
 {

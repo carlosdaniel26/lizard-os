@@ -8,16 +8,16 @@
 
 typedef u32 blk_dev_t;
 
-typedef struct BlockDeviceOps {
+struct block_device_ops {
     int (*read)();
     int (*write)();
 
     int (*flush)();
     int (*ioctl)();
-} BlockDeviceOps;
+};
 
-typedef struct BlockDevice {
-    ListHead list;
+struct block_device {
+    struct list_head list;
     char name[DEFAULT_NAME_SIZE];
     blk_dev_t id;
 
@@ -25,7 +25,7 @@ typedef struct BlockDevice {
     u32 sector_size;
     u32 max_transfer_sectors;
 
-    BlockDeviceOps *ops;
+    struct block_device_ops *ops;
     void *private_data;
 
     bool initialized;
@@ -35,26 +35,26 @@ typedef struct BlockDevice {
     u64 write_count;
 
     bool present;
-} BlockDevice;
+};
 
-typedef struct {
-    BlockDevice *parent;
+struct partition_private {
+    struct block_device *parent;
     u64 start_lba;
     u64 sec_count;
-} PartitionPrivate;
+};
 
 /* Block layer management */
-int blkdev_manager_add(BlockDevice *dev);
-int blk_dev_unregister(BlockDevice *dev);
-BlockDevice *blk_dev_find(const char *name);
+int blkdev_manager_add(struct block_device *dev);
+int blk_dev_unregister(struct block_device *dev);
+struct block_device *blk_dev_find(const char *name);
 
 /* Utility functions */
-u64 blk_dev_size(BlockDevice *dev); /* in bytes */
-bool blk_dev_ready(BlockDevice *dev);
+u64 blk_dev_size(struct block_device *dev); /* in bytes */
+bool blk_dev_ready(struct block_device *dev);
 
 /* Public API */
-int blk_dev_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
-int blk_dev_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);
+int blk_dev_read(struct block_device *dev, u64 sector, void *buffer, size_t count);
+int blk_dev_write(struct block_device *dev, u64 sector, const void *buffer, size_t count);
 
-int blk_dev_part_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
-int blk_dev_part_write(BlockDevice *dev, u64 sector, const void *buffer, size_t count);
+int blk_dev_part_read(struct block_device *dev, u64 sector, void *buffer, size_t count);
+int blk_dev_part_write(struct block_device *dev, u64 sector, const void *buffer, size_t count);

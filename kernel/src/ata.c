@@ -14,11 +14,11 @@ static u16 ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
 
-static int block_read(BlockDevice *dev, u64 sector, void *buffer, size_t count);
-static int block_write(BlockDevice *dev, u64 sector, void *buffer, size_t count);
-static int block_flush(BlockDevice *dev);
+static int block_read(struct block_device *dev, u64 sector, void *buffer, size_t count);
+static int block_write(struct block_device *dev, u64 sector, void *buffer, size_t count);
+static int block_flush(struct block_device *dev);
 
-static BlockDeviceOps ata_block_ops = {.read = block_read, .write = block_write, .flush = block_flush};
+static struct block_device_ops ata_block_ops = {.read = block_read, .write = block_write, .flush = block_flush};
 
 // static void unmask_ata_primary_irq()
 // {
@@ -46,7 +46,7 @@ static int ata_wait(u16 io_base, u8 mask, int set)
     return -1;
 }
 
-static inline void ata_select(ATADevice *dev)
+static inline void ata_select(struct ata_device *dev)
 {
     outb(dev->io_base + ATA_REG_DRIVE, 0xA0);
 
@@ -57,7 +57,7 @@ int ata_detect_devices()
 {
     for (u8 ata_id = PRIMARY; ata_id <= PRIMARY; ata_id++)
     {
-        ATADevice *ata_dev = zalloc(sizeof(ATADevice));
+        struct ata_device *ata_dev = zalloc(sizeof(struct ata_device));
 
         ata_dev->io_base = base[ata_id];
         ata_dev->ctrl_base = ctrl[ata_id];
@@ -140,7 +140,7 @@ int ata_detect_devices()
         name[3] = '0' + ata_id; /* id must be 0 or 1 */
         name[4] = '\0';
 
-        BlockDevice *dev = zalloc(sizeof(BlockDevice));
+        struct block_device *dev = zalloc(sizeof(struct block_device));
         strcpy(dev->name, name);
         dev->total_sectors = ata_dev->total_sectors;
         dev->sector_size = ata_dev->sector_size;
@@ -159,9 +159,9 @@ int ata_detect_devices()
 device_initcall(ata_detect_devices);
 
 /* Block Device */
-static int block_read(BlockDevice *dev, u64 sector, void *buffer, size_t count)
+static int block_read(struct block_device *dev, u64 sector, void *buffer, size_t count)
 {
-    ATADevice *ata_dev = (ATADevice *)dev->private_data;
+    struct ata_device *ata_dev = (struct ata_device *)dev->private_data;
 
     u64 end_sector = sector + count;
 
@@ -197,9 +197,9 @@ static int block_read(BlockDevice *dev, u64 sector, void *buffer, size_t count)
     return 0;
 }
 
-static int block_write(BlockDevice *dev, u64 sector, void *buffer, size_t count)
+static int block_write(struct block_device *dev, u64 sector, void *buffer, size_t count)
 {
-    ATADevice *ata_dev = (ATADevice *)dev->private_data;
+    struct ata_device *ata_dev = (struct ata_device *)dev->private_data;
 
     u64 end_sector = sector + count;
 
@@ -235,13 +235,13 @@ static int block_write(BlockDevice *dev, u64 sector, void *buffer, size_t count)
     return 0;
 }
 
-static int block_flush(BlockDevice *dev)
+static int block_flush(struct block_device *dev)
 {
     (void)dev;
     return 0;
 }
 
-// static inline void ata_general_isr(ATADevice *dev)
+// static inline void ata_general_isr(struct ata_device *dev)
 // {
 
 // }

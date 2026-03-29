@@ -5,7 +5,7 @@
 
 #define IDT_ENTRIES 256
 
-typedef struct {
+struct idt_entry {
     u16 offset_low;  /* -> 0-15 */
     u16 selector;    /* -> 0-15 */
     u8 ist;          /* -> 0-7 */
@@ -13,14 +13,14 @@ typedef struct {
     u16 offset_mid;  /* -> 16-31 */
     u32 offset_high; /* -> 32-63 */
     u32 zero;        /* -> 0-31 */
-} __attribute__((packed)) idt_entry;
+} __attribute__((packed));
 
-typedef struct {
+struct idt_ptr {
     u16 limit;
     u64 base;
-} __attribute__((packed)) idt_ptr;
+} __attribute__((packed));
 
-void isr_common_entry(u64 int_id, CpuState *regs);
+void isr_common_entry(u64 int_id, struct cpu_state *regs);
 void set_idt_gate(int vector, void (*isr)(), u8 flags);
 
-extern void (*isr_table[IDT_ENTRIES])(CpuState *regs);
+extern void (*isr_table[IDT_ENTRIES])(struct cpu_state *regs);

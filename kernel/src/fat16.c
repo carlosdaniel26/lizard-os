@@ -36,29 +36,29 @@
 static const char name[] = "fat16";
 
 /* Forward declarations */
-static int fat16_lookup(Inode *dir, Dentry *dentry);
-static ssize_t fat16_read(File *file, char *buf, size_t count, off_t offset);
-static int fat16_readdir(File *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
+static int fat16_lookup(struct inode *dir, struct dentry *dentry);
+static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offset);
+static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
 
-static InodeOps fat16_inode_ops = {
+static struct inode_ops fat16_inode_ops = {
     .lookup = fat16_lookup,
 };
 
-static FileOps fat16_file_ops = {
+static struct file_ops fat16_file_ops = {
     .read = fat16_read,
     .readdir = fat16_readdir,
 };
 
 /* ===== INTERNAL HELPERS ===== */
 
-static inline bool is_valid_entry(const Fat16Directory *entry)
+static inline bool is_valid_entry(const struct fat16_directory *entry)
 {
     if (entry->name[0] == FAT16_DIR_ENTRY_DELETED || entry->name[0] == FAT16_DIR_ENTRY_END)
     {
         return false;
     }
 
-    if (entry->attributes == 0x0F) /* Long File Name entry */
+    if (entry->attributes == 0x0F) /* Long struct file Name entry */
         return false;
 
     /* Check ASCII characters */
@@ -70,13 +70,13 @@ static inline bool is_valid_entry(const Fat16Directory *entry)
     return true;
 }
 
-static u32 cluster_to_lba(Fat16 *fs, u16 cluster)
+static u32 cluster_to_lba(struct fat16 *fs, u16 cluster)
 {
     if (cluster < 2) return 0;
     return ((u32)(cluster - 2) * fs->header.sectors_per_cluster) + fs->data_region_lba;
 }
 
-static int read_fat_entry(Fat16 *fs, u16 cluster, u16 *next)
+static int read_fat_entry(struct fat16 *fs, u16 cluster, u16 *next)
 {
     u32 fat_offset = (u32)cluster * FAT16_FAT_ENTRY_SIZE;
     u32 fat_sector = fs->fat_start_lba + (fat_offset / fs->header.bytes_per_sector);
@@ -89,7 +89,7 @@ static int read_fat_entry(Fat16 *fs, u16 cluster, u16 *next)
     return 0;
 }
 
-static u16 get_next_cluster(Fat16 *fs, u16 cluster)
+static u16 get_next_cluster(struct fat16 *fs, u16 cluster)
 {
     u16 next = FAT16_EOC;
     if (read_fat_entry(fs, cluster, &next) != 0) return FAT16_EOC;
@@ -118,7 +118,7 @@ static void convert_83_to_string(const u8 name[8], const u8 ext[3], char *out_st
     out_string[pos] = '\0';
 }
 
-static int compare_filenames(const char *filename, const Fat16Directory *entry)
+static int compare_filenames(const char *filename, const struct fat16_directory *entry)
 {
     char entry_name[13];
     convert_83_to_string(entry->name, entry->extension, entry_name);
@@ -127,21 +127,21 @@ static int compare_filenames(const char *filename, const Fat16Directory *entry)
     return strcasecmp(filename, entry_name);
 }
 
-int fat16_detect(BlockDevice *dev)
+int fat16_detect(struct block_device *dev)
 {
     if (!dev || !dev->present) return -1;
 
     char boot_sector[512];
     if (dev->ops->read(dev, 0, boot_sector, 1) != 0) return -1;
 
-    FatHeader *header = (FatHeader *)boot_sector;
+    struct fat_header *header = (struct fat_header *)boot_sector;
 
     if (header->boot_signature == FAT16_BOOT_SIGNATURE) return 1;
 
     return -1;
 }
 
-int fat16_mount(BlockDevice *dev, Fat16 *fs)
+int fat16_mount(struct block_device *dev, struct fat16 *fs)
 {
     if (!dev || !fs) return -1;
 
@@ -152,7 +152,7 @@ int fat16_mount(BlockDevice *dev, Fat16 *fs)
         debug_printf("ERROR reading boot sector\n");
         return -1;
     }
-    memcpy(&fs->header, buffer, sizeof(FatHeader));
+    memcpy(&fs->header, buffer, sizeof(struct fat_header));
 
     /* Calculate LBA values */
     fs->fat_start_lba = fs->header.reserved_sector_count;
@@ -163,10 +163,10 @@ int fat16_mount(BlockDevice *dev, Fat16 *fs)
     return 0;
 }
 
-static int fat16_lookup(Inode *dir, Dentry *dentry)
+static int fat16_lookup(struct inode *dir, struct dentry *dentry)
 {
-    Fat16 *fs = (Fat16 *)dir->sb->fs_info;
-    Fat16Directory *dir_entry = (Fat16Directory *)dir->private_data;
+    struct fat16 *fs = (struct fat16 *)dir->sb->fs_info;
+    struct fat16_directory *dir_entry = (struct fat16_directory *)dir->private_data;
     char buffer[512];
 
     if (dir_entry->first_cluster_low == 0) /* root */
@@ -177,18 +177,18 @@ static int fat16_lookup(Inode *dir, Dentry *dentry)
 
             for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++)
             {
-                Fat16Directory *entry = (Fat16Directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
+                struct fat16_directory *entry = (struct fat16_directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
 
                 if (entry->name[0] == FAT16_DIR_ENTRY_END) return -1;
                 if (!is_valid_entry(entry)) continue;
 
                 if (compare_filenames(dentry->name, entry) == 0)
                 {
-                    Inode *inode = inode_alloc(dir->sb);
+                    struct inode *inode = inode_alloc(dir->sb);
                     if (!inode) return -1;
 
-                    Fat16Directory *p = (Fat16Directory *)zalloc(sizeof(Fat16Directory));
-                    memcpy(p, entry, sizeof(Fat16Directory));
+                    struct fat16_directory *p = (struct fat16_directory *)zalloc(sizeof(struct fat16_directory));
+                    memcpy(p, entry, sizeof(struct fat16_directory));
 
                     inode->private_data = p;
                     inode->size = entry->file_size_bytes;
@@ -214,18 +214,18 @@ static int fat16_lookup(Inode *dir, Dentry *dentry)
 
                 for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++)
                 {
-                    Fat16Directory *entry = (Fat16Directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
+                    struct fat16_directory *entry = (struct fat16_directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
 
                     if (entry->name[0] == FAT16_DIR_ENTRY_END) return -1;
                     if (!is_valid_entry(entry)) continue;
 
                     if (compare_filenames(dentry->name, entry) == 0)
                     {
-                        Inode *inode = inode_alloc(dir->sb);
+                        struct inode *inode = inode_alloc(dir->sb);
                         if (!inode) return -1;
 
-                        Fat16Directory *p = (Fat16Directory *)zalloc(sizeof(Fat16Directory));
-                        memcpy(p, entry, sizeof(Fat16Directory));
+                        struct fat16_directory *p = (struct fat16_directory *)zalloc(sizeof(struct fat16_directory));
+                        memcpy(p, entry, sizeof(struct fat16_directory));
 
                         inode->private_data = p;
                         inode->size = entry->file_size_bytes;
@@ -245,11 +245,11 @@ static int fat16_lookup(Inode *dir, Dentry *dentry)
     return -1;
 }
 
-static ssize_t fat16_read(File *file, char *buf, size_t count, off_t offset)
+static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offset)
 {
-    Inode *inode = file->inode;
-    Fat16 *fs = (Fat16 *)inode->sb->fs_info;
-    Fat16Directory *entry = (Fat16Directory *)inode->private_data;
+    struct inode *inode = file->inode;
+    struct fat16 *fs = (struct fat16 *)inode->sb->fs_info;
+    struct fat16_directory *entry = (struct fat16_directory *)inode->private_data;
 
     if (offset >= (off_t)inode->size) return 0;
     if (offset + (off_t)count > (off_t)inode->size) count = inode->size - offset;
@@ -302,11 +302,11 @@ static ssize_t fat16_read(File *file, char *buf, size_t count, off_t offset)
     return (ssize_t)bytes_read_total;
 }
 
-static int fat16_readdir(File *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64))
+static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64))
 {
-    Inode *inode = file->inode;
-    Fat16 *fs = (Fat16 *)inode->sb->fs_info;
-    Fat16Directory *dir_entry = (Fat16Directory *)inode->private_data;
+    struct inode *inode = file->inode;
+    struct fat16 *fs = (struct fat16 *)inode->sb->fs_info;
+    struct fat16_directory *dir_entry = (struct fat16_directory *)inode->private_data;
 
     u32 offset = (u32)file->offset;
     int count = 0;
@@ -322,7 +322,7 @@ static int fat16_readdir(File *file, void *dirent, int (*filldir)(void *, const 
 
             if (blk_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0) break;
 
-            Fat16Directory *entry = (Fat16Directory *)(buffer + entry_in_sector);
+            struct fat16_directory *entry = (struct fat16_directory *)(buffer + entry_in_sector);
 
             if (entry->name[0] == FAT16_DIR_ENTRY_END) break;
             if (!is_valid_entry(entry))
@@ -366,7 +366,7 @@ static int fat16_readdir(File *file, void *dirent, int (*filldir)(void *, const 
                         continue;
                     }
 
-                    Fat16Directory *entry = (Fat16Directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
+                    struct fat16_directory *entry = (struct fat16_directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
                     if (entry->name[0] == FAT16_DIR_ENTRY_END) goto out;
                     if (!is_valid_entry(entry))
                     {
@@ -394,10 +394,10 @@ out:
     return count;
 }
 
-Dentry *fat16_mount_fs(SuperBlock *sb, const void *data)
+struct dentry *fat16_mount_fs(struct super_block *sb, const void *data)
 {
-    BlockDevice *dev = (BlockDevice *)data;
-    Fat16 *fs = (Fat16 *)zalloc(sizeof(Fat16));
+    struct block_device *dev = (struct block_device *)data;
+    struct fat16 *fs = (struct fat16 *)zalloc(sizeof(struct fat16));
     if (!fs) return NULL;
 
     if (fat16_mount(dev, fs) != 0)
@@ -408,14 +408,14 @@ Dentry *fat16_mount_fs(SuperBlock *sb, const void *data)
 
     sb->fs_info = fs;
 
-    Inode *root_inode = inode_alloc(sb);
+    struct inode *root_inode = inode_alloc(sb);
     if (!root_inode)
     {
         kfree(fs);
         return NULL;
     }
 
-    Fat16Directory *root_entry = (Fat16Directory *)zalloc(sizeof(Fat16Directory));
+    struct fat16_directory *root_entry = (struct fat16_directory *)zalloc(sizeof(struct fat16_directory));
     root_entry->attributes = FAT16_ATTR_DIRECTORY;
     root_entry->first_cluster_low = 0;
 
@@ -424,7 +424,7 @@ Dentry *fat16_mount_fs(SuperBlock *sb, const void *data)
     root_inode->i_ops = &fat16_inode_ops;
     root_inode->f_ops = &fat16_file_ops;
 
-    Dentry *root_dentry = dentry_alloc("/");
+    struct dentry *root_dentry = dentry_alloc("/");
     root_dentry->inode = root_inode;
     root_dentry->parent = root_dentry;
     sb->root = root_dentry;
@@ -434,7 +434,7 @@ Dentry *fat16_mount_fs(SuperBlock *sb, const void *data)
 
 int fat16_init()
 {
-    FsType *type = (FsType *)zalloc(sizeof(FsType));
+    struct fs_type *type = (struct fs_type *)zalloc(sizeof(struct fs_type));
     if (!type)
     {
         return -1;

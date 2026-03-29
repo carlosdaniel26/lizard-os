@@ -11,18 +11,18 @@
 #define PAGE_RESERVED (1 << 1)
 #define PAGE_ALLOCATED (1 << 2)
 
-typedef struct BuddyPage {
-    ListHead list; /* for linking free pages */
+struct buddy_page {
+    struct list_head list; /* for linking free pages */
     u8 order;
     u8 flags;
-} BuddyPage;
+};
 
-typedef struct BuddyArea {
-    ListHead free_list;
+struct buddy_area {
+    struct list_head free_list;
     int free_count;
-} BuddyArea;
+};
 
-typedef struct {
+struct buddy_allocator {
     /* free lists for each order:
      * order 0: 4kb blocks (1 page)
      * order 1: 8kb blocks (2 pages)
@@ -41,13 +41,13 @@ typedef struct {
      * order 14: 64mb blocks (16384 pages)
      * order 15: 128mb blocks (32768 pages) */
 
-    BuddyPage *pages; /* array descriptor of all pages */
+    struct buddy_page *pages; /* array descriptor of all pages */
     size_t page_count;
 
-    BuddyArea free_areas[MAX_ORDER + 1];
-} BuddyAllocator;
+    struct buddy_area free_areas[MAX_ORDER + 1];
+};
 
-extern BuddyAllocator buddy;
+extern struct buddy_allocator buddy;
 
 void *buddy_alloc(int order);
 void buddy_free(void *addr, int order);

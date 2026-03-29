@@ -6,7 +6,7 @@
 
 #define EXCEPTION_PAGE_FAULT 14
 
-void exception_pagefault(CpuState *regs)
+void exception_pagefault(struct cpu_state *regs)
 {
     u64 faulting_address;
     asm volatile("mov %%cr2, %0" : "=r"(faulting_address));

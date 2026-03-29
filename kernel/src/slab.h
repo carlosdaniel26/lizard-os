@@ -7,7 +7,7 @@
 #define KMEMCACHE_NAME_LEN 32
 #define SLAB_MAGIC 0xDEADBEEF
 
-typedef struct KMemCache {
+struct kmem_cache {
     char name[KMEMCACHE_NAME_LEN];
 
     size_t object_size;           /* requested size */
@@ -21,20 +21,20 @@ typedef struct KMemCache {
 
     unsigned int order; /* pages per slab = 2^order */
 
-    ListHead slabs_full;
-    ListHead slabs_partial;
-    ListHead slabs_free;
+    struct list_head slabs_full;
+    struct list_head slabs_partial;
+    struct list_head slabs_free;
 
     unsigned long flags;
 
     void (*ctor)(void *obj);
     void (*dtor)(void *obj);
 
-    spinlock_t lock;
-} KMemCache;
+    struct spinlock_t lock;
+};
 
-typedef struct Slab {
-    ListHead list;
+struct slab {
+    struct list_head list;
 
     void *start;         /* base address of slab */
     unsigned int in_use; /* allocated objects */
@@ -43,19 +43,19 @@ typedef struct Slab {
     void *freelist; /* singly-linked list of free objs */
     unsigned long magic;
 
-    KMemCache *cache;
-} Slab;
+    struct kmem_cache *cache;
+};
 
-typedef struct SlabObj {
-    struct Slab *slab;    /* owning slab */
-    struct SlabObj *next; /* freelist linkage */
-} SlabObj;
+struct slab_obj {
+    struct slab *slab;    /* owning slab */
+    struct slab_obj *next; /* freelist linkage */
+};
 
-KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void *), void (*dtor)(void *));
-int kmemcache_destroy(KMemCache *cache);
+struct kmem_cache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void *), void (*dtor)(void *));
+int kmemcache_destroy(struct kmem_cache *cache);
 
-void *kmemcache_alloc(KMemCache *cache);
+void *kmemcache_alloc(struct kmem_cache *cache);
 int kmemcache_free(void *obj);
 
-Slab *_get_slab(void *obj);
-int _is_valid_slab(Slab *slab);
+struct slab *_get_slab(void *obj);
+int _is_valid_slab(struct slab *slab);

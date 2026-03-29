@@ -21,7 +21,7 @@ extern u8 kernel_stack[KERNEL_STACK_SIZE];
 __attribute__((used, section(".limine_requests"))) volatile struct limine_executable_address_request
     kernel_address_request = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
 
-BuddyAllocator buddy;
+struct buddy_allocator buddy;
 
 unsigned int pages_to_order(unsigned int pages)
 {
@@ -55,7 +55,7 @@ static size_t detect_page_count(void)
     return (size_t)(align_up(max_addr, PAGE_SIZE) / PAGE_SIZE);
 }
 
-static inline void buddy_add_block(BuddyPage *page, uint8_t order)
+static inline void buddy_add_block(struct buddy_page *page, uint8_t order)
 {
     page->flags = PAGE_FREE;
     page->order = order;
@@ -68,7 +68,7 @@ static inline void buddy_add_block(BuddyPage *page, uint8_t order)
 int buddy_init()
 {
     buddy.page_count = detect_page_count();
-    buddy.pages = early_alloc(buddy.page_count * sizeof(BuddyPage), 0);
+    buddy.pages = early_alloc(buddy.page_count * sizeof(struct buddy_page), 0);
 
     const size_t page_count = buddy.page_count;
     /* init reserved to later free just the usable parts */

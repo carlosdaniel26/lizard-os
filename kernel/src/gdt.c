@@ -1,12 +1,12 @@
 #include <gdt.h>
 #include <init.h>
 
-global_descriptor gdt[5];
-gdt_ptr gdt_pointer;
+struct global_descriptor gdt[5];
+struct gdt_ptr gdt_pointer;
 
-global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity)
+struct global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity)
 {
-    global_descriptor gate;
+    struct global_descriptor gate;
 
     gate.limit_low = (limit & 0xFFFF);
     gate.base_low = (base & 0xFFFF);
@@ -20,7 +20,7 @@ global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity
 
 static inline void gdt_load()
 {
-    gdt_pointer.limit = (sizeof(global_descriptor) * 5) - 1;
+    gdt_pointer.limit = (sizeof(struct global_descriptor) * 5) - 1;
     gdt_pointer.base = (u64)&gdt;
 
     asm volatile("lgdt %0\n"

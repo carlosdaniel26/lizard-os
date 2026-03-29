@@ -19,7 +19,7 @@ static int sched_init()
 
 subsys_initcall(sched_init);
 
-void isr_scheduler(CpuState *regs)
+void isr_scheduler(struct cpu_state *regs)
 {
     scheduler(regs);
 }
@@ -34,7 +34,7 @@ void scheduler()
         return;
     }
 
-    Task *task = next_ready_task();
+    struct task *task = next_ready_task();
 
     /* no ready task found */
     if (NULL == task)

@@ -35,7 +35,7 @@ static inline void clear()
 
 static inline void lzfetch()
 {
-    TimeSpec ts = timespec_uptime();
+    struct time_spec ts = timespec_uptime();
     kprintf(" ____________________________\t\t\t\t\t\t\t\tLizard OS\n");
     kprintf("|					_		  |\t\t\t\t\t\t\t------------------\n");
     kprintf("|				   /\"\\		|\t\t\t\t\t\t\tKernel:	lz-kernel 0.1\n");
@@ -104,7 +104,7 @@ void ms()
 
 static inline void date()
 {
-    TimeSpec time = time_now();
+    struct time_spec time = time_now();
 
     kprintf("%d/%d/%d %d:%d:%d\n", timespec_get_day(&time), timespec_get_month(&time),
             timespec_get_year(&time), timespec_get_hour(&time), timespec_get_min(&time),

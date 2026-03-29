@@ -7,7 +7,7 @@
 
 static syscall_handler syscall_table[MAX_SYSCALLS];
 
-void isr_syscall(CpuState *regs)
+void isr_syscall(struct cpu_state *regs)
 {
     syscall_handler_c(regs);
 }
@@ -26,14 +26,14 @@ static int syscall_init()
 
 device_initcall(syscall_init);
 
-void sys_sleep(CpuState *regs)
+void sys_sleep(struct cpu_state *regs)
 {
     u32 ms = regs->rbx;
     kprintf("sys_sleep called with %u ms\n", ms);
     task_sleep(ms);
 }
 
-void syscall_handler_c(CpuState *regs)
+void syscall_handler_c(struct cpu_state *regs)
 {
     u32 syscall_num = regs->rax;
     if (syscall_num < MAX_SYSCALLS && syscall_table[syscall_num] != NULL)

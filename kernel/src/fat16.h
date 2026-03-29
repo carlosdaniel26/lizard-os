@@ -29,7 +29,7 @@
 #define FAT16_ATTR_DIRECTORY 0x10
 #define FAT16_ATTR_ARCHIVE 0x20
 
-typedef struct FatHeader {
+struct fat_header {
     u8 jump_boot[3];
     u8 oem_name[8];
     u16 bytes_per_sector;
@@ -50,9 +50,9 @@ typedef struct FatHeader {
     u32 volume_id;
     u8 volume_label[11];
     u8 fs_type[8];
-} __attribute__((packed)) FatHeader;
+} __attribute__((packed));
 
-typedef struct Fat16Directory {
+struct fat16_directory {
     u8 name[8];
     u8 extension[3];
     u8 attributes;
@@ -66,11 +66,11 @@ typedef struct Fat16Directory {
     u16 write_date;
     u16 first_cluster_low;
     u32 file_size_bytes;
-} __attribute__((packed)) Fat16Directory;
+} __attribute__((packed));
 
-typedef struct Fat16 {
-    FatHeader header;
-    BlockDevice *dev;
+struct fat16 {
+    struct fat_header header;
+    struct block_device *dev;
 
     u32 fat_start_lba;
     u32 root_dir_lba;
@@ -78,10 +78,10 @@ typedef struct Fat16 {
 
     u32 root_dir_sectors;
     u32 total_clusters;
-} Fat16;
+};
 
-int fat16_detect(BlockDevice *dev);
-int fat16_mount(BlockDevice *dev, Fat16 *fs);
+int fat16_detect(struct block_device *dev);
+int fat16_mount(struct block_device *dev, struct fat16 *fs);
 int fat16_init();
 
-Dentry *fat16_mount_fs(SuperBlock *sb, const void *data);
+struct dentry *fat16_mount_fs(struct super_block *sb, const void *data);

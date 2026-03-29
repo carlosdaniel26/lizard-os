@@ -3,7 +3,7 @@
 /* Created in March 24, 2026.
  *
  * This setup/kernel params system is based on code i have seen on old versions
- * of linux kernel < 3.0. The system consists of basically of the struct SetupEntry which has a function
+ * of linux kernel < 3.0. The system consists of basically of the struct setup_entry which has a function
  * as a callback and a label for it, the macro __setup is responsible for registering the setup function by
  * creating a static global variable with the prefix __setup_ and applying the attribute
  * section(".kernel_params") to ensure that the location of this data is within a specific section of the
@@ -16,10 +16,10 @@
 
 typedef int (*setup_fn)(char *);
 
-typedef struct SetupEntry {
+struct setup_entry {
     const char *str;
     setup_fn fn;
-} SetupEntry;
+};
 
 #define __setup(name, fn)                                                                                    \
-    static const SetupEntry __setup_##fn __attribute__((section(".kernel_params"), used)) = {name, fn}
+    static const struct setup_entry __setup_##fn __attribute__((section(".kernel_params"), used)) = {name, fn}

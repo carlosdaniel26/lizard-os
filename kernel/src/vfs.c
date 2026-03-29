@@ -11,9 +11,9 @@
 #include <vfs.h>
 
 __initdata char rootdev_str[64] = {0};
-static Dentry *vfs_root;
+static struct dentry *vfs_root;
 
-Dentry *vfs_get_root(void)
+struct dentry *vfs_get_root(void)
 {
     dentry_get(vfs_root);
     return vfs_root;
@@ -41,23 +41,23 @@ static int setup_root(char *dev_str)
 
 __setup("root=", setup_root);
 
-int set_root(BlockDevice *dev)
+int set_root(struct block_device *dev)
 {
     if (dev == NULL)
     {
         kpanic("Root device is NULL");
     }
 
-    FsType *type = fs_detect(dev);
+    struct fs_type *type = fs_detect(dev);
     if (type == NULL)
     {
         kpanic("Failed to detect filesystem on %s", dev->name);
     }
 
-    SuperBlock *sb = (SuperBlock *)zalloc(sizeof(SuperBlock));
+    struct super_block *sb = (struct super_block *)zalloc(sizeof(struct super_block));
     if (sb == NULL)
     {
-        kpanic("Failed to allocate SuperBlock for root");
+        kpanic("Failed to allocate struct super_block for root");
     }
 
     sb->type = type;
@@ -73,7 +73,7 @@ int set_root(BlockDevice *dev)
 
 void vfs_init()
 {
-    BlockDevice *dev = blkdev_manager_get_by_name(rootdev_str);
+    struct block_device *dev = blkdev_manager_get_by_name(rootdev_str);
     if (dev == NULL)
     {
         kpanic("Failed to find root device %s", rootdev_str);

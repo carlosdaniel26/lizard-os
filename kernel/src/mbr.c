@@ -4,23 +4,23 @@
 #include <mbr.h>
 #include <stdio.h>
 
-static int mbr_read(BlockDevice *dev, MbrHeader *mbr)
+static int mbr_read(struct block_device *dev, struct mbr_header *mbr)
 {
     /* Read first sector (LBA 0) */
     return blk_dev_read(dev, 0, mbr, 1);
 }
 
 /* Write MBR to disk */
-static int mbr_write(BlockDevice *dev, const MbrHeader *mbr)
+static int mbr_write(struct block_device *dev, const struct mbr_header *mbr)
 {
     /* Write first sector (LBA 0) */
     return blk_dev_write(dev, 0, mbr, 1);
 }
 
-int mbr_scan(BlockDevice *dev)
+int mbr_scan(struct block_device *dev)
 {
     debug_printf("starting mbr_scan..\n");
-    MbrHeader mbr;
+    struct mbr_header mbr;
 
     if (mbr_read(dev, &mbr) == -1)
     {
@@ -36,7 +36,7 @@ int mbr_scan(BlockDevice *dev)
 
     for (int i = 0; i < MBR_PARTITION_COUNT; i++)
     {
-        const MbrPartitionEntry *partition = &mbr.partitions[i];
+        const struct mbr_partition_entry *partition = &mbr.partitions[i];
 
         if (!mbr_partition_is_used(partition)) continue;
 

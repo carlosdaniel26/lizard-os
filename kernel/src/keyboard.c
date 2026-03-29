@@ -22,7 +22,7 @@ int init_keyboard()
 
 device_initcall(init_keyboard);
 
-void isr_keyboard(CpuState *regs)
+void isr_keyboard(struct cpu_state *regs)
 {
     (regs);
     while (inb(0x64) & 0x01)

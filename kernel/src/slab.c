@@ -11,14 +11,14 @@
 #define MAX_FREE_SLABS 3
 
 /* ============================================================
- * Slab object header
+ * struct slab object header
  * ============================================================ */
 
 /* ============================================================
- * Slab helpers
+ * struct slab helpers
  * ============================================================ */
 
-static Slab *slab_create(KMemCache *cache)
+static struct slab *slab_create(struct kmem_cache *cache)
 {
     void *mem = buddy_alloc(cache->order);
     if (!mem) return NULL;
@@ -27,7 +27,7 @@ static Slab *slab_create(KMemCache *cache)
     uintptr_t slab_start = (uintptr_t)mem;
     uintptr_t slab_end = slab_start + slab_size;
 
-    Slab *slab = (Slab *)mem;
+    struct slab *slab = (struct slab *)mem;
     slab->magic = SLAB_MAGIC;
     slab->cache = cache;
     slab->start = mem;
@@ -36,7 +36,7 @@ static Slab *slab_create(KMemCache *cache)
 
     slab->list.next = slab->list.prev = &slab->list;
 
-    uintptr_t obj_start = align_up(slab_start + sizeof(Slab), cache->align);
+    uintptr_t obj_start = align_up(slab_start + sizeof(struct slab), cache->align);
 
     if (obj_start >= slab_end) kpanic("slab_create: no space for objects");
 
@@ -49,7 +49,7 @@ static Slab *slab_create(KMemCache *cache)
 
     for (int i = objs - 1; i >= 0; i--)
     {
-        SlabObj *o = (SlabObj *)(obj_start + i * cache->real_object_size);
+        struct slab_obj *o = (struct slab_obj *)(obj_start + i * cache->real_object_size);
 
         o->slab = slab;
         o->next = slab->freelist;
@@ -59,7 +59,7 @@ static Slab *slab_create(KMemCache *cache)
     return slab;
 }
 
-static void slab_destroy(KMemCache *cache, Slab *slab)
+static void slab_destroy(struct kmem_cache *cache, struct slab *slab)
 {
     if (slab->magic != SLAB_MAGIC) kpanic("slab_destroy: bad slab");
 
@@ -73,9 +73,9 @@ static void slab_destroy(KMemCache *cache, Slab *slab)
  * Cache API
  * ============================================================ */
 
-KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void *), void (*dtor)(void *))
+struct kmem_cache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void *), void (*dtor)(void *))
 {
-    KMemCache *cache = buddy_alloc(0);
+    struct kmem_cache *cache = buddy_alloc(0);
     if (!cache) return NULL;
 
     memset(cache, 0, sizeof(*cache));
@@ -89,9 +89,9 @@ KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void
     cache->object_size = obj_size;
     cache->align = sizeof(void *);
 
-    cache->real_object_size = align_up(sizeof(SlabObj) + obj_size, cache->align);
+    cache->real_object_size = align_up(sizeof(struct slab_obj) + obj_size, cache->align);
 
-    size_t needed = sizeof(Slab) + cache->real_object_size;
+    size_t needed = sizeof(struct slab) + cache->real_object_size;
 
     cache->order = 0;
     while (((size_t)PAGE_SIZE << cache->order) < needed)
@@ -99,7 +99,7 @@ KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void
 
     size_t slab_bytes = (size_t)PAGE_SIZE << cache->order;
 
-    cache->objects_per_slab = (slab_bytes - sizeof(Slab)) / cache->real_object_size;
+    cache->objects_per_slab = (slab_bytes - sizeof(struct slab)) / cache->real_object_size;
 
     if (cache->objects_per_slab == 0) kpanic("kmemcache_create: object too large");
 
@@ -120,17 +120,17 @@ KMemCache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void
  * Allocation
  * ============================================================ */
 
-void *kmemcache_alloc(KMemCache *cache)
+void *kmemcache_alloc(struct kmem_cache *cache)
 {
-    Slab *slab;
+    struct slab *slab;
 
     if (!list_empty(&cache->slabs_partial))
     {
-        slab = list_first_entry(&cache->slabs_partial, Slab, list);
+        slab = list_first_entry(&cache->slabs_partial, struct slab, list);
     }
     else if (!list_empty(&cache->slabs_free))
     {
-        slab = list_first_entry(&cache->slabs_free, Slab, list);
+        slab = list_first_entry(&cache->slabs_free, struct slab, list);
         list_move(&slab->list, &cache->slabs_partial);
         cache->free_slab_count--;
     }
@@ -141,7 +141,7 @@ void *kmemcache_alloc(KMemCache *cache)
         list_add(&slab->list, &cache->slabs_partial);
     }
 
-    SlabObj *o = slab->freelist;
+    struct slab_obj *o = slab->freelist;
     slab->freelist = o->next;
 
     slab->in_use++;
@@ -165,14 +165,14 @@ int kmemcache_free(void *obj)
 {
     if (!obj) return -1;
 
-    Slab *slab = _get_slab(obj);
-    KMemCache *cache = slab->cache;
+    struct slab *slab = _get_slab(obj);
+    struct kmem_cache *cache = slab->cache;
 
     if (slab->magic != SLAB_MAGIC) kpanic("kmemcache_free: bad slab %p", slab);
 
     if (cache->dtor) cache->dtor(obj);
 
-    SlabObj *o = ((SlabObj *)obj) - 1;
+    struct slab_obj *o = ((struct slab_obj *)obj) - 1;
     o->next = slab->freelist;
     slab->freelist = o;
 
@@ -199,15 +199,15 @@ int kmemcache_free(void *obj)
 }
 
 /* public helpers */
-Slab *_get_slab(void *obj)
+struct slab *_get_slab(void *obj)
 {
-    SlabObj *o = ((SlabObj *)obj) - 1;
-    Slab *slab = o->slab;
+    struct slab_obj *o = ((struct slab_obj *)obj) - 1;
+    struct slab *slab = o->slab;
 
     return slab;
 }
 
-int _is_valid_slab(Slab *slab)
+int _is_valid_slab(struct slab *slab)
 {
     return (slab->magic == SLAB_MAGIC);
 }

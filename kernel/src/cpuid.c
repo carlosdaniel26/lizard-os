@@ -5,7 +5,7 @@
 #include <tty.h>
 #include <types.h>
 
-CPUID g_cpuid;
+struct cpuid g_cpuid;
 
 void cpuid(u32 code, u32 *output)
 {

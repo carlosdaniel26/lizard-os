@@ -49,7 +49,7 @@ int pit_init()
 
 device_initcall(pit_init);
 
-void isr_pit(CpuState *regs)
+void isr_pit(struct cpu_state *regs)
 {
     pit_ticks++;
 

@@ -47,7 +47,7 @@
 
 #define ATA_DEFAULT_SECTOR_SIZE 512
 
-typedef struct ATADevice {
+struct ata_device {
     u8 id;
     u16 io_base;
     u16 ctrl_base;
@@ -61,7 +61,7 @@ typedef struct ATADevice {
 
     u32 total_sectors;
     u64 total_bytes;
-} ATADevice;
+};
 
 int ata_detect_devices();
 

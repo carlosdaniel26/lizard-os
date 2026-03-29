@@ -7,13 +7,13 @@
 #include <types.h>
 
 LIST_HEAD(fs_types);
-atomic_t fstype_count = {};
+struct atomic_t fstype_count = {};
 
 SPINLOCK(fstype_lock);
 
 LIST_HEAD(fs_instances);
 
-int fs_register(FsType *fstype)
+int fs_register(struct fs_type *fstype)
 {
     if (!fstype || !fstype->name[0])
     {
@@ -36,7 +36,7 @@ int fs_register(FsType *fstype)
     return 0;
 }
 
-int fs_unregister(FsType *fstype)
+int fs_unregister(struct fs_type *fstype)
 {
     if (!fstype)
     {
@@ -53,13 +53,13 @@ int fs_unregister(FsType *fstype)
     return 0;
 }
 
-FsType *fs_find_locked(const char *name)
+struct fs_type *fs_find_locked(const char *name)
 {
-    ListHead *pos, *tmp;
+    struct list_head *pos, *tmp;
 
     list_for_each(pos, tmp, &fs_types)
     {
-        FsType *type = container_of(pos, FsType, list);
+        struct fs_type *type = container_of(pos, struct fs_type, list);
 
         if (strcmp(type->name, name) == 0)
         {
@@ -70,10 +70,10 @@ FsType *fs_find_locked(const char *name)
     return NULL;
 }
 
-FsType *fs_find(const char *name)
+struct fs_type *fs_find(const char *name)
 {
     spinlock_lock(&fstype_lock);
-    FsType *type = fs_find_locked(name);
+    struct fs_type *type = fs_find_locked(name);
     spinlock_unlock(&fstype_lock);
 
     return type;
@@ -84,13 +84,13 @@ int fs_type_count()
     return (int)atomic_read(&fstype_count);
 }
 
-FsType *fs_detect(BlockDevice *dev)
+struct fs_type *fs_detect(struct block_device *dev)
 {
-    ListHead *pos, *tmp;
+    struct list_head *pos, *tmp;
 
     list_for_each(pos, tmp, &fs_types)
     {
-        FsType *type = container_of(pos, FsType, list);
+        struct fs_type *type = container_of(pos, struct fs_type, list);
 
         return type;
     }
@@ -98,35 +98,35 @@ FsType *fs_detect(BlockDevice *dev)
     return NULL;
 }
 
-Inode *inode_alloc(SuperBlock *sb)
+struct inode *inode_alloc(struct super_block *sb)
 {
-    Inode *inode = (Inode *)zalloc(sizeof(Inode));
+    struct inode *inode = (struct inode *)zalloc(sizeof(struct inode));
     if (!inode) return NULL;
     inode->sb = sb;
     return inode;
 }
 
-void inode_free(Inode *inode)
+void inode_free(struct inode *inode)
 {
     if (!inode) return;
     kfree(inode);
 }
 
-Dentry *dentry_alloc(const char *name)
+struct dentry *dentry_alloc(const char *name)
 {
-    Dentry *d = (Dentry *)zalloc(sizeof(Dentry));
+    struct dentry *d = (struct dentry *)zalloc(sizeof(struct dentry));
     if (!d) return NULL;
     strncpy(d->name, name, sizeof(d->name) - 1);
     d->name[sizeof(d->name) - 1] = '\0';
     return d;
 }
 
-void dentry_get(Dentry *d)
+void dentry_get(struct dentry *d)
 {
     if (d) atomic_inc(&d->refcount);
 }
 
-void dentry_put(Dentry *d)
+void dentry_put(struct dentry *d)
 {
     if (!d) return;
     if (atomic_dec_and_test(&d->refcount))
@@ -135,7 +135,7 @@ void dentry_put(Dentry *d)
     }
 }
 
-void dentry_add(Dentry *parent, Dentry *child)
+void dentry_add(struct dentry *parent, struct dentry *child)
 {
     if (!parent || !child) return;
     spinlock_lock(&parent->lock);
@@ -144,14 +144,14 @@ void dentry_add(Dentry *parent, Dentry *child)
     spinlock_unlock(&parent->lock);
 }
 
-Dentry *dentry_lookup(Dentry *parent, const char *name)
+struct dentry *dentry_lookup(struct dentry *parent, const char *name)
 {
     if (!parent) return NULL;
     spinlock_lock(&parent->lock);
-    ListHead *pos, *tmp;
+    struct list_head *pos, *tmp;
     list_for_each(pos, tmp, &parent->children)
     {
-        Dentry *d = container_of(pos, Dentry, sibling);
+        struct dentry *d = container_of(pos, struct dentry, sibling);
         if (strcmp(d->name, name) == 0)
         {
             dentry_get(d);
@@ -163,9 +163,9 @@ Dentry *dentry_lookup(Dentry *parent, const char *name)
     return NULL;
 }
 
-Dentry *vfs_lookup(Dentry *parent, const char *name)
+struct dentry *vfs_lookup(struct dentry *parent, const char *name)
 {
-    Dentry *d = dentry_lookup(parent, name);
+    struct dentry *d = dentry_lookup(parent, name);
     if (d) return d;
 
     d = dentry_alloc(name);

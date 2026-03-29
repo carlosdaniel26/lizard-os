@@ -3,11 +3,11 @@
 #include <init.h>
 #include <types.h>
 
-static TimeSpec wall_clock; /* CLOCK_REALTIME */
-static TimeSpec mono_clock; /* CLOCK_MONOTONIC */
+static struct time_spec wall_clock; /* CLOCK_REALTIME */
+static struct time_spec mono_clock; /* CLOCK_MONOTONIC */
 
-static TimeSpec boot_wall;
-static TimeSpec boot_mono;
+static struct time_spec boot_wall;
+static struct time_spec boot_mono;
 
 static int is_leap_year(int y)
 {
@@ -26,9 +26,9 @@ static u64 days_before_year(int y)
     return years * 365 + (years + 1) / 4 - (years + 69) / 100 + (years + 369) / 400;
 }
 
-TimeSpec rtc_to_timespec(const RTCTimer *t)
+struct time_spec rtc_to_timespec(const struct rtc_timer *t)
 {
-    TimeSpec ts;
+    struct time_spec ts;
 
     u64 days = 0;
 
@@ -45,7 +45,7 @@ TimeSpec rtc_to_timespec(const RTCTimer *t)
 
 int time_init(void)
 {
-    RTCTimer rtc;
+    struct rtc_timer rtc;
     rtc_read(&rtc);
 
     wall_clock = rtc_to_timespec(&rtc); /* calendar -> seconds */
@@ -71,9 +71,9 @@ void time_tick_ns(u64 delta_ns)
     timespec_normalize(&wall_clock);
 }
 
-TimeSpec timespec_uptime(void)
+struct time_spec timespec_uptime(void)
 {
-    TimeSpec up;
+    struct time_spec up;
 
     up.sec = mono_clock.sec - boot_mono.sec;
     up.nsec = mono_clock.nsec - boot_mono.nsec;
@@ -97,12 +97,12 @@ i64 time_uptime_ms(void)
     return timespec_to_ms(timespec_uptime());
 }
 
-TimeSpec time_now(void)
+struct time_spec time_now(void)
 {
     return wall_clock;
 }
 
-static void timespec_split(const TimeSpec *ts, i32 *year, i32 *month, i32 *day, i32 *hour, i32 *min, i32 *sec)
+static void timespec_split(const struct time_spec *ts, i32 *year, i32 *month, i32 *day, i32 *hour, i32 *min, i32 *sec)
 {
     i64 s = ts->sec;
 
@@ -147,42 +147,42 @@ static void timespec_split(const TimeSpec *ts, i32 *year, i32 *month, i32 *day, 
     if (day) *day = days + 1;
 }
 
-i32 timespec_get_day(const TimeSpec *ts)
+i32 timespec_get_day(const struct time_spec *ts)
 {
     i32 d;
     timespec_split(ts, NULL, NULL, &d, NULL, NULL, NULL);
     return d;
 }
 
-i32 timespec_get_month(const TimeSpec *ts)
+i32 timespec_get_month(const struct time_spec *ts)
 {
     i32 m;
     timespec_split(ts, NULL, &m, NULL, NULL, NULL, NULL);
     return m;
 }
 
-i32 timespec_get_year(const TimeSpec *ts)
+i32 timespec_get_year(const struct time_spec *ts)
 {
     i32 y;
     timespec_split(ts, &y, NULL, NULL, NULL, NULL, NULL);
     return y;
 }
 
-i32 timespec_get_hour(const TimeSpec *ts)
+i32 timespec_get_hour(const struct time_spec *ts)
 {
     i32 h;
     timespec_split(ts, NULL, NULL, NULL, &h, NULL, NULL);
     return h;
 }
 
-i32 timespec_get_min(const TimeSpec *ts)
+i32 timespec_get_min(const struct time_spec *ts)
 {
     i32 m;
     timespec_split(ts, NULL, NULL, NULL, NULL, &m, NULL);
     return m;
 }
 
-i32 timespec_get_sec(const TimeSpec *ts)
+i32 timespec_get_sec(const struct time_spec *ts)
 {
     i32 s;
     timespec_split(ts, NULL, NULL, NULL, NULL, NULL, &s);

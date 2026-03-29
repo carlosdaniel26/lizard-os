@@ -43,7 +43,7 @@ static inline void rtc_write_b(u8 reg, u8 value)
     outb(RTC_DATA_PORT, binary_to_bcd(value));
 }
 
-void rtc_write(const RTCTimer *in)
+void rtc_write(const struct rtc_timer *in)
 {
     /* Disable updates while programming */
     outb(RTC_COMMAND_PORT, 0x8B); // select register B, disable NMI
@@ -63,7 +63,7 @@ void rtc_write(const RTCTimer *in)
     outb(RTC_DATA_PORT, prev & ~0x80);
 }
 
-void rtc_read(RTCTimer *out)
+void rtc_read(struct rtc_timer *out)
 {
     u8 *RTC_array = (u8 *)&out;
 

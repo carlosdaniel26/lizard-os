@@ -8,13 +8,13 @@
         0                                                                                                    \
     }
 
-#define SPINLOCK(name) spinlock_t name = SPINLOCK_INITIALIZER
+#define SPINLOCK(name) struct spinlock_t name = SPINLOCK_INITIALIZER
 
-typedef struct {
+struct spinlock_t {
     volatile bool locked;
-} spinlock_t;
+};
 
-void spinlock_init(spinlock_t *lock);
-void spinlock_lock(spinlock_t *lock);
-void spinlock_unlock(spinlock_t *lock);
-int spinlock_trylock(spinlock_t *lock);
+void spinlock_init(struct spinlock_t *lock);
+void spinlock_lock(struct spinlock_t *lock);
+void spinlock_unlock(struct spinlock_t *lock);
+int spinlock_trylock(struct spinlock_t *lock);

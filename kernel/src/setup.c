@@ -6,8 +6,8 @@
 #define MAX_CMDLINE_LEN 1024
 __initdata char boot_cmdline[MAX_CMDLINE_LEN] = {0};
 
-extern const struct SetupEntry __setup_start[];
-extern const struct SetupEntry __setup_end[];
+extern const struct setup_entry __setup_start[];
+extern const struct setup_entry __setup_end[];
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_cmdline_request
     cmdline_req = {.id = LIMINE_EXECUTABLE_CMDLINE_REQUEST, .revision = 0};
@@ -49,7 +49,7 @@ static int setup_params()
         }
 
         /* all the corresponding function if the prefix matches. */
-        SetupEntry *ptr;
+        struct setup_entry *ptr;
         for (ptr = __setup_start; ptr < __setup_end; ptr++)
         {
             size_t len = strlen(ptr->str);

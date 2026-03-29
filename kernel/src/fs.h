@@ -6,103 +6,103 @@
 #include <spinlock.h>
 #include <types.h>
 
-typedef struct Inode Inode;
-typedef struct FsType FsType;
 
-typedef struct Dentry {
-    ListHead sibling;
-    ListHead children;
+
+
+struct dentry {
+    struct list_head sibling;
+    struct list_head children;
 
     char name[NAME_MAX];
     u32 name_len;
 
-    struct Dentry *parent;
+    struct dentry *parent;
 
-    Inode *inode;
+    struct inode *inode;
 
-    spinlock_t lock;
-    atomic_t refcount;
+    struct spinlock_t lock;
+    struct atomic_t refcount;
 
     u32 flags;
-} Dentry;
+};
 
-typedef struct SuperBlock {
-    ListHead list;
-    const FsType *type;
-    spinlock_t lock;
+struct super_block {
+    struct list_head list;
+    const struct fs_type *type;
+    struct spinlock_t lock;
 
     void *fs_info;
 
-    Dentry *root;
+    struct dentry *root;
     u64 flags;
 
     size_t block_size;
     u64 total_blocks;
     u64 free_blocks;
-} SuperBlock;
+};
 
-typedef struct {
-    int (*statfs)(SuperBlock *sb, void *out);
-    int (*sync)(SuperBlock *sb);
-} SuperOps;
+struct super_ops {
+    int (*statfs)(struct super_block *sb, void *out);
+    int (*sync)(struct super_block *sb);
+};
 
-typedef struct FsType {
-    ListHead list;
+struct fs_type {
+    struct list_head list;
     char name[32];
 
-    struct Dentry *(*mount)(SuperBlock *sb, const void *data);
-    void (*kill_sb)(SuperBlock *sb);
+    struct dentry *(*mount)(struct super_block *sb, const void *data);
+    void (*kill_sb)(struct super_block *sb);
 
     u32 flags;
     void *private_data;
-} FsType;
+};
 
-typedef struct InodeOps {
-    int (*lookup)(Inode *dir, Dentry *dentry);
-    int (*create)(Inode *dir, Dentry *dentry, int mode);
-    int (*mkdir)(Inode *dir, Dentry *dentry, int mode);
-    int (*unlink)(Inode *dir, Dentry *dentry);
-    int (*rename)(Inode *old, Inode *new);
-} InodeOps;
+struct inode_ops {
+    int (*lookup)(struct inode *dir, struct dentry *dentry);
+    int (*create)(struct inode *dir, struct dentry *dentry, int mode);
+    int (*mkdir)(struct inode *dir, struct dentry *dentry, int mode);
+    int (*unlink)(struct inode *dir, struct dentry *dentry);
+    int (*rename)(struct inode *old, struct inode *new);
+};
 
-typedef struct File {
-    Inode *inode;
+struct file {
+    struct inode *inode;
     u64 offset;
     u32 flags;
     void *private_data;
-} File;
+};
 
-typedef struct FileOps {
-    int (*open)(Inode *inode, File *file);
-    ssize_t (*read)(File *file, char *buf, size_t count, off_t offset);
-    ssize_t (*write)(File *file, const char *buf, size_t count, off_t offset);
-    int (*readdir)(File *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
-    int (*release)(Inode *inode, File *file);
-} FileOps;
+struct file_ops {
+    int (*open)(struct inode *inode, struct file *file);
+    ssize_t (*read)(struct file *file, char *buf, size_t count, off_t offset);
+    ssize_t (*write)(struct file *file, const char *buf, size_t count, off_t offset);
+    int (*readdir)(struct file *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
+    int (*release)(struct inode *inode, struct file *file);
+};
 
-typedef struct Inode {
+struct inode {
     u32 mode;
     u64 size;
 
-    InodeOps *i_ops;
-    FileOps *f_ops;
+    struct inode_ops *i_ops;
+    struct file_ops *f_ops;
 
-    SuperBlock *sb;
+    struct super_block *sb;
     void *private_data;
-} Inode;
+};
 
-int fs_register(FsType *type);
-int fs_unregister(FsType *type);
-FsType *fs_find(const char *name);
-FsType *fs_find_locked(const char *name);
+int fs_register(struct fs_type *type);
+int fs_unregister(struct fs_type *type);
+struct fs_type *fs_find(const char *name);
+struct fs_type *fs_find_locked(const char *name);
 int fs_type_count(void);
-FsType *fs_detect(BlockDevice *dev);
+struct fs_type *fs_detect(struct block_device *dev);
 
-Dentry *dentry_alloc(const char *name);
-void dentry_get(Dentry *d);
-void dentry_put(Dentry *d);
-Dentry *dentry_lookup(Dentry *parent, const char *name);
-void dentry_add(Dentry *parent, Dentry *child);
+struct dentry *dentry_alloc(const char *name);
+void dentry_get(struct dentry *d);
+void dentry_put(struct dentry *d);
+struct dentry *dentry_lookup(struct dentry *parent, const char *name);
+void dentry_add(struct dentry *parent, struct dentry *child);
 
-Inode *inode_alloc(SuperBlock *sb);
-void inode_free(Inode *inode);
+struct inode *inode_alloc(struct super_block *sb);
+void inode_free(struct inode *inode);

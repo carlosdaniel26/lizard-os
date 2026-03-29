@@ -13,20 +13,20 @@
 #include <types.h>
 #include <vmm.h>
 
-Task idle = {0};
+struct task idle = {0};
 
-CpuState *ptrace = {0};
+struct cpu_state *ptrace = {0};
 
 LIST_HEAD(task_list);
 
-Task *current_task = NULL;
+struct task *current_task = NULL;
 
 void idle_func()
 {
     yield();
 }
 
-void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority)
+void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority)
 {
     /* task->name = name */
     memcpy(task->name, name, strlen(name));
@@ -43,9 +43,9 @@ void task_create(struct Task *task, void (*entry_point)(void), const char *name,
     task->state = TASK_STATE_READY;
 }
 
-void task_load_context(Task *task)
+void task_load_context(struct task *task)
 {
-    CpuState *saved = &task->regs;
+    struct cpu_state *saved = &task->regs;
 
     ptrace->rax = saved->rax;
     ptrace->rdi = saved->rdi;
@@ -72,7 +72,7 @@ void task_load_context(Task *task)
 
 void task_save_context()
 {
-    CpuState *saved = &current_task->regs;
+    struct cpu_state *saved = &current_task->regs;
 
     saved->rax = ptrace->rax;
     saved->rdi = ptrace->rdi;
@@ -114,7 +114,7 @@ void task_sleep(u32 ms)
 /*
  * Clean this code up to make sleep work properly
  */
-int task_switch_to(Task *next_task)
+int task_switch_to(struct task *next_task)
 {
     task_save_context();
     task_load_context(next_task);
@@ -126,13 +126,13 @@ int task_switch_to(Task *next_task)
 
 void task_tick()
 {
-    Task *t = &idle;
-    ListHead *pos, *tmp;
+    struct task *t = &idle;
+    struct list_head *pos, *tmp;
 
     /* Wake up sleeping tasks */
     list_for_each(pos, tmp, &task_list)
     {
-        t = (Task *)pos;
+        t = (struct task *)pos;
         if (t->state == TASK_STATE_WAITING && pit_ticks >= t->sleep_until)
         {
             t->state = TASK_STATE_READY;
@@ -140,15 +140,15 @@ void task_tick()
     }
 }
 
-Task *next_ready_task()
+struct task *next_ready_task()
 {
-    ListHead *pos = current_task->list.next;
+    struct list_head *pos = current_task->list.next;
 
     /* task_list <--> .. <--> task <--> .. <--> task_list
      * so first we iterate the task to the right */
     while (pos != &task_list)
     {
-        Task *t = container_of(pos, Task, list);
+        struct task *t = container_of(pos, struct task, list);
         if (t->state == TASK_STATE_READY && t != &idle) return t;
         pos = pos->next;
     }
@@ -157,7 +157,7 @@ Task *next_ready_task()
     pos = task_list.next;
     while (pos != &current_task->list)
     {
-        Task *t = container_of(pos, Task, list);
+        struct task *t = container_of(pos, struct task, list);
         if (t->state == TASK_STATE_READY && t != &idle) return t;
         pos = pos->next;
     }

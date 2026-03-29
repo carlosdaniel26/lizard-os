@@ -31,28 +31,28 @@
     X(65536)                                                                                                 \
     X(131072)
 
-typedef struct CacheNode {
-    ListHead list;
-    KMemCache *cache;
+struct cache_node {
+    struct list_head list;
+    struct kmem_cache *cache;
     size_t size;
-} CacheNode;
+};
 
 static bool kmalloc_initialized = false;
 static LIST_HEAD(kmalloc_cache_list);
-static KMemCache *kmalloc_node_cache = NULL;
+static struct kmem_cache *kmalloc_node_cache = NULL;
 
 void kmalloc_init(void)
 {
     InitListHead(&kmalloc_cache_list);
 
-    kmalloc_node_cache = kmemcache_create("kmalloc_node", sizeof(CacheNode), NULL, NULL);
+    kmalloc_node_cache = kmemcache_create("kmalloc_node", sizeof(struct cache_node), NULL, NULL);
 
     char name[KMEMCACHE_NAME_LEN];
 
 #define CREATE_CACHE(sz)                                                                                     \
     do                                                                                                       \
     {                                                                                                        \
-        CacheNode *node = kmemcache_alloc(kmalloc_node_cache);                                               \
+        struct cache_node *node = kmemcache_alloc(kmalloc_node_cache);                                               \
         node->size = (sz);                                                                                   \
         sprintf(name, "kmalloc_%u", (unsigned)(sz));                                                         \
         node->cache = kmemcache_create(name, (sz), NULL, NULL);                                              \
@@ -73,12 +73,12 @@ void *kmalloc(size_t size)
         kmalloc_init();
     }
 
-    ListHead *pos, *tmp;
-    CacheNode *best = NULL;
+    struct list_head *pos, *tmp;
+    struct cache_node *best = NULL;
 
     list_for_each(pos, tmp, &kmalloc_cache_list)
     {
-        CacheNode *node = container_of(pos, CacheNode, list);
+        struct cache_node *node = container_of(pos, struct cache_node, list);
         if (node->size >= size && (!best || node->size < best->size)) best = node;
     }
 
@@ -97,7 +97,7 @@ void kfree(void *ptr)
         kpanic("kfree: kmalloc not initialized");
     }
     /* belongs to a slab? */
-    Slab *slab = _get_slab(ptr);
+    struct slab *slab = _get_slab(ptr);
     if (_is_valid_slab(slab))
     {
         kmemcache_free(ptr);

@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-typedef struct RTCTimer {
+struct rtc_timer {
     u8 seconds;       /* 00*/
     u8 seconds_alarm; /* 01*/
     u8 minutes;       /* 02*/
@@ -18,7 +18,7 @@ typedef struct RTCTimer {
     u8 status_register_B; /* B*/
     u8 status_register_C; /* C*/
     u8 status_register_D; /* D*/
-} RTCTimer;
+};
 
-void rtc_write(const RTCTimer *in);
-void rtc_read(RTCTimer *out);
+void rtc_write(const struct rtc_timer *in);
+void rtc_read(struct rtc_timer *out);

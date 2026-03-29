@@ -15,12 +15,12 @@
 
 extern u8 kernel_stack[];
 
-static idt_entry idt[IDT_ENTRIES];
-static idt_ptr idt_descriptor;
+static struct idt_entry idt[IDT_ENTRIES];
+static struct idt_ptr idt_descriptor;
 
-void (*isr_table[IDT_ENTRIES])(CpuState *regs);
+void (*isr_table[IDT_ENTRIES])(struct cpu_state *regs);
 
-void isr_common_entry(u64 int_id, CpuState *regs)
+void isr_common_entry(u64 int_id, struct cpu_state *regs)
 {
     ptrace = regs;
 

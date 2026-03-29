@@ -45,47 +45,47 @@
 #define MBR_CHS_SECTOR_MASK 0x3F
 #define MBR_CHS_CYLINDER_HIGH_MASK 0xC0
 
-typedef struct __attribute__((packed)) {
+struct mbr_partition_entry {
     u8 status;
     u8 chs_first[3];
     u8 type;
     u8 chs_last[3];
     u32 lba_first;
     u32 sector_count;
-} MbrPartitionEntry;
+} __attribute__((packed));
 
-typedef struct __attribute__((packed)) {
+struct mbr_header {
     u8 boot_code[MBR_BOOT_CODE_SIZE];
-    MbrPartitionEntry partitions[MBR_PARTITION_COUNT];
+    struct mbr_partition_entry partitions[MBR_PARTITION_COUNT];
     u16 signature;
-} MbrHeader;
+} __attribute__((packed));
 
-typedef struct {
-    BlockDevice *parent_dev;
+struct mbr_partition_context {
+    struct block_device *parent_dev;
     u64 lba_start;
     u64 sector_count;
-} MbrPartitionContext;
+};
 
-typedef struct {
+struct mbr_partition_data {
     u64 start_lba;
     u64 sector_count;
-} MBRPartitionData;
+};
 
 /* Helpers */
 
-static inline bool mbr_is_valid(const MbrHeader *mbr)
+static inline bool mbr_is_valid(const struct mbr_header *mbr)
 {
     return mbr && mbr->signature == MBR_SIGNATURE;
 }
 
-static inline bool mbr_partition_is_used(const MbrPartitionEntry *p)
+static inline bool mbr_partition_is_used(const struct mbr_partition_entry *p)
 {
     return p && p->type != MBRYPE_EMPTY && p->sector_count != 0;
 }
 
-static inline bool mbr_partition_is_active(const MbrPartitionEntry *p)
+static inline bool mbr_partition_is_active(const struct mbr_partition_entry *p)
 {
     return p && p->status == MBR_PARTITION_ACTIVE;
 }
 
-int mbr_scan(BlockDevice *dev);
+int mbr_scan(struct block_device *dev);

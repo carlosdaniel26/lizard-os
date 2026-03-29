@@ -8,7 +8,7 @@
 #define debug_printf(fmt, ...)                                                                               \
     do                                                                                                       \
     {                                                                                                        \
-        TimeSpec ts = timespec_uptime();                                                                     \
+        struct time_spec ts = timespec_uptime();                                                                     \
         u64 ms = (u64)(ts.nsec / 1000000);                                                                   \
         kprintf("[%llu.", (u64)ts.sec);                                                                      \
         if (ms < 10)                                                                                         \

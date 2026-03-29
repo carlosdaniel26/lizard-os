@@ -6,7 +6,7 @@
 
 #define TASK_NAME_MAX_LEN 32
 
-typedef struct __attribute__((packed)) CpuState {
+struct cpu_state {
     u64 rax;
     u64 rbx;
     u64 rcx;
@@ -29,7 +29,7 @@ typedef struct __attribute__((packed)) CpuState {
     u64 rflags;
     u64 rsp;
     u64 ss;
-} CpuState;
+} __attribute__((packed));
 
 /* States */
 #define TASK_STATE_RUNNING 0
@@ -37,34 +37,34 @@ typedef struct __attribute__((packed)) CpuState {
 #define TASK_STATE_WAITING 2
 #define TASK_STATE_TERMINATED 3
 
-typedef struct Task {
-    ListHead list;
+struct task {
+    struct list_head list;
     char name[TASK_NAME_MAX_LEN];
 
     u8 state;
 
-    CpuState regs;
+    struct cpu_state regs;
 
     u32 priority;
     u32 ticks_remaining;
     u32 sleep_until; /* Absolute wake-up time in ms */
-} Task;
+};
 
-void task_create(struct Task *task, void (*entry_point)(void), const char *name, u32 priority);
+void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority);
 void task_save_context();
-void task_load_context(Task *task);
+void task_load_context(struct task *task);
 void task_tick();
 int task_switch();
 struct task *task_current();
-Task *next_ready_task();
+struct task *next_ready_task();
 void task_exit();
 
 void task_sleep(u32 ms);
 void idle_func();
 
 extern u8 scheduler_enabled;
-extern Task *current_task;
-extern ListHead task_list;
+extern struct task *current_task;
+extern struct list_head task_list;
 
-extern CpuState *ptrace;
-extern Task idle;
+extern struct cpu_state *ptrace;
+extern struct task idle;
