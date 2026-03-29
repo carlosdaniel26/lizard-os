@@ -41,7 +41,7 @@ static int setup_root(char *dev_str)
 
 __setup("root=", setup_root);
 
-int set_root(struct block_device *dev)
+int set_root(struct block_dev *dev)
 {
     if (dev == NULL)
     {
@@ -73,7 +73,7 @@ int set_root(struct block_device *dev)
 
 void vfs_init()
 {
-    struct block_device *dev = blkdev_manager_get_by_name(rootdev_str);
+    struct block_dev *dev = blkdev_manager_get_by_name(rootdev_str);
     if (dev == NULL)
     {
         kpanic("Failed to find root device %s", rootdev_str);

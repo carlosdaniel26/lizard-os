@@ -36,7 +36,7 @@ static void blkdev_free_id(blk_dev_t id)
     blkdev_id_bitmap[byte] &= ~(1 << bit);
 }
 
-int blkdev_manager_add(struct block_device *dev)
+int blkdev_manager_add(struct block_dev *dev)
 {
     struct list_head *pos, *tmp;
 
@@ -60,7 +60,7 @@ int blkdev_manager_add(struct block_device *dev)
 
     list_for_each(pos, tmp, &blk_devs)
     {
-        struct block_device *curr = (struct block_device *)pos;
+        struct block_dev *curr = (struct block_dev *)pos;
 
         if (strcmp(curr->name, dev->name) == 0)
         {
@@ -84,26 +84,26 @@ int blkdev_manager_add(struct block_device *dev)
 void blkdev_manager_remove(blk_dev_t id)
 {
     struct list_head *pos, *tmp;
-    struct block_device *curr;
+    struct block_dev *curr;
 
     blkdev_free_id(id);
 
     list_for_each(pos, tmp, &blk_devs)
     {
-        curr = (struct block_device *)pos;
+        curr = (struct block_dev *)pos;
 
         if (curr->id == id) break;
     }
 }
 
-struct block_device *blkdev_manager_get(blk_dev_t id)
+struct block_dev *blkdev_manager_get(blk_dev_t id)
 {
     struct list_head *pos, *tmp;
-    struct block_device *curr;
+    struct block_dev *curr;
 
     list_for_each(pos, tmp, &blk_devs)
     {
-        curr = (struct block_device *)pos;
+        curr = (struct block_dev *)pos;
 
         if (curr->id == id) return curr;
     }
@@ -111,14 +111,14 @@ struct block_device *blkdev_manager_get(blk_dev_t id)
     return NULL;
 }
 
-struct block_device *blkdev_manager_get_by_name(const char *name)
+struct block_dev *blkdev_manager_get_by_name(const char *name)
 {
     struct list_head *pos, *tmp;
-    struct block_device *curr;
+    struct block_dev *curr;
 
     list_for_each(pos, tmp, &blk_devs)
     {
-        curr = (struct block_device *)pos;
+        curr = (struct block_dev *)pos;
 
         if (strcmp(curr->name, name) == 0) return curr;
     }
@@ -126,10 +126,10 @@ struct block_device *blkdev_manager_get_by_name(const char *name)
     return NULL;
 }
 
-int blkdev_create_partition(struct block_device *parent, int part_num, u64 start, u64 secs)
+int blkdev_create_partition(struct block_dev *parent, int part_num, u64 start, u64 secs)
 {
-    struct block_device *part = zalloc(sizeof(struct block_device));
-    struct block_device_ops *ops = zalloc(sizeof(struct block_device_ops));
+    struct block_dev *part = zalloc(sizeof(struct block_dev));
+    struct block_dev_ops *ops = zalloc(sizeof(struct block_dev_ops));
 
     ops->read = blk_dev_part_read;
     ops->write = blk_dev_part_write;

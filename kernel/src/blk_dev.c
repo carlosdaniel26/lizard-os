@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int blk_dev_read(struct block_device *dev, u64 sector, void *buffer, size_t count)
+int blk_dev_read(struct block_dev *dev, u64 sector, void *buffer, size_t count)
 {
     if (!dev || !dev->ops || !dev->ops->read)
     {
@@ -15,7 +15,7 @@ int blk_dev_read(struct block_device *dev, u64 sector, void *buffer, size_t coun
     return dev->ops->read(dev, sector, buffer, count);
 }
 
-int blk_dev_write(struct block_device *dev, u64 sector, const void *buffer, size_t count)
+int blk_dev_write(struct block_dev *dev, u64 sector, const void *buffer, size_t count)
 {
     if (!dev || !dev->ops || !dev->ops->write)
     {
@@ -26,7 +26,7 @@ int blk_dev_write(struct block_device *dev, u64 sector, const void *buffer, size
     return dev->ops->write(dev, sector, buffer, count);
 }
 
-int blk_dev_part_read(struct block_device *dev, u64 sector, void *buffer, size_t count)
+int blk_dev_part_read(struct block_dev *dev, u64 sector, void *buffer, size_t count)
 {
     if (!dev || !dev->ops || !dev->ops->read)
     {
@@ -35,7 +35,7 @@ int blk_dev_part_read(struct block_device *dev, u64 sector, void *buffer, size_t
     }
 
     struct partition_private *part = (struct partition_private *)dev->private_data;
-    struct block_device *parent = part->parent;
+    struct block_dev *parent = part->parent;
 
     /* sector is an offset, bring it to the real world */
     u64 phys_sec = sector + part->start_lba;
@@ -43,7 +43,7 @@ int blk_dev_part_read(struct block_device *dev, u64 sector, void *buffer, size_t
     return part->parent->ops->read(parent, phys_sec, buffer, count);
 }
 
-int blk_dev_part_write(struct block_device *dev, u64 sector, const void *buffer, size_t count)
+int blk_dev_part_write(struct block_dev *dev, u64 sector, const void *buffer, size_t count)
 {
     if (!dev || !dev->ops || !dev->ops->write)
     {
@@ -52,7 +52,7 @@ int blk_dev_part_write(struct block_device *dev, u64 sector, const void *buffer,
     }
 
     struct partition_private *part = (struct partition_private *)dev->private_data;
-    struct block_device *parent = part->parent;
+    struct block_dev *parent = part->parent;
 
     /* sector is an offset, bring it to the real world */
     u64 phys_sec = sector + part->start_lba;

@@ -14,11 +14,11 @@ static u16 ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};
 #define PIC1_DATA 0x21
 #define PIC2_DATA 0xA1
 
-static int block_read(struct block_device *dev, u64 sector, void *buffer, size_t count);
-static int block_write(struct block_device *dev, u64 sector, void *buffer, size_t count);
-static int block_flush(struct block_device *dev);
+static int block_read(struct block_dev *dev, u64 sector, void *buffer, size_t count);
+static int block_write(struct block_dev *dev, u64 sector, void *buffer, size_t count);
+static int block_flush(struct block_dev *dev);
 
-static struct block_device_ops ata_block_ops = {.read = block_read, .write = block_write, .flush = block_flush};
+static struct block_dev_ops ata_block_ops = {.read = block_read, .write = block_write, .flush = block_flush};
 
 // static void unmask_ata_primary_irq()
 // {
@@ -140,7 +140,7 @@ int ata_detect_devices()
         name[3] = '0' + ata_id; /* id must be 0 or 1 */
         name[4] = '\0';
 
-        struct block_device *dev = zalloc(sizeof(struct block_device));
+        struct block_dev *dev = zalloc(sizeof(struct block_dev));
         strcpy(dev->name, name);
         dev->total_sectors = ata_dev->total_sectors;
         dev->sector_size = ata_dev->sector_size;
@@ -159,7 +159,7 @@ int ata_detect_devices()
 device_initcall(ata_detect_devices);
 
 /* Block Device */
-static int block_read(struct block_device *dev, u64 sector, void *buffer, size_t count)
+static int block_read(struct block_dev *dev, u64 sector, void *buffer, size_t count)
 {
     struct ata_device *ata_dev = (struct ata_device *)dev->private_data;
 
@@ -197,7 +197,7 @@ static int block_read(struct block_device *dev, u64 sector, void *buffer, size_t
     return 0;
 }
 
-static int block_write(struct block_device *dev, u64 sector, void *buffer, size_t count)
+static int block_write(struct block_dev *dev, u64 sector, void *buffer, size_t count)
 {
     struct ata_device *ata_dev = (struct ata_device *)dev->private_data;
 
@@ -235,7 +235,7 @@ static int block_write(struct block_device *dev, u64 sector, void *buffer, size_
     return 0;
 }
 
-static int block_flush(struct block_device *dev)
+static int block_flush(struct block_dev *dev)
 {
     (void)dev;
     return 0;

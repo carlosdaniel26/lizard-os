@@ -4,20 +4,20 @@
 #include <mbr.h>
 #include <stdio.h>
 
-static int mbr_read(struct block_device *dev, struct mbr_header *mbr)
+static int mbr_read(struct block_dev *dev, struct mbr_header *mbr)
 {
     /* Read first sector (LBA 0) */
     return blk_dev_read(dev, 0, mbr, 1);
 }
 
 /* Write MBR to disk */
-static int mbr_write(struct block_device *dev, const struct mbr_header *mbr)
+static int mbr_write(struct block_dev *dev, const struct mbr_header *mbr)
 {
     /* Write first sector (LBA 0) */
     return blk_dev_write(dev, 0, mbr, 1);
 }
 
-int mbr_scan(struct block_device *dev)
+int mbr_scan(struct block_dev *dev)
 {
     debug_printf("starting mbr_scan..\n");
     struct mbr_header mbr;

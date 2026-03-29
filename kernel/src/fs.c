@@ -84,7 +84,7 @@ int fs_type_count()
     return (int)atomic_read(&fstype_count);
 }
 
-struct fs_type *fs_detect(struct block_device *dev)
+struct fs_type *fs_detect(struct block_dev *dev)
 {
     struct list_head *pos, *tmp;
 

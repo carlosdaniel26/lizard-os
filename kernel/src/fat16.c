@@ -127,7 +127,7 @@ static int compare_filenames(const char *filename, const struct fat16_directory 
     return strcasecmp(filename, entry_name);
 }
 
-int fat16_detect(struct block_device *dev)
+int fat16_detect(struct block_dev *dev)
 {
     if (!dev || !dev->present) return -1;
 
@@ -141,7 +141,7 @@ int fat16_detect(struct block_device *dev)
     return -1;
 }
 
-int fat16_mount(struct block_device *dev, struct fat16 *fs)
+int fat16_mount(struct block_dev *dev, struct fat16 *fs)
 {
     if (!dev || !fs) return -1;
 
@@ -396,7 +396,7 @@ out:
 
 struct dentry *fat16_mount_fs(struct super_block *sb, const void *data)
 {
-    struct block_device *dev = (struct block_device *)data;
+    struct block_dev *dev = (struct block_dev *)data;
     struct fat16 *fs = (struct fat16 *)zalloc(sizeof(struct fat16));
     if (!fs) return NULL;
 

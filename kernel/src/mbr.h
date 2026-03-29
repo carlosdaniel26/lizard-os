@@ -61,7 +61,7 @@ struct mbr_header {
 } __attribute__((packed));
 
 struct mbr_partition_context {
-    struct block_device *parent_dev;
+    struct block_dev *parent_dev;
     u64 lba_start;
     u64 sector_count;
 };
@@ -88,4 +88,4 @@ static inline bool mbr_partition_is_active(const struct mbr_partition_entry *p)
     return p && p->status == MBR_PARTITION_ACTIVE;
 }
 
-int mbr_scan(struct block_device *dev);
+int mbr_scan(struct block_dev *dev);

@@ -70,7 +70,7 @@ struct fat16_directory {
 
 struct fat16 {
     struct fat_header header;
-    struct block_device *dev;
+    struct block_dev *dev;
 
     u32 fat_start_lba;
     u32 root_dir_lba;
@@ -80,8 +80,8 @@ struct fat16 {
     u32 total_clusters;
 };
 
-int fat16_detect(struct block_device *dev);
-int fat16_mount(struct block_device *dev, struct fat16 *fs);
+int fat16_detect(struct block_dev *dev);
+int fat16_mount(struct block_dev *dev, struct fat16 *fs);
 int fat16_init();
 
 struct dentry *fat16_mount_fs(struct super_block *sb, const void *data);

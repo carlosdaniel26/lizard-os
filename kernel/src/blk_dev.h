@@ -8,7 +8,7 @@
 
 typedef u32 blk_dev_t;
 
-struct block_device_ops {
+struct block_dev_ops {
     int (*read)();
     int (*write)();
 
@@ -16,7 +16,7 @@ struct block_device_ops {
     int (*ioctl)();
 };
 
-struct block_device {
+struct block_dev {
     struct list_head list;
     char name[DEFAULT_NAME_SIZE];
     blk_dev_t id;
@@ -25,7 +25,7 @@ struct block_device {
     u32 sector_size;
     u32 max_transfer_sectors;
 
-    struct block_device_ops *ops;
+    struct block_dev_ops *ops;
     void *private_data;
 
     bool initialized;
@@ -38,23 +38,23 @@ struct block_device {
 };
 
 struct partition_private {
-    struct block_device *parent;
+    struct block_dev *parent;
     u64 start_lba;
     u64 sec_count;
 };
 
 /* Block layer management */
-int blkdev_manager_add(struct block_device *dev);
-int blk_dev_unregister(struct block_device *dev);
-struct block_device *blk_dev_find(const char *name);
+int blkdev_manager_add(struct block_dev *dev);
+int blk_dev_unregister(struct block_dev *dev);
+struct block_dev *blk_dev_find(const char *name);
 
 /* Utility functions */
-u64 blk_dev_size(struct block_device *dev); /* in bytes */
-bool blk_dev_ready(struct block_device *dev);
+u64 blk_dev_size(struct block_dev *dev); /* in bytes */
+bool blk_dev_ready(struct block_dev *dev);
 
 /* Public API */
-int blk_dev_read(struct block_device *dev, u64 sector, void *buffer, size_t count);
-int blk_dev_write(struct block_device *dev, u64 sector, const void *buffer, size_t count);
+int blk_dev_read(struct block_dev *dev, u64 sector, void *buffer, size_t count);
+int blk_dev_write(struct block_dev *dev, u64 sector, const void *buffer, size_t count);
 
-int blk_dev_part_read(struct block_device *dev, u64 sector, void *buffer, size_t count);
-int blk_dev_part_write(struct block_device *dev, u64 sector, const void *buffer, size_t count);
+int blk_dev_part_read(struct block_dev *dev, u64 sector, void *buffer, size_t count);
+int blk_dev_part_write(struct block_dev *dev, u64 sector, const void *buffer, size_t count);

@@ -96,7 +96,7 @@ int fs_unregister(struct fs_type *type);
 struct fs_type *fs_find(const char *name);
 struct fs_type *fs_find_locked(const char *name);
 int fs_type_count(void);
-struct fs_type *fs_detect(struct block_device *dev);
+struct fs_type *fs_detect(struct block_dev *dev);
 
 struct dentry *dentry_alloc(const char *name);
 void dentry_get(struct dentry *d);
