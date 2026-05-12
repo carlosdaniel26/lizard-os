@@ -64,17 +64,8 @@ download_by_hash() {
     fi
 }
 
-clone_repo_commit \
-    https://codeberg.org/osdev/freestnd-c-hdrs-0bsd.git \
-    freestnd-c-hdrs \
-    a87c192f3eb66b0806740dc67325f9ad23fc2d0b
-
-clone_repo_commit \
-    https://codeberg.org/osdev/cc-runtime.git \
-    cc-runtime \
-    dae79833b57a01b9fd3e359ee31def69f5ae899b
-
 download_by_hash \
     https://github.com/limine-bootloader/limine/raw/4687a182be23939c2d9f15db970382dc353ed956/limine.h \
     src/limine.h \
     6879e626f34c1be25ac2f72bf43b083fc2b53887280bb0fcdaee790e258c6974
+
