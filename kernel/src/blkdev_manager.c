@@ -76,7 +76,8 @@ int blkdev_manager_add(struct block_dev *dev)
     debug_printf("Registered block device: %s (sectors: %u, size: %u bytes)\n", dev->name, dev->total_sectors,
                  dev->sector_size);
 
-    mbr_scan(dev);
+    if (dev->type == BLKDEV_TYPE_PHYSICAL)
+        mbr_scan(dev);
 
     return 0;
 }
@@ -148,6 +149,7 @@ int blkdev_create_partition(struct block_dev *parent, int part_num, u64 start, u
     }
 
     strcpy(part->name, name);
+    part->type = BLKDEV_TYPE_PARTITION;
     part->total_sectors = secs;
     part->sector_size = parent->sector_size;
     part->ops = ops;

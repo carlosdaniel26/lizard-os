@@ -142,6 +142,7 @@ int ata_detect_devices()
 
         struct block_dev *dev = zalloc(sizeof(struct block_dev));
         strcpy(dev->name, name);
+        dev->type = BLKDEV_TYPE_PHYSICAL;
         dev->total_sectors = ata_dev->total_sectors;
         dev->sector_size = ata_dev->sector_size;
         dev->ops = &ata_block_ops;

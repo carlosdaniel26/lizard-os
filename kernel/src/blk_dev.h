@@ -8,6 +8,11 @@
 
 typedef u32 blk_dev_t;
 
+enum blkdev_type {
+    BLKDEV_TYPE_PHYSICAL,
+    BLKDEV_TYPE_PARTITION,
+};
+
 struct block_dev_ops {
     int (*read)();
     int (*write)();
@@ -20,6 +25,7 @@ struct block_dev {
     struct list_head list;
     char name[DEFAULT_NAME_SIZE];
     blk_dev_t id;
+    enum blkdev_type type;
 
     u64 total_sectors;
     u32 sector_size;
