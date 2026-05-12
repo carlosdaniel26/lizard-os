@@ -19,7 +19,6 @@ static int mbr_write(struct block_dev *dev, const struct mbr_header *mbr)
 
 int mbr_scan(struct block_dev *dev)
 {
-    debug_printf("starting mbr_scan..\n");
     struct mbr_header mbr;
 
     if (mbr_read(dev, &mbr) == -1)
@@ -51,7 +50,8 @@ int mbr_scan(struct block_dev *dev)
 
         kprintf("mbr: partition %u type=0x%x start=%u sectors=%u\n", i + 1, partition->type, start, count);
 
-        if (blkdev_create_partition(dev, i, start, count)) created++;
+        if (blkdev_create_partition(dev, i, start, count) == 0) 
+            created++;
     }
 
     return created;
