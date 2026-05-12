@@ -90,7 +90,7 @@ int buddy_init()
     /* mark usable pages */
     struct limine_memmap_response *resp = memmap_request.response;
 
-    if (!resp) return;
+    if (!resp) return -1;
 
     const u64 entry_count = resp->entry_count;
     for (u64 i = 0; i < entry_count; i++)

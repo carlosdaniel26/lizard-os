@@ -69,17 +69,20 @@ int set_root(struct block_dev *dev)
     }
 
     kprintf("VFS: Mounted root (%s) on %s\n", type->name, dev->name);
-}
+    return 0;
+    }
 
-void vfs_init()
-{
+    int vfs_init()
+    {
     struct block_dev *dev = blkdev_manager_get_by_name(rootdev_str);
     if (dev == NULL)
     {
         kpanic("Failed to find root device %s", rootdev_str);
     }
 
-    setup_root(rootdev_str);
-}
+    set_root(dev);
+    return 0;
+    }
+
 
 late_initcall(vfs_init);

@@ -5,6 +5,7 @@
 #include <fat16.h>
 #include <fs.h>
 #include <helpers.h>
+#include <init.h>
 #include <kmalloc.h>
 #include <setup.h>
 #include <stdio.h>

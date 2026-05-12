@@ -3,6 +3,7 @@
 #include <kernelcfg.h>
 #include <limine.h>
 #include <pit.h>
+#include <sched.h>
 #include <stack.h>
 #include <stdbool.h>
 #include <types.h>

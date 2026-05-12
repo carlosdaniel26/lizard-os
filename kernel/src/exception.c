@@ -3,6 +3,7 @@
 #include <init.h>
 #include <isr_vector.h>
 #include <kernelcfg.h>
+#include <panic.h>
 
 #define EXCEPTION_PAGE_FAULT 14
 

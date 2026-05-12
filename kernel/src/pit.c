@@ -6,6 +6,7 @@
 #include <ktime.h>
 #include <pic.h>
 #include <pit.h>
+#include <sched.h>
 #include <stdio.h>
 #include <task.h>
 

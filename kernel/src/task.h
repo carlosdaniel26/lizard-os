@@ -53,6 +53,7 @@ struct task {
 void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority);
 void task_save_context();
 void task_load_context(struct task *task);
+int task_switch_to(struct task *next_task);
 void task_tick();
 int task_switch();
 struct task *task_current();
