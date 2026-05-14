@@ -23,4 +23,4 @@ struct idt_ptr {
 void isr_common_entry(u64 int_id, struct cpu_state *regs);
 void set_idt_gate(int vector, void (*isr)(), u8 flags);
 
-extern void (*isr_table[IDT_ENTRIES])(struct cpu_state *regs);
+extern void (**isr_table)(struct cpu_state *regs);

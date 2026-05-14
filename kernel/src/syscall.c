@@ -17,7 +17,7 @@ static int syscall_init()
     // For now, we only have one syscall
     syscall_table[0] = &sys_sleep;
 
-    set_idt_gate(SYSCALL_ISR_INDEX, isr_vectors[SYSCALL_ISR_INDEX], 0xEE);
+    set_idt_gate(SYSCALL_ISR_INDEX, isr_stub_table[SYSCALL_ISR_INDEX], 0xEE);
 
     isr_table[SYSCALL_ISR_INDEX] = &isr_syscall;
 

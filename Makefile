@@ -6,7 +6,9 @@ ARCH := x86_64
 
 QEMUDEBUGFLAGS := -S -s
 QEMUHDAFLAGS := -drive file=hda.img,format=raw,if=ide
-QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt $(QEMUHDAFLAGS)
+QEMU_WINDOW_NAME = LIZARD-OS
+QMEU_PROCESSOR_NAME = generic qemu processor
+QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt $(QEMUHDAFLAGS) -name guest=$(QEMU_WINDOW_NAME),process=$(QEMU_WINDOW_NAME)
 
 SRC_DIRS := kernel/src
 FORMAT_FILES := $(shell find $(SRC_DIRS) -type f \( -name "*.c" -o -name "*.h" \))

@@ -5,6 +5,7 @@
 #include <isr_vector.h>
 #include <kernelcfg.h>
 #include <keyboard.h>
+#include <kmalloc.h>
 #include <panic.h>
 #include <pic.h>
 #include <stdio.h>
@@ -18,13 +19,13 @@ extern u8 kernel_stack[];
 static struct idt_entry idt[IDT_ENTRIES];
 static struct idt_ptr idt_descriptor;
 
-void (*isr_table[IDT_ENTRIES])(struct cpu_state *regs);
+void (**isr_table)(struct cpu_state *regs);
 
 void isr_common_entry(u64 int_id, struct cpu_state *regs)
 {
     ptrace = regs;
 
-    if (isr_table[int_id])
+    if (isr_table && isr_table[int_id])
     {
         isr_table[int_id](regs);
         PIC_sendEOI(15);
@@ -52,8 +53,10 @@ static inline void idt_load()
 
 int init_idt()
 {
+    isr_table = zalloc(sizeof(void *) * IDT_ENTRIES);
+
     for (int i = 0; i < IDT_ENTRIES; i++)
-        set_idt_gate(i, isr_vectors[i], 0x8E);
+        set_idt_gate(i, isr_stub_table[i], 0x8E);
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base = (u64)&idt;
