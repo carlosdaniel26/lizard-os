@@ -41,10 +41,13 @@ struct block_dev {
     u64 write_count;
 
     bool present;
+
+    struct block_dev *parent;
+    struct list_head children;
+    struct list_head siblings;
 };
 
 struct partition_private {
-    struct block_dev *parent;
     u64 start_lba;
     u64 sec_count;
 };

@@ -162,10 +162,14 @@ int blkdev_create_partition(struct block_dev *parent, int part_num, u64 start, u
     part->read_only = false;
     part->present = true;
 
+    part->parent = parent;
+    InitListHead(&part->children);
+    InitListHead(&part->siblings);
+    list_add_tail(&part->siblings, &parent->children);
+
     struct partition_private *part_info = (struct partition_private *)part->private_data;
     part_info->start_lba = start;
     part_info->sec_count = secs;
-    part_info->parent = parent;
 
     blkdev_manager_add(part);
 

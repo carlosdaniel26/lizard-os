@@ -35,12 +35,12 @@ int blk_dev_part_read(struct block_dev *dev, u64 sector, void *buffer, size_t co
     }
 
     struct partition_private *part = (struct partition_private *)dev->private_data;
-    struct block_dev *parent = part->parent;
+    struct block_dev *parent = dev->parent;
 
     /* sector is an offset, bring it to the real world */
     u64 phys_sec = sector + part->start_lba;
 
-    return part->parent->ops->read(parent, phys_sec, buffer, count);
+    return parent->ops->read(parent, phys_sec, buffer, count);
 }
 
 int blk_dev_part_write(struct block_dev *dev, u64 sector, const void *buffer, size_t count)
@@ -52,10 +52,10 @@ int blk_dev_part_write(struct block_dev *dev, u64 sector, const void *buffer, si
     }
 
     struct partition_private *part = (struct partition_private *)dev->private_data;
-    struct block_dev *parent = part->parent;
+    struct block_dev *parent = dev->parent;
 
     /* sector is an offset, bring it to the real world */
     u64 phys_sec = sector + part->start_lba;
 
-    return part->parent->ops->write(parent, phys_sec, buffer, count);
+    return parent->ops->write(parent, phys_sec, buffer, count);
 }

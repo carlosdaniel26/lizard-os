@@ -151,6 +151,10 @@ int ata_detect_devices()
         dev->read_only = false;
         dev->present = true;
 
+        dev->parent = NULL;
+        InitListHead(&dev->children);
+        InitListHead(&dev->siblings);
+
         blkdev_manager_add(dev);
     }
 
