@@ -1,10 +1,10 @@
 #include <gdt.h>
 #include <init.h>
 
-struct global_descriptor gdt[5];
-struct gdt_ptr gdt_pointer;
+static struct global_descriptor boot_gdt[5] __initdata;
+static struct gdt_ptr boot_gdt_ptr __initdata;
 
-struct global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity)
+struct global_descriptor __init create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity)
 {
     struct global_descriptor gate;
 
@@ -18,10 +18,10 @@ struct global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 gran
     return gate;
 }
 
-static inline void gdt_load()
+static inline void __init gdt_load()
 {
-    gdt_pointer.limit = (sizeof(struct global_descriptor) * 5) - 1;
-    gdt_pointer.base = (u64)&gdt;
+    boot_gdt_ptr.limit = (sizeof(struct global_descriptor) * 5) - 1;
+    boot_gdt_ptr.base = (u64)&boot_gdt;
 
     asm volatile("lgdt %0\n"
 
@@ -42,17 +42,17 @@ static inline void gdt_load()
                  "mov %%ax, %%gs\n"
                  "mov %%ax, %%ss\n"
                  :
-                 : "m"(gdt_pointer)
+                 : "m"(boot_gdt_ptr)
                  : "memory", "rax", "ax");
 }
 
-static int init_gdt()
+static int __init init_gdt()
 {
-    gdt[0] = create_gdt_gate(0, 0, 0x00, 0x00); // Null
-    gdt[1] = create_gdt_gate(0, 0, 0x9A, 0xA0); // Code: exec/read, ring 0
-    gdt[2] = create_gdt_gate(0, 0, 0x92, 0xA0); // Data: read/write, ring 0
-    gdt[3] = create_gdt_gate(0, 0, 0xFA, 0xA0); // Code: user
-    gdt[4] = create_gdt_gate(0, 0, 0xF2, 0xA0); // Data: user
+    boot_gdt[0] = create_gdt_gate(0, 0, 0x00, 0x00); // Null
+    boot_gdt[1] = create_gdt_gate(0, 0, 0x9A, 0xA0); // Code: exec/read, ring 0
+    boot_gdt[2] = create_gdt_gate(0, 0, 0x92, 0xA0); // Data: read/write, ring 0
+    boot_gdt[3] = create_gdt_gate(0, 0, 0xFA, 0xA0); // Code: user
+    boot_gdt[4] = create_gdt_gate(0, 0, 0xF2, 0xA0); // Data: user
 
     gdt_load();
 

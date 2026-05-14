@@ -4,6 +4,7 @@
 
 typedef int (*initcall_t)();
 
+#define __init __attribute__((section(".init.text"), used))
 #define __initdata __attribute__((section(".init.data"), used))
 #define __initconst __attribute__((section(".init.const"), used))
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <init.h>
 #include <types.h>
 
 struct global_descriptor {
@@ -16,4 +17,4 @@ struct gdt_ptr {
     u64 base;
 } __attribute__((packed));
 
-struct global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity);
+struct global_descriptor __init create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity);
