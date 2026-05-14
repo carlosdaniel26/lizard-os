@@ -8,6 +8,7 @@
 #include <kmalloc.h>
 #include <panic.h>
 #include <pic.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <syscall.h>
 #include <task.h>
@@ -16,7 +17,7 @@
 
 extern u8 kernel_stack[];
 
-static struct idt_entry idt[IDT_ENTRIES];
+static struct idt_entry idt[IDT_ENTRIES] __page_aligned;
 static struct idt_ptr idt_descriptor;
 
 void (**isr_table)(struct cpu_state *regs);

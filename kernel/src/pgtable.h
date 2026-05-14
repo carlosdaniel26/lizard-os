@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <types.h>
 
 #define PAGE_PRESENT (1 << 0)
@@ -11,8 +12,6 @@
 #define PAGE_DIRTY (1 << 6)
 #define PAGE_HUGE (1 << 7)
 #define PAGE_GLOBAL (1 << 8)
-
-#define PAGE_SIZE 4096UL
 
 u64 *pgtable_alloc_table();
 u64 *pgtable_free(u64 *pml4);
