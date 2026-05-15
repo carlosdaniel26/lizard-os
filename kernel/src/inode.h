@@ -1,0 +1,29 @@
+#pragma once
+
+#include <types.h>
+
+struct super_block;
+struct dentry;
+struct inode;
+
+struct inode_ops {
+    int (*lookup)(struct inode *dir, struct dentry *dentry);
+    int (*create)(struct inode *dir, struct dentry *dentry, int mode);
+    int (*mkdir)(struct inode *dir, struct dentry *dentry, int mode);
+    int (*unlink)(struct inode *dir, struct dentry *dentry);
+    int (*rename)(struct inode *old, struct inode *new);
+};
+
+struct inode {
+    u32 mode;
+    u64 size;
+
+    struct inode_ops *i_ops;
+    struct file_ops *f_ops;
+
+    struct super_block *sb;
+    void *private_data;
+};
+
+struct inode *inode_alloc(struct super_block *sb);
+void inode_free(struct inode *inode);

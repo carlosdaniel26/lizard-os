@@ -84,5 +84,26 @@ int set_root(struct block_dev *dev)
     return 0;
     }
 
+struct dentry *vfs_lookup(struct dentry *parent, const char *name)
+{
+    struct dentry *d = dentry_lookup(parent, name);
+    if (d) return d;
+
+    d = dentry_alloc(name);
+    if (!d) return NULL;
+
+    if (parent->inode && parent->inode->i_ops && parent->inode->i_ops->lookup)
+    {
+        if (parent->inode->i_ops->lookup(parent->inode, d) == 0)
+        {
+            dentry_add(parent, d);
+            return d;
+        }
+    }
+
+    dentry_put(d);
+    return NULL;
+}
+
 
 late_initcall(vfs_init);

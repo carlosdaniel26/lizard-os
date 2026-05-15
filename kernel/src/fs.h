@@ -6,25 +6,13 @@
 #include <spinlock.h>
 #include <types.h>
 
+/* Forward declarations */
+struct dentry;
+struct inode;
+struct super_block;
 
-
-
-struct dentry {
-    struct list_head sibling;
-    struct list_head children;
-
-    char name[NAME_MAX];
-    u32 name_len;
-
-    struct dentry *parent;
-
-    struct inode *inode;
-
-    struct spinlock_t lock;
-    struct atomic_t refcount;
-
-    u32 flags;
-};
+#include <dentry.h>
+#include <inode.h>
 
 struct super_block {
     struct list_head list;
@@ -57,14 +45,6 @@ struct fs_type {
     void *private_data;
 };
 
-struct inode_ops {
-    int (*lookup)(struct inode *dir, struct dentry *dentry);
-    int (*create)(struct inode *dir, struct dentry *dentry, int mode);
-    int (*mkdir)(struct inode *dir, struct dentry *dentry, int mode);
-    int (*unlink)(struct inode *dir, struct dentry *dentry);
-    int (*rename)(struct inode *old, struct inode *new);
-};
-
 struct file {
     struct inode *inode;
     u64 offset;
@@ -80,29 +60,9 @@ struct file_ops {
     int (*release)(struct inode *inode, struct file *file);
 };
 
-struct inode {
-    u32 mode;
-    u64 size;
-
-    struct inode_ops *i_ops;
-    struct file_ops *f_ops;
-
-    struct super_block *sb;
-    void *private_data;
-};
-
 int fs_register(struct fs_type *type);
 int fs_unregister(struct fs_type *type);
 struct fs_type *fs_find(const char *name);
 struct fs_type *fs_find_locked(const char *name);
 int fs_type_count(void);
 struct fs_type *fs_detect(struct block_dev *dev);
-
-struct dentry *dentry_alloc(const char *name);
-void dentry_get(struct dentry *d);
-void dentry_put(struct dentry *d);
-struct dentry *dentry_lookup(struct dentry *parent, const char *name);
-void dentry_add(struct dentry *parent, struct dentry *child);
-
-struct inode *inode_alloc(struct super_block *sb);
-void inode_free(struct inode *inode);
