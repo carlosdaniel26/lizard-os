@@ -6,3 +6,5 @@
 *.img
 qemu_log.txt
 .vscode/
+
+kernel.map.txt
