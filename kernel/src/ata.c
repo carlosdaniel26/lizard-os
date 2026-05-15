@@ -42,6 +42,7 @@ static int ata_wait(u16 io_base, u8 mask, int set)
         {
             if ((status & mask) == 0) return 0;
         }
+        io_wait();
     }
     return -1;
 }
