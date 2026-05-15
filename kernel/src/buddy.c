@@ -159,13 +159,14 @@ int buddy_init()
     }
 
     /* reserve kernel memory */
-    uintptr_t kernel_size = (uintptr_t)&kernel_end - (uintptr_t)&kernel_start;
-
     uintptr_t kernel_phys_start = kernel_address_request.response->physical_base;
+    uintptr_t kernel_virt_start = (uintptr_t)&kernel_start;
+    uintptr_t kernel_virt_end = (uintptr_t)&kernel_end;
+    uintptr_t kernel_size = kernel_virt_end - kernel_virt_start;
     uintptr_t kernel_phys_end = kernel_phys_start + kernel_size;
 
     u64 kernel_start_pfn = kernel_phys_start / PAGE_SIZE;
-    u64 kernel_end_pfn = kernel_phys_end / PAGE_SIZE;
+    u64 kernel_end_pfn = align_up(kernel_phys_end, PAGE_SIZE) / PAGE_SIZE;
 
     for (u64 pfn = kernel_start_pfn; pfn < kernel_end_pfn; pfn++)
         buddy.pages[pfn].flags = PAGE_RESERVED;
