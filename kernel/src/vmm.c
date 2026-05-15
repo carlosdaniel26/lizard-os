@@ -24,36 +24,42 @@ u64 *current_pml4 = NULL;
 u64 *kpml4 = NULL;
 extern u64 hhdm_offset;
 extern struct limine_executable_address_request kernel_address_request;
+extern volatile struct limine_memmap_request memmap_request;
 
 static int vmm_init(void)
 {
     kpml4 = pgtable_alloc_table();
     current_pml4 = kpml4;
 
-    /* get regions from buddy then maps all the regions */
-
-    u64 vir = kernel_address_request.response->virtual_base;
-    u64 phys = kernel_address_request.response->physical_base;
+    /* 1. Map the kernel */
     u64 vstart = align_down((u64)&kernel_start, PAGE_SIZE);
     u64 vend = align_up((u64)&kernel_end, PAGE_SIZE);
+    u64 phys = kernel_address_request.response->physical_base;
     u64 pstart = phys - ((u64)&kernel_start - vstart);
-
     u64 kernel_pages = (vend - vstart) / PAGE_SIZE;
 
     pgtable_maprange(kpml4, vstart, pstart, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
 
-    char *ptr = (char *)0xffff8000bff7dfd0; /*fault addr */
-    char *page = (char *)align_down((uintptr_t)ptr, PAGE_SIZE);
-    extern u64 *kpml4;
-
+    /* 2. Map the framebuffer */
     pgtable_maprange(kpml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
                      framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
-    /* map direct mapped memory */
+    /* 3. Map every region in the memory map to HHDM */
+    struct limine_memmap_response *memmap = memmap_request.response;
+    if (!memmap) kpanic("VMM: No memory map from Limine");
 
-    u64 tables_needed = DIV_UP(highest_addr, PAGE_SIZE);
-    if (tables_needed > highest_addr) kpanic("VMM: tables_needed overflow");
-    pgtable_maprange(kpml4, hhdm_offset, 0, tables_needed, PAGE_PRESENT | PAGE_WRITABLE);
+    for (u64 i = 0; i < memmap->entry_count; i++)
+    {
+        struct limine_memmap_entry *entry = memmap->entries[i];
+
+        /* Align to page boundaries */
+        u64 start = align_down(entry->base, PAGE_SIZE);
+        u64 end = align_up(entry->base + entry->length, PAGE_SIZE);
+
+        u64 pages = (end - start) / PAGE_SIZE;
+        pgtable_maprange(kpml4, start + hhdm_offset, start, pages, PAGE_PRESENT | PAGE_WRITABLE);
+    }
+
     pgtable_switch(kpml4);
 
     return 0;

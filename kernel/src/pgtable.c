@@ -88,13 +88,10 @@ void pgtable_map(u64 *pml4, u64 virt, u64 phys, u64 flags)
     pgtable_invlpg((void *)virt);
 }
 
-void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 length, u64 flags)
+void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 pages, u64 flags)
 {
-    /* check if maps ffffffff7f80ebb7, print yes or no and hlt*/
-
-    for (u64 i = 0; i <= length; i++)
+    for (u64 i = 0; i < pages; i++)
     {
-        // debug_printf("Mapping page: virt=0x%x phys=0x%x\n", virt, phys);
         pgtable_map(pml4, virt, phys, flags);
         virt += PAGE_SIZE;
         phys += PAGE_SIZE;
@@ -121,7 +118,7 @@ void pgtable_unmap(u64 *pml4, u64 virt)
 
     pt[pt_i] = 0;
     pgtable_invlpg((void *)virt);
-    buddy_free((void *)virt - hhdm_offset, 0);
+    buddy_free((void *)((uintptr_t)virt - hhdm_offset), 0);
 
     if (pgtable_table_empty(pt))
     {
