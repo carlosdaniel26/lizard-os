@@ -3,7 +3,7 @@
 #include <task.h>
 #include <types.h>
 
-#define MAX_SYSCALLS 256
+#define SYSCALL_ENTRIES 256
 
 typedef void (*syscall_handler)(struct cpu_state *regs);
 

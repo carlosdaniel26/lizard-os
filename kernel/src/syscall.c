@@ -2,10 +2,11 @@
 #include <isr_vector.h>
 #include <stdio.h>
 #include <syscall.h>
+#include <kmalloc.h>
 
 #define SYSCALL_ISR_INDEX 0x80
 
-static syscall_handler syscall_table[MAX_SYSCALLS];
+syscall_handler *syscall_table;
 
 void isr_syscall(struct cpu_state *regs)
 {
@@ -14,7 +15,8 @@ void isr_syscall(struct cpu_state *regs)
 
 static int syscall_init()
 {
-    // For now, we only have one syscall
+    syscall_table = zalloc(sizeof(syscall_handler) * SYSCALL_ENTRIES);
+
     syscall_table[0] = &sys_sleep;
 
     set_idt_gate(SYSCALL_ISR_INDEX, isr_stub_table[SYSCALL_ISR_INDEX], 0xEE);
@@ -36,7 +38,7 @@ void sys_sleep(struct cpu_state *regs)
 void syscall_handler_c(struct cpu_state *regs)
 {
     u32 syscall_num = regs->rax;
-    if (syscall_num < MAX_SYSCALLS && syscall_table[syscall_num] != NULL)
+    if (syscall_num < SYSCALL_ENTRIES && syscall_table[syscall_num] != NULL)
     {
         syscall_handler handler = syscall_table[syscall_num];
         handler(regs);
