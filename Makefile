@@ -138,6 +138,17 @@ $(IMAGE_NAME).hdd: limine/limine kernel
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/BOOTX64.EFI ::/EFI/BOOT
 	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/BOOTIA32.EFI ::/EFI/BOOT
 
+.PHONY: mount
+mount:
+	sudo mkdir -p /mnt/lizard
+	sudo losetup -o 1048576 -f hda.img
+	sudo mount /dev/loop0 /mnt/lizard
+
+.PHONY: umount
+umount:
+	sudo umount /mnt/lizard
+	sudo losetup -d /dev/loop0
+
 .PHONY: clean
 clean:
 	$(MAKE) -C kernel clean
