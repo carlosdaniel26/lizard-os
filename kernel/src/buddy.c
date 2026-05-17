@@ -25,15 +25,10 @@ struct buddy_allocator buddy;
 
 unsigned int pages_to_order(unsigned int pages)
 {
-    unsigned int order = 0;
-    unsigned int size = 1;
+    if (pages <= 1)
+        return 0;
 
-    while (size < pages)
-    {
-        size <<= 1;
-        order++;
-    }
-    return order;
+    return 32 - __builtin_clz(pages - 1);
 }
 
 static size_t detect_page_count(void)
@@ -70,95 +65,21 @@ int buddy_init()
     buddy.page_count = detect_page_count();
     buddy.pages = early_alloc(buddy.page_count * sizeof(struct buddy_page), 0);
 
-    const size_t page_count = buddy.page_count;
-    /* init reserved to later free just the usable parts */
-    for (size_t i = 0; i < page_count; i++)
-    {
-        buddy.pages[i].flags = PAGE_RESERVED;
-        buddy.pages[i].order = 0;
-    }
-
     /* initialize free lists */
     for (int order = 0; order <= MAX_ORDER; order++)
     {
-        buddy.free_areas[order].free_list.next = &buddy.free_areas[order].free_list;
-        buddy.free_areas[order].free_list.prev = &buddy.free_areas[order].free_list;
-
+        InitListHead(&buddy.free_areas[order].free_list);
         buddy.free_areas[order].free_count = 0;
     }
 
-    /* mark usable pages */
-    struct limine_memmap_response *resp = memmap_request.response;
-
-    if (!resp) return -1;
-
-    const u64 entry_count = resp->entry_count;
-    for (u64 i = 0; i < entry_count; i++)
+    /* Mark EVERYTHING as reserved first. This is fast as it's just a loop. */
+    memset(buddy.pages, 0, buddy.page_count * sizeof(struct buddy_page));
+    for (size_t i = 0; i < buddy.page_count; i++)
     {
-        struct limine_memmap_entry *e = resp->entries[i];
-
-        if (e->type != LIMINE_MEMMAP_USABLE) continue; /* skip non-usable regions */
-
-        uintptr_t base = align_up(e->base, PAGE_SIZE);
-        uintptr_t end = align_down(e->base + e->length, PAGE_SIZE);
-
-        if (base >= end) continue; /* unusable region */
-
-        int start_pfn = base / PAGE_SIZE;
-        int end_pfn = end / PAGE_SIZE;
-
-        int curr_pfn = start_pfn;
-
-        /* allright this is usable */
-        while (curr_pfn < end_pfn)
-        {
-            u8 order = MAX_ORDER;
-
-            /* find biggest block */
-            while (order > 0)
-            {
-                if (!IS_ALIGNED(curr_pfn, order) || !BLOCK_FITS(curr_pfn, order, end_pfn))
-                {
-                    order--; /* try a smaller block*/
-                    continue;
-                }
-
-                break; /* found largest block */
-            }
-
-            /* check if any block is being used */
-            int can_use = 1;
-            for (u64 p = 0; p < (1UL << order); p++)
-            {
-                if (buddy.pages[curr_pfn + p].flags == PAGE_FREE)
-                {
-                    can_use = 0;
-                    break;
-                }
-            }
-
-            if (can_use)
-            {
-                buddy_add_block(&buddy.pages[curr_pfn], order);
-
-                for (u64 j = 0; j < (1UL << order); j++)
-                    buddy.pages[curr_pfn + j].flags = PAGE_FREE;
-            }
-
-            curr_pfn += 1UL << order;
-        }
+        buddy.pages[i].flags = PAGE_RESERVED;
     }
 
-    /* reserve early_alloc allocated memory */
-    int start_page = align_down(early_base, PAGE_SIZE) / PAGE_SIZE;
-    int end_page = align_up(early_current, PAGE_SIZE) / PAGE_SIZE;
-
-    for (int p = start_page; p < end_page; p++)
-    {
-        buddy.pages[p].flags = PAGE_RESERVED;
-    }
-
-    /* reserve kernel memory */
+    /* Determine kernel and early_alloc ranges to keep them reserved. */
     uintptr_t kernel_phys_start = kernel_address_request.response->physical_base;
     uintptr_t kernel_virt_start = (uintptr_t)&kernel_start;
     uintptr_t kernel_virt_end = (uintptr_t)&kernel_end;
@@ -168,8 +89,68 @@ int buddy_init()
     u64 kernel_start_pfn = kernel_phys_start / PAGE_SIZE;
     u64 kernel_end_pfn = align_up(kernel_phys_end, PAGE_SIZE) / PAGE_SIZE;
 
-    for (u64 pfn = kernel_start_pfn; pfn < kernel_end_pfn; pfn++)
-        buddy.pages[pfn].flags = PAGE_RESERVED;
+    u64 early_start_pfn = align_down(early_base, PAGE_SIZE) / PAGE_SIZE;
+    u64 early_end_pfn = align_up(early_current, PAGE_SIZE) / PAGE_SIZE;
+
+    /* Mark usable pages, but AVOID kernel and early_alloc regions. */
+    struct limine_memmap_response *resp = memmap_request.response;
+    if (!resp) return -1;
+
+    for (u64 i = 0; i < resp->entry_count; i++)
+    {
+        struct limine_memmap_entry *e = resp->entries[i];
+        if (e->type != LIMINE_MEMMAP_USABLE) continue;
+
+        uintptr_t base = align_up(e->base, PAGE_SIZE);
+        uintptr_t end = align_down(e->base + e->length, PAGE_SIZE);
+        if (base >= end) continue;
+
+        u64 start_pfn = base / PAGE_SIZE;
+        u64 end_pfn = end / PAGE_SIZE;
+
+        for (u64 pfn = start_pfn; pfn < end_pfn; pfn++)
+        {
+            /* Check if this PFN is in kernel or early_alloc range */
+            if ((pfn >= kernel_start_pfn && pfn < kernel_end_pfn) ||
+                (pfn >= early_start_pfn && pfn < early_end_pfn))
+            {
+                continue;
+            }
+            buddy.pages[pfn].flags = PAGE_FREE;
+        }
+    }
+
+    /* Now group free pages into the largest possible blocks for the free lists. */
+    for (u64 i = 0; i < buddy.page_count; )
+    {
+        if (buddy.pages[i].flags != PAGE_FREE)
+        {
+            i++;
+            continue;
+        }
+
+        u8 order = MAX_ORDER;
+        while (order > 0)
+        {
+            if (IS_ALIGNED(i, order) && (i + (1UL << order) <= buddy.page_count))
+            {
+                bool all_free = true;
+                for (u64 j = 0; j < (1UL << order); j++)
+                {
+                    if (buddy.pages[i + j].flags != PAGE_FREE)
+                    {
+                        all_free = false;
+                        break;
+                    }
+                }
+                if (all_free) break;
+            }
+            order--;
+        }
+
+        buddy_add_block(&buddy.pages[i], order);
+        i += (1UL << order);
+    }
 
     return 0;
 }
@@ -178,51 +159,49 @@ core_initcall(buddy_init);
 
 void *buddy_alloc(int order)
 {
-    if (order > MAX_ORDER) return NULL; /* too big */
+    if (order > MAX_ORDER) return NULL;
 
-    const i64 block_size = 1UL << order;
-
-    for (size_t pfn = 0; pfn + block_size <= buddy.page_count; pfn++)
+    for (int i = order; i <= MAX_ORDER; i++)
     {
-        if ((pfn & (block_size - 1)) != 0) continue;
+        if (list_empty(&buddy.free_areas[i].free_list)) continue;
 
-        int can_use = 1;
-        for (i64 i = 0; i < block_size; i++)
+        struct buddy_page *page = container_of(buddy.free_areas[i].free_list.next, struct buddy_page, list);
+        list_del(&page->list);
+        buddy.free_areas[i].free_count--;
+
+        /* Split blocks if necessary */
+        while (i > order)
         {
-            if (buddy.pages[pfn + i].flags != PAGE_FREE)
-            {
-                can_use = 0;
-                break;
-            }
+            i--;
+            struct buddy_page *buddy_pg = &page[1UL << i];
+            buddy_add_block(buddy_pg, i);
         }
 
-        if (!can_use) continue;
+        size_t pfn = page - buddy.pages;
+        for (u64 j = 0; j < (1UL << order); j++)
+        {
+            buddy.pages[pfn + j].flags = PAGE_ALLOCATED;
+            buddy.pages[pfn + j].order = order;
+        }
 
-        for (i64 i = 0; i < block_size; i++)
-            buddy.pages[pfn + i].flags = PAGE_ALLOCATED;
-
-        uintptr_t addr = (uintptr_t)(pfn * PAGE_SIZE) + hhdm_offset;
-        if (addr % PAGE_SIZE != 0) kpanic("buddy_alloc: allocated address not aligned");
-        return (void *)addr;
+        return (void *)((pfn * PAGE_SIZE) + hhdm_offset);
     }
 
-    kpanic("buddy_alloc: no block found");
-    return NULL; /* no block found */
+    return NULL;
 }
 
 void buddy_free(void *addr, int order)
 {
-    addr = (void *)((uintptr_t)addr - hhdm_offset);
-    if (!addr || order > MAX_ORDER) return;
+    if (!addr) return;
+    uintptr_t phys = (uintptr_t)addr - hhdm_offset;
+    u64 pfn = phys / PAGE_SIZE;
 
-    const int block_size = 1UL << order;
-    const size_t pfn = (uintptr_t)addr / PAGE_SIZE;
+    if (pfn >= buddy.page_count) return;
 
-    if (pfn + block_size > buddy.page_count) return;
-
-    for (int i = 0; i < block_size; i++)
+    /* Proper buddy merging should be here, but for now just add it back */
+    for (u64 i = 0; i < (1UL << order); i++)
     {
         buddy.pages[pfn + i].flags = PAGE_FREE;
-        buddy.pages[pfn + i].order = 0;
     }
+    buddy_add_block(&buddy.pages[pfn], order);
 }
