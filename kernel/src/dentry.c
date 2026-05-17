@@ -12,6 +12,8 @@ struct dentry *dentry_alloc(const char *name)
     if (!d) return NULL;
     strncpy(d->name, name, sizeof(d->name) - 1);
     d->name[sizeof(d->name) - 1] = '\0';
+    InitListHead(&d->children);
+    InitListHead(&d->sibling);
     return d;
 }
 

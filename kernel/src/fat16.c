@@ -124,7 +124,9 @@ static int compare_filenames(const char *filename, const struct fat16_directory 
     char entry_name[13];
     convert_83_to_string(entry->name, entry->extension, entry_name);
 
-    /* Case-insensitive comparison could be better, but let's stick to simple for now */
+    /* Skip leading slashes in the filename */
+    while (*filename == '/') filename++;
+
     return strcasecmp(filename, entry_name);
 }
 
