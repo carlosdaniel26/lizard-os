@@ -2,11 +2,16 @@
 #include <init.h>
 #include <kernelcfg.h>
 #include <limine.h>
+#include <loader.h>
 #include <pit.h>
 #include <sched.h>
 #include <stack.h>
 #include <stdbool.h>
+#include <task.h>
 #include <types.h>
+#include <vfs.h>
+#include <kmalloc.h>
+#include <string.h>
 
 /*
  * feel dumb is temporary, the progress of commits on this
@@ -33,6 +38,14 @@ void kmain()
     do_initcalls(__initcall5_start, __initcall5_end); /* filesystem */
     do_initcalls(__initcall6_start, __initcall6_end); /* device */
     do_initcalls(__initcall7_start, __initcall7_end); /* late */
+
+    /* Test loading */
+    struct task *t = (struct task *)zalloc(sizeof(struct task));
+    void *buffer = vfs_read_all("/hello");
+    if (buffer) {
+        load_elf(buffer, t);
+        task_create(t, (void (*)(void))t->regs.rip, "hello", 1);
+    }
 
     pit_start();
     enable_scheduler();

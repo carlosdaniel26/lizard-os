@@ -10,6 +10,7 @@ typedef void (*syscall_handler)(struct cpu_state *regs);
 void isr_syscall(struct cpu_state *regs);
 
 void sys_sleep(struct cpu_state *regs);
+void sys_write(struct cpu_state *regs);
 void syscall_handler_c(struct cpu_state *regs);
 
 u64 syscall0(u64 syscall_num);

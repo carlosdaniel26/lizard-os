@@ -18,6 +18,7 @@ static int syscall_init()
     syscall_table = zalloc(sizeof(syscall_handler) * SYSCALL_ENTRIES);
 
     syscall_table[0] = &sys_sleep;
+    syscall_table[1] = &sys_write;
 
     set_idt_gate(SYSCALL_ISR_INDEX, isr_stub_table[SYSCALL_ISR_INDEX], 0xEE);
 
@@ -33,6 +34,12 @@ void sys_sleep(struct cpu_state *regs)
     u32 ms = regs->rbx;
     kprintf("sys_sleep called with %u ms\n", ms);
     task_sleep(ms);
+}
+
+void sys_write(struct cpu_state *regs)
+{
+    const char *str = (const char *)regs->rbx;
+    kprintf("%s", str);
 }
 
 void syscall_handler_c(struct cpu_state *regs)
