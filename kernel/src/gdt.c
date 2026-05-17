@@ -1,5 +1,6 @@
 #include <gdt.h>
 #include <init.h>
+#include <memory_map.h>
 
 static struct global_descriptor boot_gdt[5] __initdata;
 static struct gdt_ptr boot_gdt_ptr __initdata;
@@ -48,11 +49,18 @@ static inline void __init gdt_load()
 
 static int __init init_gdt()
 {
+    /*
+     * Access bytes:
+     * 0x9A = 10011010 (Ring 0, Code, Exec/Read)
+     * 0x92 = 10010010 (Ring 0, Data, Read/Write)
+     * 0xFA = 11111010 (Ring 3, Code, Exec/Read)
+     * 0xF2 = 11110010 (Ring 3, Data, Read/Write)
+     */
     boot_gdt[0] = create_gdt_gate(0, 0, 0x00, 0x00); // Null
-    boot_gdt[1] = create_gdt_gate(0, 0, 0x9A, 0xA0); // Code: exec/read, ring 0
-    boot_gdt[2] = create_gdt_gate(0, 0, 0x92, 0xA0); // Data: read/write, ring 0
-    boot_gdt[3] = create_gdt_gate(0, 0, 0xFA, 0xA0); // Code: user
-    boot_gdt[4] = create_gdt_gate(0, 0, 0xF2, 0xA0); // Data: user
+    boot_gdt[1] = create_gdt_gate(0, 0xFFFFFFFF, 0x9A, 0xA0); // Kernel Code
+    boot_gdt[2] = create_gdt_gate(0, 0xFFFFFFFF, 0x92, 0xA0); // Kernel Data
+    boot_gdt[3] = create_gdt_gate(0, 0xFFFFFFFF, 0xFA, 0xA0); // User Code
+    boot_gdt[4] = create_gdt_gate(0, 0xFFFFFFFF, 0xF2, 0xA0); // User Data
 
     gdt_load();
 

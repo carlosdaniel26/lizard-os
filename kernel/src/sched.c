@@ -13,6 +13,7 @@ static int sched_init()
     isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
 
     task_create(&idle, &idle_func, "idle", 0); /* init idle */
+    current_task = &idle;
 
     return 0;
 }
@@ -28,29 +29,19 @@ void scheduler()
 {
     if (!scheduler_enabled) return;
 
-    if (NULL == current_task)
-    {
-        task_load_context(&idle);
-        return;
-    }
-
     struct task *task = next_ready_task();
 
-    /* no ready task found */
+    /* if no ready task is found, default to idle */
     if (NULL == task)
     {
-        if (current_task->state == TASK_STATE_READY)
-        {
-            return; /* able to keep running */
-        }
-        else
-        {
-            task = &idle; /* no task ready, fallback to idle */
-        }
+        task = &idle;
     }
 
-    task_switch_to(task);
-    current_task = task;
+    if (task != current_task)
+    {
+        task_switch_to(task);
+        current_task = task;
+    }
 }
 
 void enable_scheduler()
