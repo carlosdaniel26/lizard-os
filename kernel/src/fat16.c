@@ -39,7 +39,7 @@ static const char name[] = "fat16";
 /* Forward declarations */
 static int fat16_lookup(struct inode *dir, struct dentry *dentry);
 static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offset);
-static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
+static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, struct dirent *));
 
 static struct inode_ops fat16_inode_ops = {
     .lookup = fat16_lookup,
@@ -303,7 +303,7 @@ static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offs
     return (ssize_t)bytes_read_total;
 }
 
-static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64))
+static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, struct dirent *))
 {
     struct inode *inode = file->inode;
     struct fat16 *fs = (struct fat16 *)inode->sb->fs_info;
@@ -335,7 +335,15 @@ static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *,
             char name_str[13];
             convert_83_to_string(entry->name, entry->extension, name_str);
 
-            if (filldir(dirent, name_str, strlen(name_str), offset, i) < 0) break;
+            struct dirent d = {
+                .inode = 0,
+                .offset = offset,
+                .reclen = sizeof(struct dirent),
+                .type = DT_UNKNOWN,
+            };
+            strncpy(d.name, name_str, sizeof(d.name));
+
+            if (filldir(dirent, &d) < 0) break;
 
             offset += FAT16_DIR_ENTRY_SIZE;
             count++;
@@ -379,7 +387,15 @@ static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *,
                     char name_str[13];
                     convert_83_to_string(entry->name, entry->extension, name_str);
 
-                    if (filldir(dirent, name_str, strlen(name_str), offset, 0) < 0) goto out;
+                    struct dirent d = {
+                        .inode = 0,
+                        .offset = offset,
+                        .reclen = sizeof(struct dirent),
+                        .type = DT_UNKNOWN,
+                    };
+                    strncpy(d.name, name_str, sizeof(d.name));
+
+                    if (filldir(dirent, &d) < 0) goto out;
 
                     offset += FAT16_DIR_ENTRY_SIZE;
                     current_offset += FAT16_DIR_ENTRY_SIZE;

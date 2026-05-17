@@ -2,6 +2,7 @@
 
 #include <atomic.h>
 #include <blkdev_manager.h>
+#include <file.h>
 #include <list.h>
 #include <spinlock.h>
 #include <types.h>
@@ -43,21 +44,6 @@ struct fs_type {
 
     u32 flags;
     void *private_data;
-};
-
-struct file {
-    struct inode *inode;
-    u64 offset;
-    u32 flags;
-    void *private_data;
-};
-
-struct file_ops {
-    int (*open)(struct inode *inode, struct file *file);
-    ssize_t (*read)(struct file *file, char *buf, size_t count, off_t offset);
-    ssize_t (*write)(struct file *file, const char *buf, size_t count, off_t offset);
-    int (*readdir)(struct file *file, void *dirent, int (*filldir)(void *, const char *, int, off_t, u64));
-    int (*release)(struct inode *inode, struct file *file);
 };
 
 int fs_register(struct fs_type *type);
