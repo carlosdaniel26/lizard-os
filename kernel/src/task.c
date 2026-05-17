@@ -119,6 +119,10 @@ int task_switch_to(struct task *next_task)
     task_save_context();
     task_load_context(next_task);
 
+    if (next_task->pml4) {
+        vmm_switch_pml4(next_task->pml4);
+    }
+
     current_task = next_task;
 
     return 0;

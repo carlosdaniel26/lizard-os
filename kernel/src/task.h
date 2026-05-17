@@ -44,6 +44,7 @@ struct task {
     u8 state;
 
     struct cpu_state regs;
+    u64 *pml4;
 
     u32 priority;
     u32 ticks_remaining;

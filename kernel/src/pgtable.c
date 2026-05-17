@@ -9,7 +9,19 @@
 /* times i forgot to automap: 3.5*/
 /* the .5 is for now that the system is missing one page for some reason, so its kinda my fault */
 
-extern u64 hhdm_offset;
+extern u64 *kernel_pml4;
+
+u64 *pgtable_create(void)
+{
+    u64 *pml4 = pgtable_alloc_table();
+    // Map only the higher-half kernel memory (index 256-511)
+    for (int i = KERNEL_PML4_INDEX; i < 512; i++)
+    {
+        pml4[i] = kernel_pml4[i];
+    }
+    return pml4;
+}
+
 
 static inline void pgtable_invlpg(void *addr)
 {

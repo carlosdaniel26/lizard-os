@@ -5,6 +5,7 @@
 #include <helpers.h>
 #include <kernelcfg.h>
 #include <limine.h>
+#include <memory_map.h>
 #include <panic.h>
 #include <pgtable.h>
 
@@ -21,15 +22,15 @@ extern u32 kernel_start;
 extern u32 kernel_end;
 
 u64 *current_pml4 = NULL;
-u64 *kpml4 = NULL;
+u64 *kernel_pml4 = NULL;
 extern u64 hhdm_offset;
 extern struct limine_executable_address_request kernel_address_request;
 extern volatile struct limine_memmap_request memmap_request;
 
 static int vmm_init(void)
 {
-    kpml4 = pgtable_alloc_table();
-    current_pml4 = kpml4;
+    kernel_pml4 = pgtable_alloc_table();
+    current_pml4 = kernel_pml4;
 
     /* 1. Map the kernel */
     u64 vstart = align_down((u64)&kernel_start, PAGE_SIZE);
@@ -38,10 +39,10 @@ static int vmm_init(void)
     u64 pstart = phys - ((u64)&kernel_start - vstart);
     u64 kernel_pages = (vend - vstart) / PAGE_SIZE;
 
-    pgtable_maprange(kpml4, vstart, pstart, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    pgtable_maprange(kernel_pml4, vstart, pstart, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* 2. Map the framebuffer */
-    pgtable_maprange(kpml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
+    pgtable_maprange(kernel_pml4, (uint64_t)framebuffer, (uint64_t)framebuffer - hhdm_offset,
                      framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* 3. Map every region in the memory map to HHDM */
@@ -57,10 +58,10 @@ static int vmm_init(void)
         u64 end = align_up(entry->base + entry->length, PAGE_SIZE);
 
         u64 pages = (end - start) / PAGE_SIZE;
-        pgtable_maprange(kpml4, start + hhdm_offset, start, pages, PAGE_PRESENT | PAGE_WRITABLE);
+        pgtable_maprange(kernel_pml4, start + hhdm_offset, start, pages, PAGE_PRESENT | PAGE_WRITABLE);
     }
 
-    pgtable_switch(kpml4);
+    pgtable_switch(kernel_pml4);
 
     return 0;
 }
@@ -75,6 +76,13 @@ void vmm_map_page(u64 virt, u64 phys, u64 flags)
 void vmm_unmap_page(u64 virt)
 {
     pgtable_unmap(current_pml4, virt);
+}
+
+void *vmm_alloc(u64 *pml4, u64 virt, u64 flags)
+{
+    void *ptr = buddy_alloc(0);
+    pgtable_map(pml4, virt, (u64)ptr - hhdm_offset, flags);
+    return ptr;
 }
 
 void *vmm_alloc_page(void)
