@@ -13,6 +13,7 @@ PHDRS
     text PT_LOAD;
     rodata PT_LOAD;
     data PT_LOAD;
+    init PT_LOAD;
 }
 
 SECTIONS
@@ -29,8 +30,61 @@ SECTIONS
         KEEP(*(.limine_requests_end))
     } :limine_requests
 
-    /* Move to the next memory page for .text */
+    /* Initialization section */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
+    __init_start = .;
+    .init : {
+        *(.init.text)
+        *(.init.data)
+        *(.init.const)
+
+        . = ALIGN(8);
+        __initcall_start = .;
+        /* Level 0 - early */
+        __initcall0_start = .;
+        KEEP(*(SORT(.initcall0.*)))
+        KEEP(*(.initcall0))
+        __initcall0_end = .;
+        /* Level 1 - core */
+        __initcall1_start = .;
+        KEEP(*(SORT(.initcall1.*)))
+        KEEP(*(.initcall1))
+        __initcall1_end = .;
+        /* Level 2 - postcore */
+        __initcall2_start = .;
+        KEEP(*(SORT(.initcall2.*)))
+        KEEP(*(.initcall2))
+        __initcall2_end = .;
+        /* Level 3 - arch */
+        __initcall3_start = .;
+        KEEP(*(SORT(.initcall3.*)))
+        KEEP(*(.initcall3))
+        __initcall3_end = .;
+        /* Level 4 - subsys */
+        __initcall4_start = .;
+        KEEP(*(SORT(.initcall4.*)))
+        KEEP(*(.initcall4))
+        __initcall4_end = .;
+        /* Level 5 - fs */
+        __initcall5_start = .;
+        KEEP(*(SORT(.initcall5.*)))
+        KEEP(*(.initcall5))
+        __initcall5_end = .;
+        /* Level 6 - device */
+        __initcall6_start = .;
+        KEEP(*(SORT(.initcall6.*)))
+        KEEP(*(.initcall6))
+        __initcall6_end = .;
+        /* Level 7 - late */
+        __initcall7_start = .;
+        KEEP(*(SORT(.initcall7.*)))
+        KEEP(*(.initcall7))
+        __initcall7_end = .;
+        __initcall_end = .;
+    } :init
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
+    __init_end = .;
+
     .text : {
         *(.text .text.*)
     } :text
@@ -45,73 +99,6 @@ SECTIONS
         __setup_start = .;
         KEEP(*(.kernel_params))
         __setup_end = .;
-
-        . = ALIGN(8);
-        __init.const_start = .;
-        KEEP(*(.init.const))
-        __init.const_end = .;
-        
-        /* Initcalls */
-        . = ALIGN(8);
-        __initcall_start = .;
-
-        /* Level 0 - early */
-        . = ALIGN(8);
-        __initcall0_start = .;
-        KEEP(*(SORT(.initcall0.*)))
-        KEEP(*(.initcall0))
-        __initcall0_end = .;
-
-        /* Level 1 - core */
-        . = ALIGN(8);
-        __initcall1_start = .;
-        KEEP(*(SORT(.initcall1.*)))
-        KEEP(*(.initcall1))
-        __initcall1_end = .;
-
-        /* Level 2 - postcore */
-        . = ALIGN(8);
-        __initcall2_start = .;
-        KEEP(*(SORT(.initcall2.*)))
-        KEEP(*(.initcall2))
-        __initcall2_end = .;
-
-        /* Level 3 - arch */
-        . = ALIGN(8);
-        __initcall3_start = .;
-        KEEP(*(SORT(.initcall3.*)))
-        KEEP(*(.initcall3))
-        __initcall3_end = .;
-
-        /* Level 4 - subsys */
-        . = ALIGN(8);
-        __initcall4_start = .;
-        KEEP(*(SORT(.initcall4.*)))
-        KEEP(*(.initcall4))
-        __initcall4_end = .;
-
-        /* Level 5 - fs */
-        . = ALIGN(8);
-        __initcall5_start = .;
-        KEEP(*(SORT(.initcall5.*)))
-        KEEP(*(.initcall5))
-        __initcall5_end = .;
-
-        /* Level 6 - device */
-        . = ALIGN(8);
-        __initcall6_start = .;
-        KEEP(*(SORT(.initcall6.*)))
-        KEEP(*(.initcall6))
-        __initcall6_end = .;
-
-        /* Level 7 - late */
-        . = ALIGN(8);
-        __initcall7_start = .;
-        KEEP(*(SORT(.initcall7.*)))
-        KEEP(*(.initcall7))
-        __initcall7_end = .;
-
-        __initcall_end = .;
     } :rodata
 
     /* Move to the next memory page for .data */
@@ -120,11 +107,6 @@ SECTIONS
         __data_start = .;
         *(.data .data.*)
         __data_end = .;
-
-        . = ALIGN(8);
-        __init.data_start = .;
-        KEEP(*(.init.data))
-        __init.data_end = .;
     } :data
 
     /* NOTE: .bss needs to be the last thing mapped to :data, otherwise lots of */

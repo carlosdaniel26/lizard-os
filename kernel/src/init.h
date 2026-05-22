@@ -31,6 +31,11 @@ typedef int (*initcall_t)();
 #define late_initcall_prio(fn, sublevel) __initcall(fn, 7, sublevel)
 
 void do_initcalls(initcall_t *start, initcall_t *end);
+void kernel_bootstrap();
+void free_init_sections();
+
+extern const char __init_start[];
+extern const char __init_end[];
 
 extern const initcall_t __initcall0_start[];
 extern const initcall_t __initcall1_start[];
