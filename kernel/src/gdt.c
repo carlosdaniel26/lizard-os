@@ -1,11 +1,21 @@
 #include <gdt.h>
 #include <init.h>
 #include <memory_map.h>
+#include <kmalloc.h>
+#include <string.h>
+#include <panic.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 static struct global_descriptor boot_gdt[5] __initdata;
 static struct gdt_ptr boot_gdt_ptr __initdata;
 
-struct global_descriptor __init create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity)
+static struct global_descriptor *runtime_gdt = NULL;
+static struct gdt_ptr runtime_gdt_ptr;
+static int gdt_next_index = 0;
+static bool gdt_is_dynamic = false;
+
+struct global_descriptor gdt_create_gate(u64 base, u64 limit, u8 access, u8 granularity)
 {
     struct global_descriptor gate;
 
@@ -19,11 +29,20 @@ struct global_descriptor __init create_gdt_gate(u64 base, u64 limit, u8 access, 
     return gate;
 }
 
-static inline void __init gdt_load()
+int gdt_add_gate(u64 base, u64 limit, u8 access, u8 granularity)
 {
-    boot_gdt_ptr.limit = (sizeof(struct global_descriptor) * 5) - 1;
-    boot_gdt_ptr.base = (u64)&boot_gdt;
+    if (!gdt_is_dynamic)
+        kpanic("GDT: Attempted to add gate before dynamic initialization");
 
+    if (gdt_next_index >= GDT_MAX_ENTRIES)
+        kpanic("GDT: Maximum entries (%d) exceeded", GDT_MAX_ENTRIES);
+
+    runtime_gdt[gdt_next_index] = gdt_create_gate(base, limit, access, granularity);
+    return gdt_next_index++;
+}
+
+void gdt_load(struct gdt_ptr *ptr)
+{
     asm volatile("lgdt %0\n"
 
                  /* Far jump to reload CS */
@@ -43,26 +62,44 @@ static inline void __init gdt_load()
                  "mov %%ax, %%gs\n"
                  "mov %%ax, %%ss\n"
                  :
-                 : "m"(boot_gdt_ptr)
+                 : "m"(*ptr)
                  : "memory", "rax", "ax");
+}
+
+void __init gdt_init_dynamic()
+{
+    runtime_gdt = (struct global_descriptor *)kmalloc(sizeof(struct global_descriptor) * GDT_MAX_ENTRIES);
+    if (!runtime_gdt) kpanic("GDT: Failed to allocate memory for runtime GDT");
+
+    memset(runtime_gdt, 0, sizeof(struct global_descriptor) * GDT_MAX_ENTRIES);
+
+    /* Copy boot GDT entries */
+    for (int i = 0; i < 5; i++) {
+        runtime_gdt[i] = boot_gdt[i];
+    }
+    gdt_next_index = 5;
+    gdt_is_dynamic = true;
+
+    runtime_gdt_ptr.limit = (sizeof(struct global_descriptor) * GDT_MAX_ENTRIES) - 1;
+    runtime_gdt_ptr.base = (u64)runtime_gdt;
+
+    gdt_load(&runtime_gdt_ptr);
+
+    kprintf("GDT: Dynamic GDT initialized with %d entries\n", GDT_MAX_ENTRIES);
 }
 
 static int __init init_gdt()
 {
-    /*
-     * Access bytes:
-     * 0x9A = 10011010 (Ring 0, Code, Exec/Read)
-     * 0x92 = 10010010 (Ring 0, Data, Read/Write)
-     * 0xFA = 11111010 (Ring 3, Code, Exec/Read)
-     * 0xF2 = 11110010 (Ring 3, Data, Read/Write)
-     */
-    boot_gdt[0] = create_gdt_gate(0, 0, 0x00, 0x00); // Null
-    boot_gdt[1] = create_gdt_gate(0, 0xFFFFFFFF, 0x9A, 0xA0); // Kernel Code
-    boot_gdt[2] = create_gdt_gate(0, 0xFFFFFFFF, 0x92, 0xA0); // Kernel Data
-    boot_gdt[3] = create_gdt_gate(0, 0xFFFFFFFF, 0xFA, 0xA0); // User Code
-    boot_gdt[4] = create_gdt_gate(0, 0xFFFFFFFF, 0xF2, 0xA0); // User Data
+    boot_gdt[0] = gdt_create_gate(0, 0, 0x00, 0x00); // Null
+    boot_gdt[1] = gdt_create_gate(0, 0xFFFFFFFF, GDT_KERNEL_CODE, GDT_GRAN_4KB | GDT_GRAN_64BIT | GDT_GRAN_LIMIT_HIGH);
+    boot_gdt[2] = gdt_create_gate(0, 0xFFFFFFFF, GDT_KERNEL_DATA, GDT_GRAN_4KB | GDT_GRAN_64BIT | GDT_GRAN_LIMIT_HIGH);
+    boot_gdt[3] = gdt_create_gate(0, 0xFFFFFFFF, GDT_USER_CODE,   GDT_GRAN_4KB | GDT_GRAN_64BIT | GDT_GRAN_LIMIT_HIGH);
+    boot_gdt[4] = gdt_create_gate(0, 0xFFFFFFFF, GDT_USER_DATA,   GDT_GRAN_4KB | GDT_GRAN_64BIT | GDT_GRAN_LIMIT_HIGH);
 
-    gdt_load();
+    boot_gdt_ptr.limit = (sizeof(struct global_descriptor) * 5) - 1;
+    boot_gdt_ptr.base = (u64)&boot_gdt;
+
+    gdt_load(&boot_gdt_ptr);
 
     return 0;
 }

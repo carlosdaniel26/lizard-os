@@ -12,6 +12,7 @@
 #include <vfs.h>
 #include <kmalloc.h>
 #include <string.h>
+#include <gdt.h>
 
 /*
  * feel dumb is temporary, the progress of commits on this
@@ -29,15 +30,7 @@ u8 kernel_stack[KERNEL_STACK_SIZE];
 void kmain()
 {
     stack_init(kernel_stack, KERNEL_STACK_SIZE);
-
-    do_initcalls(__initcall0_start, __initcall0_end); /* early */
-    do_initcalls(__initcall1_start, __initcall1_end); /* core */
-    do_initcalls(__initcall2_start, __initcall2_end); /* postcore */
-    do_initcalls(__initcall3_start, __initcall3_end); /* arch */
-    do_initcalls(__initcall4_start, __initcall4_end); /* subsystem */
-    do_initcalls(__initcall5_start, __initcall5_end); /* filesystem */
-    do_initcalls(__initcall6_start, __initcall6_end); /* device */
-    do_initcalls(__initcall7_start, __initcall7_end); /* late */
+    kernel_bootstrap();
 
     /* Test loading */
     struct task *t = (struct task *)zalloc(sizeof(struct task));
