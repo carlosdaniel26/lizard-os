@@ -168,3 +168,16 @@ struct task *next_ready_task()
 
     return NULL;
 }
+
+void task_exit()
+{
+    if (current_task && current_task != &idle)
+    {
+        current_task->state = TASK_STATE_TERMINATED;
+    }
+
+    while (1)
+    {
+        scheduler_trigger();
+    }
+}

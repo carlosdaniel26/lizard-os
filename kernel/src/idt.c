@@ -22,9 +22,28 @@ static struct idt_ptr idt_descriptor;
 
 void (**isr_table)(struct cpu_state *regs);
 
+#include <sched.h>
+
+extern u8 scheduler_enabled;
+
 void isr_common_entry(u64 int_id, struct cpu_state *regs)
 {
     ptrace = regs;
+
+    if (int_id < 32)
+    {
+        /* Exception handler */
+        if (scheduler_enabled && current_task && current_task != &idle)
+        {
+            /* Redirect return pointer to task_exit */
+            regs->rip = (u64)task_exit;
+            return;
+        }
+        else
+        {
+            kpanic("EXCEPTION %d during KERNEL BOOT at RIP: %p", (int)int_id, (void *)regs->rip);
+        }
+    }
 
     if (isr_table && isr_table[int_id])
     {
