@@ -16,11 +16,8 @@ bool kprint(const char *data, size_t length)
     return true;
 }
 
-int kprintf(const char *restrict format, ...)
+int kvprintf(const char *restrict format, va_list parameters)
 {
-    va_list parameters;
-    va_start(parameters, format);
-
     int written = 0;
 
     while (*format != '\0')
@@ -62,6 +59,7 @@ int kprintf(const char *restrict format, ...)
         {
             format++;
             const char *str = va_arg(parameters, const char *);
+            if (!str) str = "(null)";
             size_t len = strlen(str);
             if (maxrem < len)
             {
@@ -81,34 +79,60 @@ int kprintf(const char *restrict format, ...)
                 return -1;
             }
             u32 size = get_unsigned2string_final_size(number);
-            char str[size];
+            char str[size + 1];
             memset(str, 0, sizeof(str));
 
-            unsigned_to_string((u64)number, str);
-            if (!kprint(str, sizeof(str))) return -1;
+            unsigned_to_string(number, str);
+            if (!kprint(str, size)) return -1;
             written += size;
         }
         else if (*format == 'u')
         {
             format++;
-            unsigned number = (unsigned)va_arg(parameters, long unsigned);
+            unsigned number = (unsigned)va_arg(parameters, unsigned int);
             if (!maxrem)
             {
                 /* TODO: Set errno to EOVERFLOW.*/
                 return -1;
             }
             u32 size = get_unsigned2string_final_size(number);
-            char str[size];
+            char str[size + 1];
             memset(str, 0, sizeof(str));
 
             unsigned_to_string((u64)number, str);
-            if (!kprint(str, sizeof(str))) return -1;
-            written++;
+            if (!kprint(str, size)) return -1;
+            written += size;
+        }
+        else if (*format == 'd')
+        {
+            format++;
+            int val = va_arg(parameters, int);
+            if (!maxrem)
+            {
+                /* TODO: Set errno to EOVERFLOW.*/
+                return -1;
+            }
+            u64 uval = (val < 0) ? (u64)-val : (u64)val;
+            u32 size = get_unsigned2string_final_size(uval);
+            if (val < 0) size++; // for '-'
+
+            char str[size + 1];
+            memset(str, 0, sizeof(str));
+
+            if (val < 0) {
+                str[0] = '-';
+                unsigned_to_string(uval, str + 1);
+            } else {
+                unsigned_to_string(uval, str);
+            }
+            
+            if (!kprint(str, size)) return -1;
+            written += size;
         }
         else if (*format == 'x')
         {
             format++;
-            long long unsigned number = (long unsigned)va_arg(parameters, long unsigned);
+            u64 number = (u64)va_arg(parameters, u64);
             if (!maxrem)
             {
                 /* TODO: Set errno to EOVERFLOW.*/
@@ -118,9 +142,9 @@ int kprintf(const char *restrict format, ...)
             char str[size + 1];
             memset(str, 0, sizeof(str));
 
-            unsigned_to_hexstring((u64)number, str);
-            if (!kprint(str, sizeof(str) - 1)) return -1;
-            written++;
+            unsigned_to_hexstring(number, str);
+            if (!kprint(str, size)) return -1;
+            written += size;
         }
         else if (*format == 'p')
         {
@@ -137,8 +161,8 @@ int kprintf(const char *restrict format, ...)
 
             unsigned_to_hexstring((u64)ptr, str);
             kprint("0x", 2);
-            if (!kprint(str, sizeof(str) - 1)) return -1;
-            written++;
+            if (!kprint(str, size)) return -1;
+            written += size + 2;
         }
         else
         {
@@ -155,6 +179,14 @@ int kprintf(const char *restrict format, ...)
         }
     }
 
+    return written;
+}
+
+int kprintf(const char *restrict format, ...)
+{
+    va_list parameters;
+    va_start(parameters, format);
+    int written = kvprintf(format, parameters);
     va_end(parameters);
     return written;
 }
@@ -163,7 +195,7 @@ void dd(const char *restrict format, ...)
 {
     va_list args;
     va_start(args, format);
-    kprintf(format, args);
+    kvprintf(format, args);
     va_end(args);
 
     die();
