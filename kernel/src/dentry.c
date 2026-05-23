@@ -14,6 +14,7 @@ struct dentry *dentry_alloc(const char *name)
     d->name[sizeof(d->name) - 1] = '\0';
     InitListHead(&d->children);
     InitListHead(&d->sibling);
+    atomic_set(&d->refcount, 1);
     return d;
 }
 
