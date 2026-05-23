@@ -58,8 +58,6 @@ int time_init(void)
     return 0;
 }
 
-device_initcall(time_init);
-
 void time_tick_ns(u64 delta_ns)
 {
     /* monotonic */

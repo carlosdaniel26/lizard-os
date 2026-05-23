@@ -9,6 +9,7 @@
 #include <sched.h>
 #include <stdio.h>
 #include <task.h>
+#include <timer.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
 
@@ -21,9 +22,9 @@
 
 #define PIT_VECTOR_INDEX 32
 
-volatile u64 pit_ticks = 0; // Definition of pit_ticks
+volatile u64 pit_ticks = 0;
 
-void pit_stop()
+void pit_stop(void)
 {
 #define PIC1_DATA 0x21
     u8 mask = inb(PIC1_DATA);
@@ -31,12 +32,12 @@ void pit_stop()
     outb(PIC1_DATA, mask);
 }
 
-void pit_start()
+void pit_start(void)
 {
     PIC_unmaskVector(PIT_VECTOR_INDEX);
 }
 
-int pit_init()
+int pit_init(void)
 {
     outb(PIT_COMMAND, 0b00110110); /* Mode 3, Channel 0, low/high byte acess*/
 
@@ -48,7 +49,26 @@ int pit_init()
     return 0;
 }
 
-device_initcall(pit_init);
+u64 pit_get_ticks(void)
+{
+    return pit_ticks;
+}
+
+static struct timer_driver pit_driver = {
+    .name = "pit",
+    .init = pit_init,
+    .start = pit_start,
+    .stop = pit_stop,
+    .read = pit_get_ticks
+};
+
+static int __init pit_register()
+{
+    register_timer(&pit_driver);
+    return 0;
+}
+
+core_initcall(pit_register);
 
 void isr_pit(struct cpu_state *regs)
 {

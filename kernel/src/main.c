@@ -13,6 +13,7 @@
 #include <kmalloc.h>
 #include <string.h>
 #include <gdt.h>
+#include <timer.h>
 
 /*
  * feel dumb is temporary, the progress of commits on this
@@ -39,8 +40,7 @@ void kmain()
         load_elf(buffer, t);
         task_create(t, (void (*)(void))t->regs.rip, "hello", 1);
     }
-
-    pit_start();
+    
     enable_scheduler();
 
     yield();

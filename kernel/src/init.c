@@ -7,10 +7,15 @@
 #include <pgtable.h>
 #include <stddef.h>
 #include <gdt.h>
+#include <ktime.h>
+#include <timer.h>
 
 extern struct limine_executable_address_request kernel_address_request;
 extern u64 hhdm_offset;
 extern u32 kernel_start;
+
+/* Declare time_init here because it's not in ktime.h */
+int time_init(void);
 
 void do_initcalls(initcall_t *start, initcall_t *end)
 {
@@ -29,6 +34,8 @@ void __init kernel_bootstrap()
     do_initcalls(__initcall4_start, __initcall4_end); /* subsystem */
     
     gdt_init_dynamic();
+    timer_init();
+    time_init();
 
     do_initcalls(__initcall5_start, __initcall5_end); /* filesystem */
     do_initcalls(__initcall6_start, __initcall6_end); /* device */
