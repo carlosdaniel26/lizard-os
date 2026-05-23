@@ -70,10 +70,10 @@ int set_root(struct block_dev *dev)
 
     kprintf("VFS: Mounted root (%s) on %s\n", type->name, dev->name);
     return 0;
-    }
+}
 
-    int vfs_init()
-    {
+int vfs_init()
+{
     struct block_dev *dev = blkdev_manager_get_by_name(rootdev_str);
     if (dev == NULL)
     {
@@ -82,7 +82,7 @@ int set_root(struct block_dev *dev)
 
     set_root(dev);
     return 0;
-    }
+}
 
 struct dentry *vfs_lookup(struct dentry *parent, const char *name)
 {
@@ -105,5 +105,44 @@ struct dentry *vfs_lookup(struct dentry *parent, const char *name)
     return NULL;
 }
 
+struct dentry *vfs_path_lookup(const char *path)
+{
+    if (!path || *path == '\0') return NULL;
+
+    struct dentry *current_dentry;
+    if (*path == '/')
+    {
+        current_dentry = vfs_get_root();
+        while (*path == '/') path++;
+    }
+    else
+    {
+        // TODO: Support relative paths in here when CWD is implemented
+        current_dentry = vfs_get_root();
+    }
+
+    if (*path == '\0') return current_dentry;
+
+    char name[NAME_MAX];
+    while (*path)
+    {
+        size_t i = 0;
+        while (*path && *path != '/' && i < NAME_MAX - 1)
+        {
+            name[i++] = *path++;
+        }
+        name[i] = '\0';
+
+        while (*path == '/') path++;
+
+        struct dentry *next = vfs_lookup(current_dentry, name);
+        dentry_put(current_dentry);
+
+        if (!next) return NULL;
+        current_dentry = next;
+    }
+
+    return current_dentry;
+}
 
 late_initcall(vfs_init);
