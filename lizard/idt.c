@@ -21,7 +21,7 @@ extern u8 kernel_stack[];
 static struct idt_entry idt[IDT_ENTRIES] __page_aligned;
 static struct idt_ptr idt_descriptor;
 
-void (**isr_table)(struct cpu_state *regs);
+void (*isr_table[IDT_ENTRIES])(struct cpu_state *regs);
 
 #include <lizard/sched.h>
 
@@ -74,10 +74,10 @@ static inline void idt_load()
 
 int init_idt()
 {
-    isr_table = zalloc(sizeof(void *) * IDT_ENTRIES);
+    memset(isr_table, 0, sizeof(isr_table));
 
     for (int i = 0; i < IDT_ENTRIES; i++)
-        set_idt_gate(i, (void *)isr_stub_table[i], 0x8E);
+        set_idt_gate(i, (void *)((u64)&isr_stub_table[0] + (i * 4) + (i32)isr_stub_table[i]), 0x8E);
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base = (u64)&idt;

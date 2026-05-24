@@ -11,7 +11,7 @@
 static struct global_descriptor boot_gdt[5] __initdata;
 static struct gdt_ptr boot_gdt_ptr __initdata;
 
-static struct global_descriptor *runtime_gdt = NULL;
+static struct global_descriptor runtime_gdt[GDT_MAX_ENTRIES];
 static struct gdt_ptr runtime_gdt_ptr;
 static int gdt_next_index = 0;
 static bool gdt_is_dynamic = false;
@@ -87,9 +87,6 @@ void gdt_load(struct gdt_ptr *ptr)
 
 void __init gdt_init_dynamic()
 {
-    runtime_gdt = (struct global_descriptor *)kmalloc(sizeof(struct global_descriptor) * GDT_MAX_ENTRIES);
-    if (!runtime_gdt) kpanic("GDT: Failed to allocate memory for runtime GDT");
-
     memset(runtime_gdt, 0, sizeof(struct global_descriptor) * GDT_MAX_ENTRIES);
 
     /* Copy boot GDT entries */
