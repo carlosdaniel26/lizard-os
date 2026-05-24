@@ -9,11 +9,11 @@ ENTRY(kmain)
 /* process. */
 PHDRS
 {
-    limine_requests PT_LOAD;
-    text PT_LOAD;
-    rodata PT_LOAD;
-    data PT_LOAD;
-    init PT_LOAD;
+    limine_requests PT_LOAD FLAGS(4); /* R */
+    text PT_LOAD FLAGS(5);           /* R E */
+    rodata PT_LOAD FLAGS(4);         /* R */
+    data PT_LOAD FLAGS(6);           /* RW */
+    init PT_LOAD FLAGS(5);           /* R E */
 }
 
 SECTIONS
