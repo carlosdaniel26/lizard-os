@@ -1,7 +1,7 @@
 .PHONY: run debug
 run: all
 	@echo "(QEMU)"
-	@qemu-system-$(ARCH) \
+	qemu-system-$(ARCH) \
 		-M pc \
 		-drive file=hda.img,format=raw,if=ide \
 		-cdrom lizard-os_x86_64.iso \
@@ -10,7 +10,7 @@ run: all
 
 debug: all
 	@echo "(QEMU)"
-	@qemu-system-$(ARCH) \
+	qemu-system-$(ARCH) \
 		-M pc \
 		-drive file=hda.img,format=raw,if=ide \
 		-cdrom lizard-os_x86_64.iso \
