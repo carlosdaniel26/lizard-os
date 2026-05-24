@@ -39,7 +39,7 @@ LDFLAGS :=
 # Ensure the dependencies have been obtained.
 ifneq ($(shell ( test '$(MAKECMDGOALS)' = clean || test '$(MAKECMDGOALS)' = distclean ); echo $$?),0)
 	ifeq ($(shell ( ! test -f src/limine.h ); echo $$?),0)
-		$(error Please run the ./get-deps script first)
+        	$(error Please run the ./get-deps script first)
 	endif
 endif
 
@@ -61,7 +61,9 @@ override CFLAGS += \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
-	-I src \
+	-I ../lizard \
+	-I ../nolibc \
+	-I ../runtime \
 	$(CPPFLAGS) \
 	-DLIMINE_API_REVISION=3 \
 	-MMD \
@@ -105,7 +107,7 @@ override LDFLAGS += \
 
 # Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
 # object and header dependency file names.
-override SRCFILES := $(shell find -L src runtime -type f | LC_ALL=C sort)
+override SRCFILES := $(shell find -L ../lizard ../nolibc ../runtime -type f | LC_ALL=C sort)
 override CFILES := $(filter %.c,$(SRCFILES))
 override ASFILES := $(filter %.S,$(SRCFILES))
 ifeq ($(ARCH),x86_64)
