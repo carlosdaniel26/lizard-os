@@ -9,7 +9,7 @@ LDFLAGS := -no-pie -z max-page-size=0x1000 -Wl,--gc-sections -Wl,--build-id=none
 all: lizard nolibc runtime
 	@mkdir -p $(BIN)
 	@$(CC) $(LDFLAGS) -T linker-x86_64.ld -nostdlib -no-pie $(shell find build -name "*.o") -o $(BIN)/$(OUTPUT)
-	@echo "(LD) $(BIN)/$(OUTPUT)"
+	@python3 scripts/build_status.py
 
 lizard:
 	$(MAKE) -C lizard
