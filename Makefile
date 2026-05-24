@@ -1,5 +1,6 @@
 OUTPUT := kernel
 BIN := build/bin
+export ARCH := x86_64
 
 include makefiles/emulation.mk
 
@@ -7,7 +8,8 @@ include makefiles/emulation.mk
 
 all: lizard nolibc runtime
 	@mkdir -p $(BIN)
-	$(CC) $(LDFLAGS) $(shell find build -name "*.o") -o $(BIN)/$(OUTPUT)
+	@$(CC) $(LDFLAGS) -T linker-x86_64.ld -nostdlib -no-pie $(shell find build -name "*.o") -o $(BIN)/$(OUTPUT)
+	@echo "(LD) $(BIN)/$(OUTPUT)"
 
 lizard:
 	$(MAKE) -C lizard
