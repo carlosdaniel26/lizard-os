@@ -8,7 +8,7 @@ import subprocess
 
 # === Config ===
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.join(SCRIPT_DIR, "../kernel/src")
+ROOT_DIR = os.path.join(SCRIPT_DIR, "../")
 OUTPUT_PNG = "/tmp/initcall_blocks.png"
 
 PATTERN = re.compile(
@@ -57,27 +57,31 @@ FALLBACK_FONT = "Liberation Serif"
 
 def parse_initcalls(root_dir):
     results = []
-    for root, _, files in os.walk(root_dir):
-        for file in files:
-            if not file.endswith(".c"):
-                continue
-            path = os.path.join(root, file)
-            try:
-                with open(path, "r", errors="ignore") as f:
-                    for lineno, line in enumerate(f, 1):
-                        for match in PATTERN.finditer(line):
-                            macro, fn, prio = match.groups()
-                            lvl = LEVEL_MAP.get(macro, 99)
-                            prio_val = int(prio) if prio else 0
-                            rel = os.path.relpath(path, ROOT_DIR)
-                            results.append({
-                                "fn": fn,
-                                "lvl": lvl,
-                                "sub": prio_val,
-                                "file": f"{rel}:{lineno}"
-                            })
-            except Exception:
-                continue
+    # Only scan these directories
+    scan_dirs = ["lizard"]
+    for d in scan_dirs:
+        full_path = os.path.join(root_dir, d)
+        for root, _, files in os.walk(full_path):
+            for file in files:
+                if not file.endswith(".c"):
+                    continue
+                path = os.path.join(root, file)
+                try:
+                    with open(path, "r", errors="ignore") as f:
+                        for lineno, line in enumerate(f, 1):
+                            for match in PATTERN.finditer(line):
+                                macro, fn, prio = match.groups()
+                                lvl = LEVEL_MAP.get(macro, 99)
+                                prio_val = int(prio) if prio else 0
+                                rel = os.path.relpath(path, root_dir)
+                                results.append({
+                                    "fn": fn,
+                                    "lvl": lvl,
+                                    "sub": prio_val,
+                                    "file": f"{rel}:{lineno}"
+                                })
+                except Exception:
+                    continue
     return results
 
 def draw_blocks(results, output_file=OUTPUT_PNG):
