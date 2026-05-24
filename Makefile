@@ -2,162 +2,192 @@
 MAKEFLAGS += -rR
 .SUFFIXES:
 
+# This is the name that our final executable will have.
+# Change as needed.
+override OUTPUT := kernel
+
+# Target architecture to build for. Default to x86_64.
 ARCH := x86_64
 
-QEMUDEBUGFLAGS := -S -s
-QEMUHDAFLAGS := -drive file=hda.img,format=raw,if=ide
-QEMU_WINDOW_NAME = LIZARD-OS
-QMEU_PROCESSOR_NAME = generic qemu processor
-QEMUFLAGS := -m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt $(QEMUHDAFLAGS) -name guest=$(QEMU_WINDOW_NAME),process=$(QEMU_WINDOW_NAME)
+# Install prefix; /usr/local is a good, standard default pick.
+PREFIX := /usr/local
 
-SRC_DIRS := kernel/src
-FORMAT_FILES := $(shell find $(SRC_DIRS) -type f \( -name "*.c" -o -name "*.h" \))
-
-override IMAGE_NAME := lizard-os_$(ARCH)
+# Check if the architecture is supported.
+ifeq ($(filter $(ARCH),aarch64 loongarch64 riscv64 x86_64),)
+	$(error Architecture $(ARCH) not supported)
+endif
 
 BUILD := build/$(ARCH)/kernel
 
+# User controllable C compiler command.
 CC := gcc
-CFLAGS := -g -O2 -pipe
+
+# User controllable C flags.
+CFLAGS := -g -O0 -pipe
+
+# User controllable C preprocessor flags. We set none by default.
 CPPFLAGS :=
-LDFLAGS :=
-LIBS :=
 
-# Targets
-
-.PHONY: all
-all: $(IMAGE_NAME).iso
-	@echo "(ISO) $(IMAGE_NAME) generated!!"
-
-.PHONY: run
-run: $(IMAGE_NAME).iso
-	@echo "(QEMU)"
-	@qemu-system-$(ARCH) \
-		-M pc \
-		-cdrom $(IMAGE_NAME).iso \
-		-boot d \
-		$(QEMUFLAGS)
-
-.PHONY: debug
-debug: $(IMAGE_NAME).iso
-	@echo "(QEMU)"
-	@qemu-system-$(ARCH) \
-		-M pc \
-		-cdrom $(IMAGE_NAME).iso \
-		-boot d \
-		$(QEMUFLAGS) \
-		$(QEMUDEBUGFLAGS)
-
-ovmf/ovmf-code-$(ARCH).fd:
-	mkdir -p ovmf
-	curl -Lo $@ https://github.com/osdev0/edk2-ovmf-nightly/releases/latest/download/ovmf-code-$(ARCH).fd
-
-limine/limine:
-	rm -rf limine
-	git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary --depth=1
-	$(MAKE) -C limine \
-		CC="$(CC)" \
-		CFLAGS="$(CFLAGS)" \
-		CPPFLAGS="$(CPPFLAGS)" \
-		LDFLAGS="$(LDFLAGS)" \
-		LIBS="$(LIBS)"
-
-kernel-deps:
-	./kernel/get-deps
-	touch kernel-deps
-
-.PHONY: kernel
-kernel: kernel-deps
-	$(MAKE) -C kernel
-
-.PHONY: hdd
-hdd:
-	qemu-img create -f raw hda.img 512M
-
-	# Create MBR partition table + one FAT16 partition
-	parted -s hda.img mklabel msdos
-	parted -s hda.img mkpart primary fat16 1MiB 100%
-
-	# Map partitions to loop devices
-	sudo losetup -Pf hda.img
-
-	# Find loop device (usually /dev/loop0)
-	LOOP=$$(losetup -j hda.img | cut -d: -f1); \
-	echo "Loop device: $$LOOP"; \
-	sudo mkfs.fat -F 16 $${LOOP}p1; \
-	sudo mkdir -p /mnt/lzos-fs; \
-	sudo mount $${LOOP}p1 /mnt/lzos-fs; \
-	sudo sh -c 'echo "Hello Lizard" > /mnt/lzos-fs/carlos.txt'; \
-	sudo mkdir -p /mnt/lzos-fs/folder; \
-	sudo sh -c 'echo "MY SECRETS" > /mnt/lzos-fs/folder/file.txt'; \
-	sudo umount /mnt/lzos-fs; \
-	sudo losetup -d $$LOOP
-
-.PHONY: format
-format:
-	@echo "Formatting source files.."
-	@clang-format -i $(FORMAT_FILES)
-
-# Build
-
-$(IMAGE_NAME).iso: limine/limine kernel
-	@rm -rf iso_root
-	@mkdir -p iso_root/boot
-	@cp $(BUILD)/$(ARCH)/kernel iso_root/boot/
-	@mkdir -p iso_root/boot/limine
-	@cp limine.conf iso_root/boot/limine/
-	@mkdir -p iso_root/EFI/BOOT
 ifeq ($(ARCH),x86_64)
-	@cp limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/boot/limine/
-	@cp limine/BOOTX64.EFI iso_root/EFI/BOOT/
-	@cp limine/BOOTIA32.EFI iso_root/EFI/BOOT/
-	@xorriso -as mkisofs -R -r -J -b boot/limine/limine-bios-cd.bin \
-		-no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
-		-apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
-		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		iso_root -o $(IMAGE_NAME).iso \
-		> /dev/null 2>&1
-	@./limine/limine bios-install $(IMAGE_NAME).iso \
-		> /dev/null 2>&1
+	# User controllable nasm flags.
+	NASMFLAGS := -F dwarf -g
 endif
-	@rm -rf iso_root
 
-$(IMAGE_NAME).hdd: limine/limine kernel
-	@rm -f $(IMAGE_NAME).hdd
-	@dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
+# User controllable linker flags. We set none by default.
+LDFLAGS :=
 
-	PATH=$$PATH:/usr/sbin:/sbin sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00 -m 1
-	@./limine/limine bios-install $(IMAGE_NAME).hdd
+# Ensure the dependencies have been obtained.
+ifneq ($(shell ( test '$(MAKECMDGOALS)' = clean || test '$(MAKECMDGOALS)' = distclean ); echo $$?),0)
+	ifeq ($(shell ( ! test -f src/limine.h ); echo $$?),0)
+        	$(error Please run the ./get-deps script first)
+	endif
+endif
 
-	@mformat -i $(IMAGE_NAME).hdd@@1M
-	@mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT ::/boot ::/boot/limine
-	@mcopy -i $(IMAGE_NAME).hdd@@1M $(BUILD)/$(ARCH)/kernel ::/boot
-	@mcopy -i $(IMAGE_NAME).hdd@@1M limine.conf ::/boot/limine
+# Check if CC is Clang.
+override CC_IS_CLANG := $(shell ! $(CC) --version 2>/dev/null | grep 'clang' >/dev/null 2>&1; echo $$?)
 
-	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/limine-bios.sys ::/boot/limine
-	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/BOOTX64.EFI ::/EFI/BOOT
-	@mcopy -i $(IMAGE_NAME).hdd@@1M limine/BOOTIA32.EFI ::/EFI/BOOT
+# Internal C flags that should not be changed by the user.
+override CFLAGS += \
+	-Wall \
+	-Wextra \
+	-std=gnu11 \
+	-nostdinc \
+	-ffreestanding \
+	-fno-stack-protector \
+	-fno-stack-check \
+	-fno-PIC \
+	-ffunction-sections \
+	-fdata-sections
 
-.PHONY: mount
-mount:
-	sudo mkdir -p /mnt/lizard
-	sudo losetup -o 1048576 -f hda.img
-	sudo mount /dev/loop0 /mnt/lizard
+# Internal C preprocessor flags that should not be changed by the user.
+override CPPFLAGS := \
+	-I lizard \
+	-I nolibc \
+	-I runtime \
+	-I . \
+	$(CPPFLAGS) \
+	-DLIMINE_API_REVISION=3 \
+	-MMD \
+	-MP
 
-.PHONY: umount
-umount:
-	sudo umount /mnt/lizard
-	sudo losetup -d /dev/loop0
+ifeq ($(ARCH),x86_64)
+	# Internal nasm flags that should not be changed by the user.
+	override NASMFLAGS += \
+		-Wall
+endif
 
+# Architecture specific internal flags.
+ifeq ($(ARCH),x86_64)
+	ifeq ($(CC_IS_CLANG),1)
+		override CC += \
+			-target x86_64-unknown-none
+	endif
+	override CFLAGS += \
+		-m64 \
+		-march=x86-64 \
+		-mno-80387 \
+		-mno-mmx \
+		-mno-sse \
+		-mno-sse2 \
+		-mno-red-zone \
+		-mcmodel=kernel
+	override LDFLAGS += \
+		-Wl,-m,elf_x86_64
+	override NASMFLAGS += \
+		-f elf64
+endif
+
+# Internal linker flags that should not be changed by the user.
+override LDFLAGS += \
+	-Wl,--build-id=none \
+	-nostdlib \
+	-static \
+	-z max-page-size=0x1000 \
+	-Wl,--gc-sections \
+	-T linker-$(ARCH).ld
+
+# Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
+# object and header dependency file names.
+override SRCFILES := $(shell find -L lizard nolibc runtime -type f | LC_ALL=C sort)
+override CFILES := $(filter %.c,$(SRCFILES))
+override ASFILES := $(filter %.S,$(SRCFILES))
+ifeq ($(ARCH),x86_64)
+override NASMFILES := $(filter %.asm,$(SRCFILES))
+endif
+override OBJ := $(addprefix $(BUILD)/$(ARCH)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o))
+ifeq ($(ARCH),x86_64)
+override OBJ += $(addprefix $(BUILD)/$(ARCH)/,$(NASMFILES:.asm=.asm.o))
+endif
+override HEADER_DEPS := $(addprefix $(BUILD)/$(ARCH)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
+
+# Default target. This must come first, before header dependencies.
+.PHONY: all
+all: $(BUILD)/$(ARCH)/$(OUTPUT)
+
+# Include header dependencies.
+-include $(HEADER_DEPS)
+
+# Link rules for the final executable.
+$(BUILD)/$(ARCH)/$(OUTPUT): Makefile linker-$(ARCH).ld $(OBJ)
+	@mkdir -p "$$(dirname $@)"
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@
+
+# Compilation rules for *.c files.
+$(BUILD)/$(ARCH)/%.c.o: %.c Makefile
+	@mkdir -p "$$(dirname $@)"
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo "(CC) $<"
+
+# Compilation rules for *.S files.
+$(BUILD)/$(ARCH)/%.S.o: %.S Makefile
+	@mkdir -p "$$(dirname $@)"
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+ifeq ($(ARCH),x86_64)
+# Compilation rules for *.asm (nasm) files.
+$(BUILD)/$(ARCH)/%.asm.o: %.asm Makefile
+	@mkdir -p "$$(dirname $@)"
+	@nasm $(NASMFLAGS) $< -o $@
+	@echo "(AS) $<"
+endif
+
+# Remove object files and the final executable.
 .PHONY: clean
 clean:
-	$(MAKE) -C kernel clean
-	@rm -rf iso_root $(IMAGE_NAME).iso $(IMAGE_NAME).hdd
+	rm -rf $(BUILD)/$(ARCH) obj-$(ARCH)
 
+# Remove everything built and generated including downloaded dependencies.
 .PHONY: distclean
 distclean:
-	$(MAKE) -C kernel distclean
-	@rm -rf iso_root *.iso *.hdd kernel-deps limine ovmf
+	rm -rf src/limine.h
 
-gdb:
-	gdb -tui -ex "target remote :1234" -x script.gdb
+.PHONY: run
+run: all
+	@echo "(QEMU)"
+	@qemu-system-$(ARCH) \
+		-M pc \
+		-cdrom lizard-os_x86_64.iso \
+		-boot d \
+		-m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt
+
+.PHONY: debug
+debug: all
+	@echo "(QEMU)"
+	@qemu-system-$(ARCH) \
+		-M pc \
+		-cdrom lizard-os_x86_64.iso \
+		-boot d \
+		-m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt \
+		-S -s
+
+# Install the final built executable to its final on-root location.
+.PHONY: install
+install: all
+	install -d "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)"
+	install -m 644 $(BUILD)/$(ARCH)/$(OUTPUT) "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)/$(OUTPUT)-$(ARCH)"
+
+# Try to undo whatever the "install" target did.
+.PHONY: uninstall
+uninstall:
+	rm -f "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)/$(OUTPUT)-$(ARCH)"
+	-rmdir "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)"
