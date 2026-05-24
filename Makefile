@@ -106,31 +106,24 @@ override LDFLAGS += \
 	-Wl,--gc-sections \
 	-T linker-$(ARCH).ld
 
-# Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
-# object and header dependency file names.
-override SRCFILES := $(shell find -L lizard nolibc runtime -type f | LC_ALL=C sort)
-override CFILES := $(filter %.c,$(SRCFILES))
-override ASFILES := $(filter %.S,$(SRCFILES))
-ifeq ($(ARCH),x86_64)
-override NASMFILES := $(filter %.asm,$(SRCFILES))
-endif
-override OBJ := $(addprefix $(BUILD)/$(ARCH)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o))
-ifeq ($(ARCH),x86_64)
-override OBJ += $(addprefix $(BUILD)/$(ARCH)/,$(NASMFILES:.asm=.asm.o))
-endif
-override HEADER_DEPS := $(addprefix $(BUILD)/$(ARCH)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
+.PHONY: lizard nolibc runtime
+lizard:
+	$(MAKE) -C lizard
+nolibc:
+	$(MAKE) -C nolibc
+runtime:
+	$(MAKE) -C runtime
+
+OBJ = $(shell find build/$(ARCH)/kernel -name "*.o")
 
 # Default target. This must come first, before header dependencies.
 .PHONY: all
-all: $(BUILD)/$(ARCH)/$(OUTPUT)
-
-# Include header dependencies.
--include $(HEADER_DEPS)
+all: lizard nolibc runtime bin/$(OUTPUT)
 
 # Link rules for the final executable.
-$(BUILD)/$(ARCH)/$(OUTPUT): Makefile linker-$(ARCH).ld $(OBJ)
-	@mkdir -p "$$(dirname $@)"
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@
+$(BIN)/$(OUTPUT): lizard nolibc runtime linker-$(ARCH).ld
+	@mkdir -p "$(BIN)"
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(shell find $(BUILD) -name "*.o") -o $@
 
 # Compilation rules for *.c files.
 $(BUILD)/$(ARCH)/%.c.o: %.c Makefile
@@ -154,39 +147,24 @@ endif
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(BUILD)/$(ARCH) obj-$(ARCH)
+	rm -rf build obj-$(ARCH)
+
+# Include emulation targets
+include makefiles/emulation.mk
 
 # Remove everything built and generated including downloaded dependencies.
-.PHONY: distclean
-distclean:
-	rm -rf src/limine.h
+.PHONY: clean distclean
+clean:
+	rm -rf build obj-$(ARCH)
 
-.PHONY: run
-run: all
-	@echo "(QEMU)"
-	@qemu-system-$(ARCH) \
-		-M pc \
-		-drive file=hda.img,format=raw,if=ide \
-		-cdrom lizard-os_x86_64.iso \
-		-boot d \
-		-m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt
-
-.PHONY: debug
-debug: all
-	@echo "(QEMU)"
-	@qemu-system-$(ARCH) \
-		-M pc \
-		-drive file=hda.img,format=raw,if=ide \
-		-cdrom lizard-os_x86_64.iso \
-		-boot d \
-		-m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt \
-		-S -s
+distclean: clean
+	rm -rf lizard/limine.h
 
 # Install the final built executable to its final on-root location.
 .PHONY: install
 install: all
 	install -d "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)"
-	install -m 644 $(BUILD)/$(ARCH)/$(OUTPUT) "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)/$(OUTPUT)-$(ARCH)"
+	install -m 644 $(BUILD)/$(OUTPUT) "$(DESTDIR)$(PREFIX)/share/$(OUTPUT)/$(OUTPUT)-$(ARCH)"
 
 # Try to undo whatever the "install" target did.
 .PHONY: uninstall
@@ -196,3 +174,4 @@ uninstall:
 
 gdb:
 	gdb -tui -ex "target remote :1234" -x script.gdb
+

@@ -1,4 +1,4 @@
-#include "../kernel/src/syscall.h"
+#include "../lizard/syscall.h"
 
 int main()
 {
