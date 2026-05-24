@@ -6,6 +6,7 @@
 #include <panic.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <tss.h>
 
 static struct global_descriptor boot_gdt[5] __initdata;
 static struct gdt_ptr boot_gdt_ptr __initdata;
@@ -39,6 +40,24 @@ int gdt_add_gate(u64 base, u64 limit, u8 access, u8 granularity)
 
     runtime_gdt[gdt_next_index] = gdt_create_gate(base, limit, access, granularity);
     return gdt_next_index++;
+}
+
+int gdt_add_tss_gate(u64 base, u64 limit, u8 access, u8 granularity)
+{
+    if (!gdt_is_dynamic)
+        kpanic("GDT: Attempted to add gate before dynamic initialization");
+
+    if (gdt_next_index + 1 >= GDT_MAX_ENTRIES)
+        kpanic("GDT: Maximum entries exceeded");
+
+    runtime_gdt[gdt_next_index] = gdt_create_gate(base, limit, access, granularity);
+
+    u64 *second_half = (u64 *)&runtime_gdt[gdt_next_index + 1];
+    *second_half = (base >> 32);
+
+    int index = gdt_next_index;
+    gdt_next_index += 2;
+    return index;
 }
 
 void gdt_load(struct gdt_ptr *ptr)
@@ -84,6 +103,8 @@ void __init gdt_init_dynamic()
     runtime_gdt_ptr.base = (u64)runtime_gdt;
 
     gdt_load(&runtime_gdt_ptr);
+
+    tss_init();
 
     kprintf("GDT: Dynamic GDT initialized with %d entries\n", GDT_MAX_ENTRIES);
 }

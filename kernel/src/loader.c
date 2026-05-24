@@ -1,4 +1,5 @@
 #include <elf.h>
+#include <gdt.h>
 #include <kmalloc.h>
 #include <pgtable.h>
 #include <stdio.h>
@@ -47,6 +48,16 @@ int load_elf(void *buffer, struct task *task)
     }
 
     task->regs.rip = ehdr->e_entry;
+
+    /* Allocate user stack */
+    for (int i = 0; i < USER_STACK_PAGES; i++) {
+        vmm_alloc(task->pml4, USER_STACK_BASE + (i * PAGE_SIZE), PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
+    }
+    task->regs.rsp = USER_STACK_BASE + (USER_STACK_PAGES * PAGE_SIZE);
+
+    task->regs.cs = USER_CS;
+    task->regs.ss = USER_SS;
+    task->regs.rflags = RFLAGS_DEFAULT;
     vmm_switch_pml4(old_pml4);
 
     return 0;

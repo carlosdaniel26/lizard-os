@@ -34,6 +34,12 @@ struct gdt_ptr {
 #define GDT_USER_CODE   (GDT_ACCESS_PRESENT | GDT_ACCESS_DPL3 | GDT_ACCESS_S | GDT_ACCESS_EX | GDT_ACCESS_RW)
 #define GDT_USER_DATA   (GDT_ACCESS_PRESENT | GDT_ACCESS_DPL3 | GDT_ACCESS_S | GDT_ACCESS_RW)
 
+#define KERNEL_CS 0x08
+#define KERNEL_SS 0x10
+#define USER_CS   0x1B
+#define USER_SS   0x23
+#define TSS_SEL   0x28
+
 /* Granularity Flags */
 #define GDT_GRAN_4KB           (1 << 7)
 #define GDT_GRAN_64BIT         (1 << 5)
@@ -41,6 +47,7 @@ struct gdt_ptr {
 
 struct global_descriptor create_gdt_gate(u64 base, u64 limit, u8 access, u8 granularity);
 int gdt_add_gate(u64 base, u64 limit, u8 access, u8 granularity);
+int gdt_add_tss_gate(u64 base, u64 limit, u8 access, u8 granularity);
 void gdt_load(struct gdt_ptr *ptr);
 void gdt_init_dynamic();
 

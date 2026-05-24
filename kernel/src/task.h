@@ -6,6 +6,11 @@
 
 #define TASK_NAME_MAX_LEN 32
 
+#define USER_STACK_BASE  0x700000000000
+#define USER_STACK_PAGES 4
+
+#define RFLAGS_DEFAULT 0x202
+
 struct cpu_state {
     u64 rax;
     u64 rbx;
@@ -45,6 +50,8 @@ struct task {
 
     struct cpu_state regs;
     u64 *pml4;
+
+    u64 kernel_stack;
 
     u32 priority;
     u32 ticks_remaining;

@@ -1,5 +1,6 @@
 #include <early_alloc.h>
 #include <framebuffer.h>
+#include <gdt.h>
 #include <idt.h>
 #include <init.h>
 #include <isr_vector.h>
@@ -58,7 +59,7 @@ void set_idt_gate(int vector, void (*isr)(), u8 flags)
     u64 addr = (u64)isr;
 
     idt[vector].offset_low = addr & 0xFFFF;
-    idt[vector].selector = 0x08;
+    idt[vector].selector = KERNEL_CS;
     idt[vector].ist = 0;
     idt[vector].type_attr = flags;
     idt[vector].offset_mid = (addr >> 16) & 0xFFFF;

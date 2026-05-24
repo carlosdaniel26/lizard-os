@@ -34,8 +34,10 @@ void __init kernel_bootstrap()
     do_initcalls(__initcall4_start, __initcall4_end); /* subsystem */
     
     gdt_init_dynamic();
-    timer_init();
+
     time_init();
+    timer_init();
+    timer_start();
 
     do_initcalls(__initcall5_start, __initcall5_end); /* filesystem */
     do_initcalls(__initcall6_start, __initcall6_end); /* device */

@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include <buddy.h>
 #include <debug.h>
+#include <gdt.h>
 #include <helpers.h>
 #include <init.h>
 #include <ktime.h>
@@ -10,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <task.h>
+#include <tss.h>
 #include <types.h>
 #include <vmm.h>
 
@@ -33,11 +35,16 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
 
     task->priority = priority;
     task->regs.rip = (u64)entry_point;
+    task->regs.cs = KERNEL_CS;
+    task->regs.ss = KERNEL_SS;
+    task->regs.rflags = RFLAGS_DEFAULT;
+
     uintptr_t ptr = (uintptr_t)vmm_alloc_page();
 
     memset((void *)ptr, 0, 4096);
 
     task->regs.rsp = ptr + 4096;
+    task->kernel_stack = ptr + 4096;
     list_add(&task->list, &task_list);
 
     task->state = TASK_STATE_READY;
@@ -57,17 +64,17 @@ void task_load_context(struct task *task)
     ptrace->r10 = saved->r10;
     ptrace->r11 = saved->r11;
     ptrace->rbx = saved->rbx;
-    // ptrace->rbp = saved->rbp;
+    ptrace->rbp = saved->rbp;
     ptrace->r12 = saved->r12;
     ptrace->r13 = saved->r13;
     ptrace->r14 = saved->r14;
     ptrace->r15 = saved->r15;
 
     ptrace->rip = saved->rip;
-    // ptrace->cs	 = saved->cs;
-    // ptrace->rflags = saved->rflags;
+    ptrace->cs	 = saved->cs;
+    ptrace->rflags = saved->rflags;
     ptrace->rsp = saved->rsp;
-    // ptrace->ss	 = saved->ss;
+    ptrace->ss	 = saved->ss;
 }
 
 void task_save_context()
@@ -91,10 +98,10 @@ void task_save_context()
     saved->r15 = ptrace->r15;
 
     saved->rip = ptrace->rip;
-    // saved->cs  = ptrace->cs;
-    // saved->rflags = ptrace->rflags;
+    saved->cs  = ptrace->cs;
+    saved->rflags = ptrace->rflags;
     saved->rsp = ptrace->rsp;
-    // saved->ss  = ptrace->ss;
+    saved->ss  = ptrace->ss;
 }
 
 static inline void scheduler_trigger()
@@ -122,6 +129,8 @@ int task_switch_to(struct task *next_task)
     if (next_task->pml4) {
         vmm_switch_pml4(next_task->pml4);
     }
+
+    tss_set_stack(next_task->kernel_stack);
 
     current_task = next_task;
 

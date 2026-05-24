@@ -37,8 +37,8 @@ void kmain()
     struct task *t = (struct task *)zalloc(sizeof(struct task));
     void *buffer = vfs_read_all("/hello");
     if (buffer) {
+        task_create(t, (void (*)(void))0, "hello", 1);
         load_elf(buffer, t);
-        task_create(t, (void (*)(void))t->regs.rip, "hello", 1);
     }
     
     enable_scheduler();
