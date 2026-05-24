@@ -5,4 +5,5 @@ all: $(OBJ)
 
 ../$(BUILD)/nolibc/%.c.o: %.c
 	@mkdir -p "$$(dirname $@)"
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo "(CC) $<"

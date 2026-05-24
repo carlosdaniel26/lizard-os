@@ -1,8 +1,8 @@
 OUTPUT := kernel
 BIN := build/bin
 export ARCH := x86_64
+LDFLAGS := -no-pie -z max-page-size=0x1000 -Wl,--gc-sections -Wl,--build-id=none
 
-include makefiles/emulation.mk
 
 .PHONY: all lizard nolibc runtime clean distclean
 
@@ -28,3 +28,4 @@ distclean: clean
 
 gdb:
 	gdb -tui -ex "target remote :1234" -x script.gdb
+include makefiles/emulation.mk

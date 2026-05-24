@@ -77,7 +77,7 @@ int init_idt()
     isr_table = zalloc(sizeof(void *) * IDT_ENTRIES);
 
     for (int i = 0; i < IDT_ENTRIES; i++)
-        set_idt_gate(i, isr_stub_table[i], 0x8E);
+        set_idt_gate(i, (void *)isr_stub_table[i], 0x8E);
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base = (u64)&idt;

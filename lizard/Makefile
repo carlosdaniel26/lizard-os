@@ -7,13 +7,16 @@ all: $(OBJ)
 
 ../$(BUILD)/lizard/%.c.o: %.c
 	@mkdir -p "$$(dirname $@)"
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo "(CC) $<"
 
 ../$(BUILD)/lizard/%.S.o: %.S
 	@mkdir -p "$$(dirname $@)"
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo "(CC) $<"
 
 ../$(BUILD)/lizard/%.asm.o: %.asm
 	@mkdir -p "$$(dirname $@)"
-	nasm $(NASMFLAGS) $< -o $@
+	@nasm $(NASMFLAGS) $< -o $@
+	@echo "(AS) $<"
 

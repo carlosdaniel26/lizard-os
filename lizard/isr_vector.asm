@@ -1,5 +1,6 @@
 section .note.GNU-stack noalloc noexec nowrite
 
+default rel
 extern isr_common_entry
 
 section .text
@@ -49,7 +50,7 @@ isr_common_stub:
 global isr_vector_%1
 isr_vector_%1:
     mov rdi, %1
-    jmp isr_common_stub
+    jmp [rel isr_common_stub]
 %endmacro
 
 %assign i 0
