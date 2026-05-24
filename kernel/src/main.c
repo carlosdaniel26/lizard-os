@@ -37,7 +37,7 @@ void kmain()
     struct task *t = (struct task *)zalloc(sizeof(struct task));
     void *buffer = vfs_read_all("/hello");
     if (buffer) {
-        task_create(t, (void (*)(void))0, "hello", 1);
+        task_create(t, (void (*)(void))0, "hello", 1, TASK_USER);
         load_elf(buffer, t);
     }
     

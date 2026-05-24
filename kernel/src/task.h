@@ -11,6 +11,9 @@
 
 #define RFLAGS_DEFAULT 0x202
 
+#define TASK_USER   true
+#define TASK_KERNEL false
+
 struct cpu_state {
     u64 rax;
     u64 rbx;
@@ -47,6 +50,7 @@ struct task {
     char name[TASK_NAME_MAX_LEN];
 
     u8 state;
+    bool is_user;
 
     struct cpu_state regs;
     u64 *pml4;
@@ -58,7 +62,7 @@ struct task {
     u32 sleep_until; /* Absolute wake-up time in ms */
 };
 
-void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority);
+void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority, bool is_user);
 void task_save_context();
 void task_load_context(struct task *task);
 int task_switch_to(struct task *next_task);

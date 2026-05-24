@@ -28,23 +28,36 @@ void idle_func()
     yield();
 }
 
-void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority)
+void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority, bool is_user)
 {
     /* task->name = name */
+    memset(task, 0, sizeof(struct task));
     memcpy(task->name, name, strlen(name));
 
     task->priority = priority;
+    task->is_user = is_user;
+    task->pml4 = pgtable_create();
+
     task->regs.rip = (u64)entry_point;
-    task->regs.cs = KERNEL_CS;
-    task->regs.ss = KERNEL_SS;
+    
+    if (is_user) {
+        task->regs.cs = USER_CS;
+        task->regs.ss = USER_SS;
+    } else {
+        task->regs.cs = KERNEL_CS;
+        task->regs.ss = KERNEL_SS;
+    }
+    
     task->regs.rflags = RFLAGS_DEFAULT;
 
-    uintptr_t ptr = (uintptr_t)vmm_alloc_page();
+    void *ptr = buddy_alloc(0);
+    memset(ptr, 0, PAGE_SIZE);
 
-    memset((void *)ptr, 0, 4096);
+    /* Map kernel stack in task's PML4 */
+    pgtable_map(task->pml4, (u64)ptr, (u64)ptr - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
 
-    task->regs.rsp = ptr + 4096;
-    task->kernel_stack = ptr + 4096;
+    task->regs.rsp = (u64)ptr + 4096;
+    task->kernel_stack = (u64)ptr + 4096;
     list_add(&task->list, &task_list);
 
     task->state = TASK_STATE_READY;

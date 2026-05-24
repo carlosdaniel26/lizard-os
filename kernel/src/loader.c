@@ -27,8 +27,6 @@ int load_elf(void *buffer, struct task *task)
         kprintf("Not an executable ELF file\n");
         return -1;
     }
-
-    task->pml4 = pgtable_create();
     
     // Switch to new pml4 to map segments
     u64 *old_pml4 = current_pml4;
