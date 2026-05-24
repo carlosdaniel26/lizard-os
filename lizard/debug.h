@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ktime.h>
-#include <pit.h>
-#include <stdio.h>
-#include <types.h>
+#include <lizard/ktime.h>
+#include <lizard/pit.h>
+#include <nolibc/stdio.h>
+#include <nolibc/types.h>
 
 #define debug_printf(fmt, ...)                                                                               \
     do                                                                                                       \

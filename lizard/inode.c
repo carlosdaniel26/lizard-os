@@ -1,7 +1,7 @@
-#include <inode.h>
-#include <fs.h>
-#include <kmalloc.h>
-#include <types.h>
+#include <lizard/inode.h>
+#include <lizard/fs.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/types.h>
 
 struct inode *inode_alloc(struct super_block *sb)
 {

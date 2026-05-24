@@ -1,4 +1,4 @@
-#include <syscall.h>
+#include <lizard/syscall.h>
 
 u64 syscall0(u64 syscall_num)
 {

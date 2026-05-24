@@ -1,8 +1,8 @@
-#include <idt.h>
-#include <init.h>
-#include <sched.h>
-#include <task.h>
-#include <types.h>
+#include <lizard/idt.h>
+#include <lizard/init.h>
+#include <lizard/sched.h>
+#include <lizard/task.h>
+#include <nolibc/types.h>
 
 #define SCHEDULER_ISR_INDEX 48
 

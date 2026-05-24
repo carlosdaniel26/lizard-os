@@ -1,8 +1,8 @@
-#include <file.h>
-#include <kmalloc.h>
-#include <stdio.h>
-#include <string.h>
-#include <vfs.h>
+#include <lizard/file.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/vfs.h>
 
 void *vfs_read_all(const char *path)
 {

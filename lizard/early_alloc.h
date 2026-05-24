@@ -1,8 +1,8 @@
 #pragma once
 
-#include <limine.h>
+#include <lizard/limine.h>
 
-#include <types.h>
+#include <nolibc/types.h>
 
 void *early_alloc(size_t size, size_t align);
 extern u64 highest_addr;

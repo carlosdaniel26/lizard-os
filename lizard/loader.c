@@ -1,11 +1,11 @@
-#include <elf.h>
-#include <gdt.h>
-#include <kmalloc.h>
-#include <pgtable.h>
-#include <stdio.h>
-#include <string.h>
-#include <task.h>
-#include <vmm.h>
+#include <lizard/elf.h>
+#include <lizard/gdt.h>
+#include <lizard/kmalloc.h>
+#include <lizard/pgtable.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/task.h>
+#include <lizard/vmm.h>
 
 extern u64 hhdm_offset;
 

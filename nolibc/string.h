@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stdbool.h>
+#include <nolibc/stdbool.h>
 
-#include <types.h>
+#include <nolibc/types.h>
 
 int memcmp(const void *, const void *, size_t size);
 int strcmp(const void *aptr, const void *bptr);

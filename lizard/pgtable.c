@@ -1,10 +1,10 @@
-#include <buddy.h>
-#include <helpers.h>
-#include <pgtable.h>
+#include <lizard/buddy.h>
+#include <lizard/helpers.h>
+#include <lizard/pgtable.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <types.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 /* times i forgot to automap: 3.5*/
 /* the .5 is for now that the system is missing one page for some reason, so its kinda my fault */

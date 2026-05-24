@@ -1,19 +1,19 @@
-#include <buddy.h>
-#include <debug.h>
-#include <early_alloc.h>
-#include <framebuffer.h>
-#include <helpers.h>
-#include <kernelcfg.h>
-#include <limine.h>
-#include <memory_map.h>
-#include <panic.h>
-#include <pgtable.h>
+#include <lizard/buddy.h>
+#include <lizard/debug.h>
+#include <lizard/early_alloc.h>
+#include <lizard/framebuffer.h>
+#include <lizard/helpers.h>
+#include <lizard/kernelcfg.h>
+#include <lizard/limine.h>
+#include <lizard/memory_map.h>
+#include <lizard/panic.h>
+#include <lizard/pgtable.h>
 
-#include <init.h>
-#include <stdio.h>
-#include <string.h>
-#include <types.h>
-#include <vmm.h>
+#include <lizard/init.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
+#include <lizard/vmm.h>
 
 #define DIV_UP(a, b) (((a) + (b) - 1) / (b))
 

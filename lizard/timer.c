@@ -1,6 +1,6 @@
-#include <timer.h>
-#include <stddef.h>
-#include <panic.h>
+#include <lizard/timer.h>
+#include <nolibc/stddef.h>
+#include <lizard/panic.h>
 
 static struct timer_driver *active_timer = NULL;
 static struct timer_driver *registered_timers = NULL;

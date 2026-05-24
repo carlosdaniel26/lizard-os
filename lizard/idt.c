@@ -1,20 +1,20 @@
-#include <early_alloc.h>
-#include <framebuffer.h>
-#include <gdt.h>
-#include <idt.h>
-#include <init.h>
-#include <isr_vector.h>
-#include <kernelcfg.h>
-#include <keyboard.h>
-#include <kmalloc.h>
-#include <panic.h>
-#include <pic.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <syscall.h>
-#include <task.h>
-#include <tty.h>
-#include <types.h>
+#include <lizard/early_alloc.h>
+#include <lizard/framebuffer.h>
+#include <lizard/gdt.h>
+#include <lizard/idt.h>
+#include <lizard/init.h>
+#include <lizard/isr_vector.h>
+#include <lizard/kernelcfg.h>
+#include <lizard/keyboard.h>
+#include <lizard/kmalloc.h>
+#include <lizard/panic.h>
+#include <lizard/pic.h>
+#include <nolibc/stddef.h>
+#include <nolibc/stdio.h>
+#include <lizard/syscall.h>
+#include <lizard/task.h>
+#include <lizard/tty.h>
+#include <nolibc/types.h>
 
 extern u8 kernel_stack[];
 
@@ -23,7 +23,7 @@ static struct idt_ptr idt_descriptor;
 
 void (**isr_table)(struct cpu_state *regs);
 
-#include <sched.h>
+#include <lizard/sched.h>
 
 extern u8 scheduler_enabled;
 

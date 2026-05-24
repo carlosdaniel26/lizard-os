@@ -1,7 +1,7 @@
 #pragma once
 
-#include <task.h>
-#include <types.h>
+#include <lizard/task.h>
+#include <nolibc/types.h>
 
 #define SYSCALL_ENTRIES 256
 

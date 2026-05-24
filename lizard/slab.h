@@ -1,7 +1,7 @@
 #pragma once
 
-#include <list.h>
-#include <spinlock.h>
+#include <nolibc/list.h>
+#include <lizard/spinlock.h>
 
 
 #define KMEMCACHE_NAME_LEN 32

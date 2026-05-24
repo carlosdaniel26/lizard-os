@@ -1,9 +1,9 @@
-#include <early_alloc.h>
-#include <framebuffer.h>
+#include <lizard/early_alloc.h>
+#include <lizard/framebuffer.h>
 
-#include <init.h>
-#include <string.h>
-#include <types.h>
+#include <lizard/init.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request
     framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};

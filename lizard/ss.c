@@ -1,15 +1,15 @@
-#include <ata.h>
-#include <buddy.h>
-#include <cpuid.h>
-#include <debug.h>
-#include <framebuffer.h>
-#include <helpers.h>
-#include <ktime.h>
-#include <rtc.h>
-#include <stdio.h>
-#include <string.h>
-#include <tty.h>
-#include <vga.h>
+#include <lizard/ata.h>
+#include <lizard/buddy.h>
+#include <lizard/cpuid.h>
+#include <lizard/debug.h>
+#include <lizard/framebuffer.h>
+#include <lizard/helpers.h>
+#include <lizard/ktime.h>
+#include <lizard/rtc.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/tty.h>
+#include <lizard/vga.h>
 
 void kprint_prompt()
 {

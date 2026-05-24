@@ -1,9 +1,9 @@
-#include <exception.h>
-#include <framebuffer.h>
-#include <init.h>
-#include <isr_vector.h>
-#include <kernelcfg.h>
-#include <panic.h>
+#include <lizard/exception.h>
+#include <lizard/framebuffer.h>
+#include <lizard/init.h>
+#include <lizard/isr_vector.h>
+#include <lizard/kernelcfg.h>
+#include <lizard/panic.h>
 
 #define EXCEPTION_PAGE_FAULT 14
 

@@ -1,14 +1,14 @@
-#include <early_alloc.h>
+#include <lizard/early_alloc.h>
 
-#include <debug.h>
-#include <helpers.h>
-#include <limine.h>
-#include <panic.h>
-#include <pgtable.h>
+#include <lizard/debug.h>
+#include <lizard/helpers.h>
+#include <lizard/limine.h>
+#include <lizard/panic.h>
+#include <lizard/pgtable.h>
 
-#include <init.h>
-#include <stdio.h>
-#include <types.h>
+#include <lizard/init.h>
+#include <nolibc/stdio.h>
+#include <nolibc/types.h>
 
 __attribute__((used, section(".limine_requests"))) volatile struct limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST, .revision = 0};

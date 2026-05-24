@@ -1,16 +1,16 @@
-#include <buddy.h>
-#include <debug.h>
-#include <early_alloc.h>
-#include <helpers.h>
-#include <kmalloc.h>
-#include <list.h>
-#include <panic.h>
-#include <pgtable.h>
-#include <slab.h>
+#include <lizard/buddy.h>
+#include <lizard/debug.h>
+#include <lizard/early_alloc.h>
+#include <lizard/helpers.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/list.h>
+#include <lizard/panic.h>
+#include <lizard/pgtable.h>
+#include <lizard/slab.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <types.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 #define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
 

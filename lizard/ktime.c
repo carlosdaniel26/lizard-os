@@ -1,7 +1,7 @@
-#include <ktime.h>
+#include <lizard/ktime.h>
 
-#include <init.h>
-#include <types.h>
+#include <lizard/init.h>
+#include <nolibc/types.h>
 
 static struct time_spec wall_clock; /* CLOCK_REALTIME */
 static struct time_spec mono_clock; /* CLOCK_MONOTONIC */

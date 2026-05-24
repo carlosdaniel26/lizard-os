@@ -1,10 +1,10 @@
-#include <blk_dev.h>
-#include <blkdev_manager.h>
-#include <debug.h>
-#include <kmalloc.h>
-#include <mbr.h>
-#include <stdio.h>
-#include <string.h>
+#include <lizard/blk_dev.h>
+#include <lizard/blkdev_manager.h>
+#include <lizard/debug.h>
+#include <lizard/kmalloc.h>
+#include <lizard/mbr.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
 
 #define MAX_BLKDEVS 16
 

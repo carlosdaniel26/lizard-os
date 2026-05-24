@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <nolibc/types.h>
 
 void PIC_remap();
 void PIC_unmaskIRQ(u8 irq);

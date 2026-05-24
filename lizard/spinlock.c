@@ -1,4 +1,4 @@
-#include <spinlock.h>
+#include <lizard/spinlock.h>
 
 void spinlock_init(struct spinlock_t *lock)
 {

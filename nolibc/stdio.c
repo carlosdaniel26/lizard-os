@@ -1,12 +1,12 @@
-#include <alias.h>
-#include <limits.h>
-#include <pit.h>
-#include <stdarg.h>
-#include <stdbool.h>
+#include <lizard/alias.h>
+#include <nolibc/limits.h>
+#include <lizard/pit.h>
+#include <nolibc/stdarg.h>
+#include <nolibc/stdbool.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <tty.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/tty.h>
 
 bool kprint(const char *data, size_t length)
 {

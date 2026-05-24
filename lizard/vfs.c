@@ -1,14 +1,14 @@
-#include <ata.h>
-#include <blkdev_manager.h>
-#include <fs.h>
-#include <init.h>
-#include <kmalloc.h>
-#include <panic.h>
-#include <setup.h>
-#include <stdio.h>
-#include <string.h>
-#include <types.h>
-#include <vfs.h>
+#include <lizard/ata.h>
+#include <lizard/blkdev_manager.h>
+#include <lizard/fs.h>
+#include <lizard/init.h>
+#include <lizard/kmalloc.h>
+#include <lizard/panic.h>
+#include <lizard/setup.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
+#include <lizard/vfs.h>
 
 __initdata char rootdev_str[64] = {0};
 static struct dentry *vfs_root;

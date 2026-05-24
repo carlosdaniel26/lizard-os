@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include <types.h>
-#include <vga.h>
+#include <nolibc/types.h>
+#include <lizard/vga.h>
 
 #define TTY_DEFAULT_BG_COLOR VGA_COLOR_BLACK
 #define TTY_DEFAULT_COLOR VGA_COLOR_WHITE

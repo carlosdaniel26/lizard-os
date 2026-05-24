@@ -1,19 +1,19 @@
 #pragma once
 
-#include <atomic.h>
-#include <blkdev_manager.h>
-#include <file.h>
-#include <list.h>
-#include <spinlock.h>
-#include <types.h>
+#include <lizard/atomic.h>
+#include <lizard/blkdev_manager.h>
+#include <lizard/file.h>
+#include <nolibc/list.h>
+#include <lizard/spinlock.h>
+#include <nolibc/types.h>
 
 /* Forward declarations */
 struct dentry;
 struct inode;
 struct super_block;
 
-#include <dentry.h>
-#include <inode.h>
+#include <lizard/dentry.h>
+#include <lizard/inode.h>
 
 struct super_block {
     struct list_head list;

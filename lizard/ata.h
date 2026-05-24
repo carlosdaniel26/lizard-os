@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <nolibc/types.h>
 
 #define PRIMARY 0
 #define SECONDARY 1

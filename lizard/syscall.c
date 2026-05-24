@@ -1,8 +1,8 @@
-#include <init.h>
-#include <isr_vector.h>
-#include <stdio.h>
-#include <syscall.h>
-#include <kmalloc.h>
+#include <lizard/init.h>
+#include <lizard/isr_vector.h>
+#include <nolibc/stdio.h>
+#include <lizard/syscall.h>
+#include <lizard/kmalloc.h>
 
 #define SYSCALL_ISR_INDEX 0x80
 

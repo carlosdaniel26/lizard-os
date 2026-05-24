@@ -1,9 +1,9 @@
-#include <helpers.h>
-#include <panic.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <tty.h>
-#include <types.h>
+#include <lizard/helpers.h>
+#include <lizard/panic.h>
+#include <nolibc/stdarg.h>
+#include <nolibc/stdio.h>
+#include <lizard/tty.h>
+#include <nolibc/types.h>
 
 void kpanic(const char *str, ...)
 {

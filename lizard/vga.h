@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <nolibc/types.h>
 
 #define VGA_WIDTH 1024
 #define VGA_HEIGHT 768

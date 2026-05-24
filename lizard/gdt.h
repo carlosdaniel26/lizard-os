@@ -1,7 +1,7 @@
 #pragma once
 
-#include <init.h>
-#include <types.h>
+#include <lizard/init.h>
+#include <nolibc/types.h>
 
 #define GDT_MAX_ENTRIES 1024
 

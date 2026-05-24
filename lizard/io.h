@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <nolibc/types.h>
 
 u8 inb(u16 port);
 u16 inw(u16 port);

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdbool.h>
-#include <types.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/types.h>
 
 /* Vendor strings from CPUs.*/
 #define CPUID_VENDOR_AMD "AuthenticAMD"

@@ -1,6 +1,6 @@
-#include <tss.h>
-#include <gdt.h>
-#include <string.h>
+#include <lizard/tss.h>
+#include <lizard/gdt.h>
+#include <nolibc/string.h>
 
 static struct tss main_tss;
 

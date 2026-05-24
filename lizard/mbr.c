@@ -1,8 +1,8 @@
-#include <blk_dev.h>
-#include <blkdev_manager.h>
-#include <debug.h>
-#include <mbr.h>
-#include <stdio.h>
+#include <lizard/blk_dev.h>
+#include <lizard/blkdev_manager.h>
+#include <lizard/debug.h>
+#include <lizard/mbr.h>
+#include <nolibc/stdio.h>
 
 static int mbr_read(struct block_dev *dev, struct mbr_header *mbr)
 {

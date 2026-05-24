@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <nolibc/types.h>
 
 typedef int (*initcall_t)();
 

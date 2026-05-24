@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string.h>
-#include <types.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 void kmalloc_init(void);
 void *kmalloc(size_t size);

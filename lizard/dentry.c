@@ -1,10 +1,10 @@
-#include <dentry.h>
-#include <atomic.h>
-#include <fs.h>
-#include <kmalloc.h>
-#include <spinlock.h>
-#include <string.h>
-#include <types.h>
+#include <lizard/dentry.h>
+#include <lizard/atomic.h>
+#include <lizard/fs.h>
+#include <lizard/kmalloc.h>
+#include <lizard/spinlock.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 struct dentry *dentry_alloc(const char *name)
 {

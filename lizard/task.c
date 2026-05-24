@@ -1,19 +1,19 @@
 #include "syscall.h"
-#include <buddy.h>
-#include <debug.h>
-#include <gdt.h>
-#include <helpers.h>
-#include <init.h>
-#include <ktime.h>
-#include <pgtable.h>
-#include <pit.h>
-#include <ss.h>
-#include <stdio.h>
-#include <string.h>
-#include <task.h>
-#include <tss.h>
-#include <types.h>
-#include <vmm.h>
+#include <lizard/buddy.h>
+#include <lizard/debug.h>
+#include <lizard/gdt.h>
+#include <lizard/helpers.h>
+#include <lizard/init.h>
+#include <lizard/ktime.h>
+#include <lizard/pgtable.h>
+#include <lizard/pit.h>
+#include <lizard/ss.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/task.h>
+#include <lizard/tss.h>
+#include <nolibc/types.h>
+#include <lizard/vmm.h>
 
 struct task idle = {0};
 

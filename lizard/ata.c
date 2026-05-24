@@ -1,12 +1,12 @@
-#include <ata.h>
-#include <blk_dev.h>
-#include <init.h>
-#include <io.h>
-#include <kmalloc.h>
-#include <setup.h>
-#include <stdio.h>
-#include <string.h>
-#include <types.h>
+#include <lizard/ata.h>
+#include <lizard/blk_dev.h>
+#include <lizard/init.h>
+#include <lizard/io.h>
+#include <lizard/kmalloc.h>
+#include <lizard/setup.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 static u16 base[] = {ATA_PRIMARY_BASE, ATA_SECONDARY_BASE};
 static u16 ctrl[] = {ATA_PRIMARY_CTRL, ATA_SECONDARY_CTRL};

@@ -1,10 +1,10 @@
-#include <atomic.h>
-#include <fs.h>
-#include <kmalloc.h>
-#include <list.h>
-#include <spinlock.h>
-#include <string.h>
-#include <types.h>
+#include <lizard/atomic.h>
+#include <lizard/fs.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/list.h>
+#include <lizard/spinlock.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 LIST_HEAD(fs_types);
 struct atomic_t fstype_count = {};

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <list.h>
-#include <stdbool.h>
-#include <types.h>
+#include <nolibc/list.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/types.h>
 
 #define TASK_NAME_MAX_LEN 32
 

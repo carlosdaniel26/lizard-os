@@ -1,12 +1,12 @@
-#include <buddy.h>
-#include <debug.h>
-#include <helpers.h>
-#include <list.h>
-#include <panic.h>
-#include <pgtable.h>
-#include <slab.h>
-#include <stdio.h>
-#include <string.h>
+#include <lizard/buddy.h>
+#include <lizard/debug.h>
+#include <lizard/helpers.h>
+#include <nolibc/list.h>
+#include <lizard/panic.h>
+#include <lizard/pgtable.h>
+#include <lizard/slab.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
 
 #define MAX_FREE_SLABS 3
 

@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <idt.h>
-#include <task.h>
+#include <lizard/idt.h>
+#include <lizard/task.h>
 
 void pit_stop();
 void pit_start();

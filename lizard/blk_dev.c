@@ -1,8 +1,8 @@
-#include <blk_dev.h>
-#include <debug.h>
-#include <kmalloc.h>
-#include <stdio.h>
-#include <string.h>
+#include <lizard/blk_dev.h>
+#include <lizard/debug.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
 
 int blk_dev_read(struct block_dev *dev, u64 sector, void *buffer, size_t count)
 {

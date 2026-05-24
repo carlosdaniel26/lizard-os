@@ -1,13 +1,13 @@
-#include <framebuffer.h>
-#include <init.h>
-#include <spinlock.h>
-#include <ss.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <tty.h>
+#include <lizard/framebuffer.h>
+#include <lizard/init.h>
+#include <lizard/spinlock.h>
+#include <lizard/ss.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/tty.h>
 
-#include <vga.h>
+#include <lizard/vga.h>
 
 size_t terminal_width;
 size_t terminal_height;

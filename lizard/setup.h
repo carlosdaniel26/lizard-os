@@ -12,7 +12,7 @@
  * As the entries are used just on boot, the isolation of theese memory pages makes the pages easily freeable
  * and reclaimable to the system. */
 
-#include <types.h>
+#include <nolibc/types.h>
 
 typedef int (*setup_fn)(char *);
 

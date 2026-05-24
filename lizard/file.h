@@ -1,8 +1,8 @@
 #pragma once
 
-#include <dirent.h>
-#include <inode.h>
-#include <types.h>
+#include <nolibc/dirent.h>
+#include <lizard/inode.h>
+#include <nolibc/types.h>
 
 struct file {
     struct inode *inode;

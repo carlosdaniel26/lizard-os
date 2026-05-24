@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include <types.h>
+#include <nolibc/types.h>
 
-#include <blk_dev.h>
-#include <fs.h>
+#include <lizard/blk_dev.h>
+#include <lizard/fs.h>
 
 /* Map: [Reserved sector][FATs][Root directory][Data region] */
 

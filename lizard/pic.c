@@ -1,7 +1,7 @@
-#include <idt.h>
-#include <init.h>
-#include <io.h>
-#include <types.h>
+#include <lizard/idt.h>
+#include <lizard/init.h>
+#include <lizard/io.h>
+#include <nolibc/types.h>
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA 0x21

@@ -1,13 +1,13 @@
-#include <debug.h>
-#include <idt.h>
-#include <init.h>
-#include <io.h>
-#include <keyboard.h>
-#include <pic.h>
-#include <setup.h>
-#include <stdio.h>
-#include <tty.h>
-#include <types.h>
+#include <lizard/debug.h>
+#include <lizard/idt.h>
+#include <lizard/init.h>
+#include <lizard/io.h>
+#include <lizard/keyboard.h>
+#include <lizard/pic.h>
+#include <lizard/setup.h>
+#include <nolibc/stdio.h>
+#include <lizard/tty.h>
+#include <nolibc/types.h>
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_VECTOR 33

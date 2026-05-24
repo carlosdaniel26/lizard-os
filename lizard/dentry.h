@@ -1,9 +1,9 @@
 #pragma once
 
-#include <atomic.h>
-#include <list.h>
-#include <spinlock.h>
-#include <types.h>
+#include <lizard/atomic.h>
+#include <nolibc/list.h>
+#include <lizard/spinlock.h>
+#include <nolibc/types.h>
 
 struct inode;
 

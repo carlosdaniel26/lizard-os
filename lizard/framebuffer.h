@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string.h>
-#include <types.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16

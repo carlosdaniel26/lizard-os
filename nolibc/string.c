@@ -1,7 +1,7 @@
-#include <stdarg.h>
-#include <stdbool.h>
-#include <string.h>
-#include <types.h>
+#include <nolibc/stdarg.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 int memcmp(const void *aptr, const void *bptr, size_t size)
 {

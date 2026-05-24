@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fs.h>
+#include <lizard/fs.h>
 
 struct dentry *vfs_get_root(void);
 int set_root(struct block_dev *dev);

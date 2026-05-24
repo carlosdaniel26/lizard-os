@@ -1,6 +1,6 @@
-#include <limits.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <nolibc/limits.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/stdint.h>
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 //===-- assembly.h - compiler-rt assembler support macros -----------------===//

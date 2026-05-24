@@ -1,8 +1,8 @@
 #pragma once
 
-#include <memory_map.h>
-#include <stddef.h>
-#include <types.h>
+#include <lizard/memory_map.h>
+#include <nolibc/stddef.h>
+#include <nolibc/types.h>
 
 #define PAGE_WRITETHROUGH (1 << 3)
 #define PAGE_CACHE_DISABLE (1 << 4)

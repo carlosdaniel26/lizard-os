@@ -1,9 +1,9 @@
-#include <cpuid.h>
-#include <init.h>
-#include <stdbool.h>
-#include <string.h>
-#include <tty.h>
-#include <types.h>
+#include <lizard/cpuid.h>
+#include <lizard/init.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/string.h>
+#include <lizard/tty.h>
+#include <nolibc/types.h>
 
 struct cpuid g_cpuid;
 

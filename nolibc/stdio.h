@@ -1,11 +1,11 @@
 #pragma once
 
-#include <pit.h>
-#include <rtc.h>
-#include <stdbool.h>
+#include <lizard/pit.h>
+#include <lizard/rtc.h>
+#include <nolibc/stdbool.h>
 
-#include <types.h>
-#include <vga.h>
+#include <nolibc/types.h>
+#include <lizard/vga.h>
 
 extern u32 tty_color;
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <limine.h>
-#include <list.h>
-#include <string.h>
-#include <types.h>
+#include <lizard/limine.h>
+#include <nolibc/list.h>
+#include <nolibc/string.h>
+#include <nolibc/types.h>
 
 #define MAX_ORDER 16
 

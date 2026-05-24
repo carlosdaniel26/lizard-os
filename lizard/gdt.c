@@ -1,12 +1,12 @@
-#include <gdt.h>
-#include <init.h>
-#include <memory_map.h>
-#include <kmalloc.h>
-#include <string.h>
-#include <panic.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <tss.h>
+#include <lizard/gdt.h>
+#include <lizard/init.h>
+#include <lizard/memory_map.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/string.h>
+#include <lizard/panic.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/stdio.h>
+#include <lizard/tss.h>
 
 static struct global_descriptor boot_gdt[5] __initdata;
 static struct gdt_ptr boot_gdt_ptr __initdata;

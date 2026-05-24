@@ -1,8 +1,8 @@
 #pragma once
 
-#include <blk_dev.h>
-#include <stdbool.h>
-#include <types.h>
+#include <lizard/blk_dev.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/types.h>
 
 /* MBR layout constants */
 

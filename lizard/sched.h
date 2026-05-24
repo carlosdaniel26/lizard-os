@@ -1,7 +1,7 @@
 #pragma once
 
-#include <task.h>
-#include <types.h>
+#include <lizard/task.h>
+#include <nolibc/types.h>
 
 void isr_scheduler(struct cpu_state *regs);
 void scheduler();

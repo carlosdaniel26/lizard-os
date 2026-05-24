@@ -1,19 +1,19 @@
-#include <helpers.h>
-#include <init.h>
-#include <kernelcfg.h>
-#include <limine.h>
-#include <loader.h>
-#include <pit.h>
-#include <sched.h>
-#include <stack.h>
-#include <stdbool.h>
-#include <task.h>
-#include <types.h>
-#include <vfs.h>
-#include <kmalloc.h>
-#include <string.h>
-#include <gdt.h>
-#include <timer.h>
+#include <lizard/helpers.h>
+#include <lizard/init.h>
+#include <lizard/kernelcfg.h>
+#include <lizard/limine.h>
+#include <lizard/loader.h>
+#include <lizard/pit.h>
+#include <lizard/sched.h>
+#include <lizard/stack.h>
+#include <nolibc/stdbool.h>
+#include <lizard/task.h>
+#include <nolibc/types.h>
+#include <lizard/vfs.h>
+#include <lizard/kmalloc.h>
+#include <nolibc/string.h>
+#include <lizard/gdt.h>
+#include <lizard/timer.h>
 
 /*
  * feel dumb is temporary, the progress of commits on this

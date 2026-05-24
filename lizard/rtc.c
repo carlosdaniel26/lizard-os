@@ -1,10 +1,10 @@
-#include <alias.h>
-#include <helpers.h>
-#include <io.h>
-#include <ktime.h>
-#include <rtc.h>
-#include <stdio.h>
-#include <types.h>
+#include <lizard/alias.h>
+#include <lizard/helpers.h>
+#include <lizard/io.h>
+#include <lizard/ktime.h>
+#include <lizard/rtc.h>
+#include <nolibc/stdio.h>
+#include <nolibc/types.h>
 
 /* Ports for RTC communication*/
 #define RTC_COMMAND_PORT 0x70

@@ -1,14 +1,14 @@
-#include <init.h>
-#include <types.h>
-#include <buddy.h>
-#include <stdio.h>
-#include <helpers.h>
-#include <limine.h>
-#include <pgtable.h>
-#include <stddef.h>
-#include <gdt.h>
-#include <ktime.h>
-#include <timer.h>
+#include <lizard/init.h>
+#include <nolibc/types.h>
+#include <lizard/buddy.h>
+#include <nolibc/stdio.h>
+#include <lizard/helpers.h>
+#include <lizard/limine.h>
+#include <lizard/pgtable.h>
+#include <nolibc/stddef.h>
+#include <lizard/gdt.h>
+#include <lizard/ktime.h>
+#include <lizard/timer.h>
 
 extern struct limine_executable_address_request kernel_address_request;
 extern u64 hhdm_offset;

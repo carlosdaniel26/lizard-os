@@ -1,15 +1,15 @@
-#include <alias.h>
-#include <helpers.h>
-#include <idt.h>
-#include <init.h>
-#include <io.h>
-#include <ktime.h>
-#include <pic.h>
-#include <pit.h>
-#include <sched.h>
-#include <stdio.h>
-#include <task.h>
-#include <timer.h>
+#include <lizard/alias.h>
+#include <lizard/helpers.h>
+#include <lizard/idt.h>
+#include <lizard/init.h>
+#include <lizard/io.h>
+#include <lizard/ktime.h>
+#include <lizard/pic.h>
+#include <lizard/pit.h>
+#include <lizard/sched.h>
+#include <nolibc/stdio.h>
+#include <lizard/task.h>
+#include <lizard/timer.h>
 
 /* PIT operates in a 1.193.182 Hz frequency*/
 

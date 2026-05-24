@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdbool.h>
-#include <types.h>
+#include <nolibc/stdbool.h>
+#include <nolibc/types.h>
 
 struct atomic_t {
     volatile i64 count;

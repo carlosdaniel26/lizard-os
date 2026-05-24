@@ -1,16 +1,16 @@
-#include <ata.h>
-#include <blk_dev.h>
-#include <blkdev_manager.h>
-#include <debug.h>
-#include <fat16.h>
-#include <fs.h>
-#include <helpers.h>
-#include <init.h>
-#include <kmalloc.h>
-#include <setup.h>
-#include <stdio.h>
-#include <string.h>
-#include <vfs.h>
+#include <lizard/ata.h>
+#include <lizard/blk_dev.h>
+#include <lizard/blkdev_manager.h>
+#include <lizard/debug.h>
+#include <lizard/fat16.h>
+#include <lizard/fs.h>
+#include <lizard/helpers.h>
+#include <lizard/init.h>
+#include <lizard/kmalloc.h>
+#include <lizard/setup.h>
+#include <nolibc/stdio.h>
+#include <nolibc/string.h>
+#include <lizard/vfs.h>
 
 /* ===== CONSTANTS ===== */
 

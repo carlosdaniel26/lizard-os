@@ -1,7 +1,7 @@
-#include <init.h>
-#include <limine.h>
-#include <setup.h>
-#include <string.h>
+#include <lizard/init.h>
+#include <lizard/limine.h>
+#include <lizard/setup.h>
+#include <nolibc/string.h>
 
 #define MAX_CMDLINE_LEN 1024
 __initdata char boot_cmdline[MAX_CMDLINE_LEN] = {0};
