@@ -59,13 +59,23 @@ static inline bool is_valid_entry(const struct fat16_directory *entry)
         return false;
     }
 
-    if (entry->attributes == 0x0F) /* Long struct file Name entry */
+    if (entry->attributes == 0x0F)
         return false;
 
-    /* Check ASCII characters */
-    for (int i = 0; i < 11; i++)
+    if (entry->attributes & FAT16_ATTR_VOLUME_ID)
+        return false;
+
+    /* Sanity check: Ensure filename contains only printable ASCII characters. */
+    for (int i = 0; i < 8; i++)
     {
-        if (entry->name[i] < 32 || entry->name[i] > 126) return false;
+        if (entry->name[i] < 0x20 || entry->name[i] > 0x7E)
+            return false;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (entry->extension[i] < 0x20 || entry->extension[i] > 0x7E)
+            return false;
     }
 
     return true;
