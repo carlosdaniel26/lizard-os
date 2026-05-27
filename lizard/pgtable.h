@@ -11,12 +11,12 @@
 #define PAGE_HUGE (1 << 7)
 #define PAGE_GLOBAL (1 << 8)
 
-u64 *pgtable_create(void);
-u64 *pgtable_alloc_table(void);
-u64 *pgtable_free(u64 *pml4);
+vaddr_t pgtable_create(void);
+vaddr_t pgtable_alloc_table(void);
+void pgtable_free(vaddr_t pml4);
 
-void pgtable_map(u64 *pml4, u64 virt, u64 phys, u64 flags);
-void pgtable_unmap(u64 *pml4, u64 virt);
-void pgtable_maprange(u64 *pml4, u64 virt, u64 phys, u64 length, u64 flags);
-void pgtable_switch(u64 *pml4);
-int pgtable_is_mapped(u64 *pml4, u64 virt);
+void pgtable_map(vaddr_t pml4, vaddr_t vaddr, paddr_t paddr, u64 flags);
+void pgtable_unmap(vaddr_t pml4, vaddr_t vaddr);
+void pgtable_maprange(vaddr_t pml4, vaddr_t vaddr, paddr_t paddr, u64 length, u64 flags);
+void pgtable_switch(vaddr_t pml4);
+int pgtable_is_mapped(vaddr_t pml4, vaddr_t vaddr);

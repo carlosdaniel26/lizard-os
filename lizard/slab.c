@@ -20,12 +20,12 @@
 
 static struct slab *slab_create(struct kmem_cache *cache)
 {
-    void *mem = buddy_alloc(cache->order);
+    void *mem = (void *)buddy_alloc(cache->order);
     if (!mem) return NULL;
 
     size_t slab_size = (size_t)PAGE_SIZE << cache->order;
-    uintptr_t slab_start = (uintptr_t)mem;
-    uintptr_t slab_end = slab_start + slab_size;
+    vaddr_t slab_start = (vaddr_t)mem;
+    vaddr_t slab_end = slab_start + slab_size;
 
     struct slab *slab = (struct slab *)mem;
     slab->magic = SLAB_MAGIC;
@@ -66,7 +66,7 @@ static void slab_destroy(struct kmem_cache *cache, struct slab *slab)
     list_del(&slab->list);
     slab->magic = 0;
 
-    buddy_free(slab, cache->order);
+    buddy_free((vaddr_t)slab, cache->order);
 }
 
 /* ============================================================
@@ -75,7 +75,7 @@ static void slab_destroy(struct kmem_cache *cache, struct slab *slab)
 
 struct kmem_cache *kmemcache_create(const char *name, size_t obj_size, void (*ctor)(void *), void (*dtor)(void *))
 {
-    struct kmem_cache *cache = buddy_alloc(0);
+    struct kmem_cache *cache = (struct kmem_cache *)buddy_alloc(0);
     if (!cache) return NULL;
 
     memset(cache, 0, sizeof(*cache));

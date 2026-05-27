@@ -19,17 +19,17 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
 u64 highest_addr = 0;
 u64 hhdm_offset = 0;
 
-uintptr_t early_base;
-uintptr_t early_end;
-uintptr_t early_current;
+vaddr_t early_base;
+vaddr_t early_end;
+vaddr_t early_current;
 
 static int early_alloc_init()
 {
     struct limine_memmap_response *response = memmap_request.response;
     if (!response || !response->entry_count) kpanic("NO MEMORY MAP FROM LIMINE");
 
-    uintptr_t largest_base = 0;
-    uintptr_t largest_size = 0;
+    paddr_t largest_base = 0;
+    size_t largest_size = 0;
 
     for (size_t i = 0; i < response->entry_count; i++)
     {
@@ -54,22 +54,22 @@ static int early_alloc_init()
     early_end = align_down(largest_base + largest_size, PAGE_SIZE);
     early_current = early_base;
 
-    hhdm_offset = (uintptr_t)hhdm_request.response->offset;
+    hhdm_offset = (u64)hhdm_request.response->offset;
 
     return 0;
 }
 
 early_initcall(early_alloc_init);
 
-void *early_alloc(size_t size, size_t align)
+vaddr_t early_alloc(size_t size, size_t align)
 {
     if (align == 0) align = sizeof(void *);
 
-    uintptr_t curr = align_up(early_current, align);
-    uintptr_t next = curr + size;
+    vaddr_t curr = align_up(early_current, align);
+    vaddr_t next = curr + size;
 
     if (next > early_end) kpanic("OUT OF MEMORY IN EARLY ALLOCATOR");
 
     early_current = next;
-    return (void *)curr + hhdm_offset;
+    return curr + hhdm_offset;
 }

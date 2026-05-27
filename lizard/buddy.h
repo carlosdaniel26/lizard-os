@@ -49,8 +49,8 @@ struct buddy_allocator {
 
 extern struct buddy_allocator buddy;
 
-void *buddy_alloc(int order);
-void buddy_free(void *addr, int order);
+vaddr_t buddy_alloc(int order);
+void buddy_free(vaddr_t vaddr, int order);
 unsigned int pages_to_order(unsigned int pages);
 
 extern u64 hhdm_offset;

@@ -60,7 +60,7 @@ void free_init_sections()
         u64 phys = addr - virt_base + phys_base;
         u64 hhdm_addr = phys + hhdm_offset;
         
-        buddy_free((void *)hhdm_addr, 0);
+        buddy_free((vaddr_t)hhdm_addr, 0);
     }
 
     kprintf("INIT: Freed %d pages of initialization code/data\n", (int)pages);

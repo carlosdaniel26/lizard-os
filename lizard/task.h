@@ -53,7 +53,7 @@ struct task {
     bool is_user;
 
     struct cpu_state regs;
-    u64 *pml4;
+    vaddr_t pml4;
 
     u64 kernel_stack;
 

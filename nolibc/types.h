@@ -15,6 +15,10 @@ typedef unsigned long long u64;
 /* Pointer */
 typedef __UINTPTR_TYPE__ uintptr_t;
 
+/* Memory Addresses */
+typedef u64 vaddr_t;
+typedef u64 paddr_t;
+
 /* common */
 typedef u64 size_t;
 typedef i64 ssize_t;

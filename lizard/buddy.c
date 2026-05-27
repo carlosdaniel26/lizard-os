@@ -34,7 +34,7 @@ unsigned int pages_to_order(unsigned int pages)
 static size_t detect_page_count(void)
 {
     struct limine_memmap_response *resp = memmap_request.response;
-    uintptr_t max_addr = 0;
+    paddr_t max_addr = 0;
 
     if (!resp) return 0;
 
@@ -43,7 +43,7 @@ static size_t detect_page_count(void)
     {
         struct limine_memmap_entry *e = resp->entries[i];
         if (e->type != LIMINE_MEMMAP_USABLE) continue;
-        uintptr_t end = e->base + e->length;
+        paddr_t end = e->base + e->length;
         if (end > max_addr) max_addr = end;
     }
 
@@ -63,7 +63,7 @@ static inline void buddy_add_block(struct buddy_page *page, uint8_t order)
 int buddy_init()
 {
     buddy.page_count = detect_page_count();
-    buddy.pages = early_alloc(buddy.page_count * sizeof(struct buddy_page), 0);
+    buddy.pages = (struct buddy_page *)early_alloc(buddy.page_count * sizeof(struct buddy_page), 0);
 
     /* initialize free lists */
     for (int order = 0; order <= MAX_ORDER; order++)
@@ -80,11 +80,11 @@ int buddy_init()
     }
 
     /* Determine kernel and early_alloc ranges to keep them reserved. */
-    uintptr_t kernel_phys_start = kernel_address_request.response->physical_base;
-    uintptr_t kernel_virt_start = (uintptr_t)&kernel_start;
-    uintptr_t kernel_virt_end = (uintptr_t)&kernel_end;
-    uintptr_t kernel_size = kernel_virt_end - kernel_virt_start;
-    uintptr_t kernel_phys_end = kernel_phys_start + kernel_size;
+    paddr_t kernel_phys_start = kernel_address_request.response->physical_base;
+    vaddr_t kernel_virt_start = (vaddr_t)&kernel_start;
+    vaddr_t kernel_virt_end = (vaddr_t)&kernel_end;
+    size_t kernel_size = kernel_virt_end - kernel_virt_start;
+    paddr_t kernel_phys_end = kernel_phys_start + kernel_size;
 
     u64 kernel_start_pfn = kernel_phys_start / PAGE_SIZE;
     u64 kernel_end_pfn = align_up(kernel_phys_end, PAGE_SIZE) / PAGE_SIZE;
@@ -101,8 +101,8 @@ int buddy_init()
         struct limine_memmap_entry *e = resp->entries[i];
         if (e->type != LIMINE_MEMMAP_USABLE) continue;
 
-        uintptr_t base = align_up(e->base, PAGE_SIZE);
-        uintptr_t end = align_down(e->base + e->length, PAGE_SIZE);
+        paddr_t base = align_up(e->base, PAGE_SIZE);
+        paddr_t end = align_down(e->base + e->length, PAGE_SIZE);
         if (base >= end) continue;
 
         u64 start_pfn = base / PAGE_SIZE;
@@ -157,9 +157,9 @@ int buddy_init()
 
 core_initcall(buddy_init);
 
-void *buddy_alloc(int order)
+vaddr_t buddy_alloc_vaddr(int order)
 {
-    if (order > MAX_ORDER) return NULL;
+    if (order > MAX_ORDER) return 0;
 
     for (int i = order; i <= MAX_ORDER; i++)
     {
@@ -184,17 +184,22 @@ void *buddy_alloc(int order)
             buddy.pages[pfn + j].order = order;
         }
 
-        return (void *)((pfn * PAGE_SIZE) + hhdm_offset);
+        return (vaddr_t)((pfn * PAGE_SIZE) + hhdm_offset);
     }
 
-    return NULL;
+    return 0;
 }
 
-void buddy_free(void *addr, int order)
+vaddr_t buddy_alloc(int order)
 {
-    if (!addr) return;
-    uintptr_t phys = (uintptr_t)addr - hhdm_offset;
-    u64 pfn = phys / PAGE_SIZE;
+    return buddy_alloc_vaddr(order);
+}
+
+void buddy_free(vaddr_t vaddr, int order)
+{
+    if (!vaddr) return;
+    paddr_t paddr = vaddr - hhdm_offset;
+    u64 pfn = paddr / PAGE_SIZE;
 
     if (pfn >= buddy.page_count) return;
 
