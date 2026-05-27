@@ -39,27 +39,29 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
     task->pml4 = pgtable_create();
 
     task->regs.rip = (u64)entry_point;
-    
+    task->regs.rflags = RFLAGS_DEFAULT;
+
+    u64 flags = PAGE_PRESENT | PAGE_WRITABLE;
     if (is_user) {
         task->regs.cs = USER_CS;
         task->regs.ss = USER_SS;
-    } else {
+        flags |= PAGE_USER;
+    } 
+    else {
         task->regs.cs = KERNEL_CS;
         task->regs.ss = KERNEL_SS;
     }
+
+    /* Allocate one stack for the task (user or kernel) at a fixed address */
+    for (int i = 0; i < USER_STACK_PAGES; i++) {
+        void *ptr = vmm_alloc(task->pml4, USER_STACK_BASE + (i * PAGE_SIZE), flags);
+        memset(ptr, 0, PAGE_SIZE);
+    }
     
-    task->regs.rflags = RFLAGS_DEFAULT;
+    task->regs.rsp = USER_STACK_BASE + (USER_STACK_PAGES * PAGE_SIZE);
+    task->kernel_stack = USER_STACK_BASE + (USER_STACK_PAGES * PAGE_SIZE);
 
-    void *ptr = buddy_alloc(0);
-    memset(ptr, 0, PAGE_SIZE);
-
-    /* Map kernel stack in task's PML4 */
-    pgtable_map(task->pml4, (u64)ptr, (u64)ptr - hhdm_offset, PAGE_PRESENT | PAGE_WRITABLE);
-
-    task->regs.rsp = (u64)ptr + 4096;
-    task->kernel_stack = (u64)ptr + 4096;
     list_add(&task->list, &task_list);
-
     task->state = TASK_STATE_READY;
 }
 

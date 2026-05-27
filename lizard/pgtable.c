@@ -125,12 +125,13 @@ void pgtable_unmap(u64 *pml4, u64 virt)
     pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
     pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
 
-    if (!(pml4[pml4_i] & PAGE_PRESENT) || !(pdpt[pdpt_i] & PAGE_PRESENT) || !(pd[pd_i] & PAGE_PRESENT))
+    if (!(pml4[pml4_i] & PAGE_PRESENT) || !(pdpt[pdpt_i] & PAGE_PRESENT) || !(pd[pd_i] & PAGE_PRESENT) || !(pt[pt_i] & PAGE_PRESENT))
         return;
 
+    u64 phys = pt[pt_i] & ~0xFFFUL;
     pt[pt_i] = 0;
     pgtable_invlpg((void *)virt);
-    buddy_free((void *)((uintptr_t)virt - hhdm_offset), 0);
+    buddy_free((void *)(phys + hhdm_offset), 0);
 
     if (pgtable_table_empty(pt))
     {
