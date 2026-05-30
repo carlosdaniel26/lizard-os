@@ -29,7 +29,7 @@ int load_elf(void *buffer, struct task *task)
     }
     
     // Switch to new pml4 to map segments
-    u64 *old_pml4 = current_pml4;
+    vaddr_t old_pml4 = (vaddr_t)current_pml4;
     vmm_switch_pml4(task->pml4);
 
     elf64_phdr_t *phdr = (elf64_phdr_t *)(buffer + ehdr->e_phoff);
