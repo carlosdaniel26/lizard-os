@@ -49,7 +49,7 @@ static int setup_params()
         }
 
         /* all the corresponding function if the prefix matches. */
-        struct setup_entry *ptr;
+        const struct setup_entry *ptr;
         for (ptr = __setup_start; ptr < __setup_end; ptr++)
         {
             size_t len = strlen(ptr->str);

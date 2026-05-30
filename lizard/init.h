@@ -30,7 +30,6 @@ typedef int (*initcall_t)();
 #define device_initcall_prio(fn, sublevel) __initcall(fn, 6, sublevel)
 #define late_initcall_prio(fn, sublevel) __initcall(fn, 7, sublevel)
 
-void do_initcalls(initcall_t *start, initcall_t *end);
 void kernel_bootstrap();
 void free_init_sections();
 

@@ -17,7 +17,7 @@ extern u32 kernel_start;
 /* Declare time_init here because it's not in ktime.h */
 int time_init(void);
 
-void do_initcalls(initcall_t *start, initcall_t *end)
+static inline void do_initcalls(const initcall_t *start, const initcall_t *end)
 {
     for (const initcall_t *fn = start; fn < end; fn++)
     {
