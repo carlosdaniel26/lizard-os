@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/33c7f305-a435-4b75-8c22-39f9e8cdc589" alt="lizard-os-logo" width="400" height="400">
+  <img salt="lizard-os-logo" rc="https://github.com/user-attachments/assets/dba7f8e8-247a-4cb3-a9aa-079dd30a44b5" width="400" height="400">
+
 </p>
 
 <h1 align="center">Lizard-OS</h1>
