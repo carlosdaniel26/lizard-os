@@ -1,12 +1,10 @@
 <p align="center">
-  <img salt="lizard-os-logo" rc="https://github.com/user-attachments/assets/dba7f8e8-247a-4cb3-a9aa-079dd30a44b5" width="400" height="400">
+  <img alt="lizard-os-logo" src="https://github.com/user-attachments/assets/dba7f8e8-247a-4cb3-a9aa-079dd30a44b5">
 
 </p>
 
-<h1 align="center">Lizard-OS</h1>
-
 <p align="center">
-  Lizard-OS is a toy operating system. Not a product. Not a clone. Just raw low-level computing the way it should be: built from scratch, for learning and control.  
+  Lizard-OS is a toy operating system. Built from scratch, for learning and control.  
 </p>
 
 ---
