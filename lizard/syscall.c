@@ -11,6 +11,7 @@
 #include <lizard/task.h>
 #include <lizard/tty.h>
 #include <lizard/vfs.h>
+#include <nolibc/dirent.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
 #include <nolibc/types.h>
@@ -310,6 +311,35 @@ static long sys_yield(long a0, long a1, long a2, long a3, long a4, long a5)
     return 0;
 }
 
+struct readdir_sink {
+    struct dirent *out; /* user array */
+    int max;
+    int n;
+};
+
+static int readdir_filldir(void *p, struct dirent *d)
+{
+    struct readdir_sink *s = p;
+    if (s->n >= s->max) return -1; /* buffer full - stop the walk */
+    s->out[s->n++] = *d;           /* user PML4 is live during the syscall */
+    return 0;
+}
+
+static long sys_readdir(long fd, long ubuf, long max, long a3, long a4, long a5)
+{
+    (void)a3; (void)a4; (void)a5;
+    if (max <= 0) return -EINVAL;
+    if (!user_ptr_ok(ubuf, max * (long)sizeof(struct dirent))) return -EFAULT;
+
+    struct file *f = fd_get(fd);
+    if (!f) return -EBADF;
+    if (!f->inode || !f->inode->f_ops || !f->inode->f_ops->readdir) return -ENOTDIR;
+
+    struct readdir_sink sink = {.out = (struct dirent *)ubuf, .max = (int)max, .n = 0};
+    f->inode->f_ops->readdir(f, &sink, readdir_filldir);
+    return sink.n;
+}
+
 /* ---- dispatch ---------------------------------------------------------- */
 
 void syscall_handler_c(struct cpu_state *regs)
@@ -343,6 +373,7 @@ static int syscall_init(void)
     syscall_table[SYS_spawn]     = sys_spawn;
     syscall_table[SYS_waitpid]   = sys_waitpid;
     syscall_table[SYS_yield]     = sys_yield;
+    syscall_table[SYS_readdir]   = sys_readdir;
 
     /* DPL 3 interrupt gate to a dedicated stub that preserves RDI (arg1). */
     set_idt_gate(SYSCALL_ISR_INDEX, isr_syscall_stub, 0xEE);

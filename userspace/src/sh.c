@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <sys/syscall.h>
 
 #define LINE_MAX 256
@@ -89,8 +90,34 @@ int main(void)
 
         if (!strcmp(argv[0], "help"))
         {
-            printf("builtins: help  exit [code]  echo ...  clear  status\n");
+            printf("builtins: help  exit [code]  echo ...  clear  status  ls [dir]\n");
             printf("anything else runs /<name> and waits for it\n");
+            continue;
+        }
+
+        if (!strcmp(argv[0], "ls"))
+        {
+            const char *dir = argc > 1 ? argv[1] : "/";
+            int fd = sys_open(dir, 0 /* O_RDONLY */);
+            if (fd < 0)
+            {
+                printf("ls: %s: cannot open\n", dir);
+                last = 1;
+                continue;
+            }
+
+            struct dirent ents[32];
+            int total = 0, n;
+            while ((n = sys_readdir(fd, ents, 32)) > 0)
+            {
+                for (int i = 0; i < n; i++)
+                    printf("%s%s\n", ents[i].d_name,
+                           ents[i].d_type == DT_DIR ? "/" : "");
+                total += n;
+            }
+            sys_close(fd);
+            last = n < 0 ? 1 : 0;
+            (void)total;
             continue;
         }
 

@@ -7,5 +7,6 @@
 #define ECHILD 10  /* no child processes          */
 #define ENOMEM 12  /* out of memory               */
 #define EFAULT 14  /* bad address                 */
+#define ENOTDIR 20 /* not a directory             */
 #define EINVAL 22  /* invalid argument            */
 #define ENOSYS 38  /* function not implemented    */

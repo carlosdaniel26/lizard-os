@@ -1,5 +1,6 @@
 #include <sys/syscall.h>
 #include <abi/syscall.h>
+#include <dirent.h>
 
 long __syscall6(long n, long a, long b, long c, long d, long e, long f)
 {
@@ -84,6 +85,11 @@ int sys_waitpid(int pid, int *status, int options)
 int sys_yield(void)
 {
     return (int)__syscall0(SYS_yield);
+}
+
+int sys_readdir(int fd, struct dirent *buf, int max)
+{
+    return (int)__syscall3(SYS_readdir, fd, buf, max);
 }
 
 __attribute__((noreturn)) void _exit(int code)

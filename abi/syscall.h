@@ -32,6 +32,9 @@ enum {
     SYS_waitpid = 13, /* (int pid, int *status, int options)    -> pid | -errno */
     SYS_yield   = 14, /* ()                                     -> 0            */
 
+    /* --- directories ------------------------------------------------- */
+    SYS_readdir = 15, /* (int fd, struct dirent *buf, int max)  -> count | -errno */
+
     SYS_NR_MAX
 };
 
