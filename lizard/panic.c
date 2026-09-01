@@ -8,18 +8,18 @@
 void kpanic(const char *str, ...)
 {
     extern u32 tty_color;
-
-    u32 temp = tty_color;
+    u32 saved = tty_color;
 
     tty_color = VGA_COLOR_RED;
+    kprintf("\nKERNEL PANIC: ");
 
     va_list args;
     va_start(args, str);
+    kvprintf(str, args); /* not kprintf(str, args) - args is a va_list */
+    va_end(args);
 
-    kprintf("KERNEL PANIC: ");
-    tty_color = temp;
-
-    kprintf(str, args);
+    kprintf("\n");
+    tty_color = saved;
 
     stop_cpu();
 }

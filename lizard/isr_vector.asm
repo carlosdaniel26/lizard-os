@@ -6,11 +6,18 @@ extern syscall_handler_c
 
 section .text
 
-; Dedicated syscall entry (int 0x80). Unlike the generic per-vector stubs it
-; must NOT clobber RDI before saving it - the syscall ABI passes arg1 in RDI.
-global isr_syscall_stub
-isr_syscall_stub:
-    push qword 0x80         ; cpu_state.vec (keeps the frame layout uniform)
+; Every entry path builds the same on-stack layout (matches struct cpu_state):
+;
+;   [ss][rsp][rflags][cs][rip]   <- pushed by the CPU
+;   [errcode]                    <- CPU for #DF/#TS/#NP/#SS/#GP/#PF/#AC/#CP,
+;                                   otherwise a dummy 0 pushed by the stub
+;   [vec]                        <- pushed by the stub
+;   [r15 ... rax]                <- pushed by SAVE_GPRS
+;
+; No GPR (RDI in particular, which carries syscall arg1) is disturbed before it
+; is saved, and the C side always sees a valid vec + errcode.
+
+%macro SAVE_GPRS 0
     push r15
     push r14
     push r13
@@ -26,76 +33,60 @@ isr_syscall_stub:
     push rcx
     push rbx
     push rax
+%endmacro
+
+%macro RESTORE_GPRS 0
+    pop rax
+    pop rbx
+    pop rcx
+    pop rdx
+    pop rdi
+    pop rsi
+    pop rbp
+    pop r8
+    pop r9
+    pop r10
+    pop r11
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+%endmacro
+
+; Dedicated syscall entry (int 0x80). int 0x80 never pushes an error code.
+global isr_syscall_stub
+isr_syscall_stub:
+    push qword 0            ; dummy errcode
+    push qword 0x80         ; vec
+    SAVE_GPRS
 
     mov rdi, rsp            ; struct cpu_state * -> arg0
     call syscall_handler_c
 
-    pop rax
-    pop rbx
-    pop rcx
-    pop rdx
-    pop rdi
-    pop rsi
-    pop rbp
-    pop r8
-    pop r9
-    pop r10
-    pop r11
-    pop r12
-    pop r13
-    pop r14
-    pop r15
-
-    add rsp, 8             ; discard the pushed vec
+    RESTORE_GPRS
+    add rsp, 16            ; discard vec + errcode
     iretq
 
-; Common handler to save state and call C. The per-vector stub pushed the
-; vector number just below the CPU's iret frame, so it lands in cpu_state.vec
-; and no GPR (in particular RDI) is disturbed before it is saved.
 isr_common_stub:
-    push r15
-    push r14
-    push r13
-    push r12
-    push r11
-    push r10
-    push r9
-    push r8
-    push rbp
-    push rsi
-    push rdi
-    push rdx
-    push rcx
-    push rbx
-    push rax
+    SAVE_GPRS
 
-    mov rdi, [rsp + 15 * 8]   ; cpu_state.vec -> int_id (arg0)
-    mov rsi, rsp              ; &cpu_state          -> arg1
+    mov rdi, [rsp + 15 * 8] ; cpu_state.vec -> int_id (arg0)
+    mov rsi, rsp            ; &cpu_state          -> arg1
     call isr_common_entry
 
-    pop rax
-    pop rbx
-    pop rcx
-    pop rdx
-    pop rdi
-    pop rsi
-    pop rbp
-    pop r8
-    pop r9
-    pop r10
-    pop r11
-    pop r12
-    pop r13
-    pop r14
-    pop r15
-
-    add rsp, 8               ; discard the pushed vector
+    RESTORE_GPRS
+    add rsp, 16            ; discard vec + errcode
     iretq
 
 %macro STUB_ENTRY 1
 global isr_vector_%1
 isr_vector_%1:
-    push qword %1
+%if (%1 == 8) || (%1 == 10) || (%1 == 11) || (%1 == 12) || (%1 == 13) || (%1 == 14) || (%1 == 17) || (%1 == 21) || (%1 == 29) || (%1 == 30)
+    ; the CPU already pushed an error code for this vector
+%else
+    push qword 0           ; dummy error code
+%endif
+    push qword %1          ; vector number
     jmp isr_common_stub
 %endmacro
 

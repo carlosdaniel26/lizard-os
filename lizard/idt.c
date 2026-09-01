@@ -1,4 +1,5 @@
 #include <lizard/early_alloc.h>
+#include <lizard/exception.h>
 #include <lizard/framebuffer.h>
 #include <lizard/gdt.h>
 #include <lizard/idt.h>
@@ -33,17 +34,8 @@ void isr_common_entry(u64 int_id, struct cpu_state *regs)
 
     if (int_id < 32)
     {
-        /* Exception handler */
-        if (scheduler_enabled && current_task && current_task != &idle)
-        {
-            /* Redirect return pointer to task_exit */
-            regs->rip = (u64)task_exit;
-            return;
-        }
-        else
-        {
-            kpanic("EXCEPTION %d during KERNEL BOOT at RIP: %p", (int)int_id, (void *)regs->rip);
-        }
+        exception_handle(regs);
+        return;
     }
 
     if (isr_table && isr_table[int_id])

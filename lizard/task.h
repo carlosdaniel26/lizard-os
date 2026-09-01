@@ -34,7 +34,8 @@ struct cpu_state {
     u64 r14;
     u64 r15;
 
-    u64 vec; /* interrupt / exception vector, pushed by the per-vector stub */
+    u64 vec;     /* interrupt / exception vector, pushed by the per-vector stub */
+    u64 errcode; /* CPU error code for #GP/#PF/... ; 0 for everything else      */
 
     /* Interrupt Frame */
     u64 rip;
