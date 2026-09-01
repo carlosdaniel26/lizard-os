@@ -65,12 +65,9 @@ void rtc_write(const struct rtc_timer *in)
 
 void rtc_read(struct rtc_timer *out)
 {
-    u8 *RTC_array = (u8 *)&out;
+    /* struct rtc_timer is laid out to match RTC registers 0x00..0x0D. */
+    u8 *RTC_array = (u8 *)out;
 
     for (u8 reg = 0; reg <= 0xD; reg++)
-    {
-        /* Write the register index to the RTC command port*/
-
         RTC_array[reg] = rtc_read_b(reg);
-    }
 }

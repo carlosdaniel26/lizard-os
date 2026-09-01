@@ -31,9 +31,10 @@ struct time_spec rtc_to_timespec(const struct rtc_timer *t)
     struct time_spec ts;
 
     u64 days = 0;
+    int year = 2000 + t->year; /* RTC year register holds only the last two digits */
 
-    days += days_before_year(t->year);
-    days += days_before_month[is_leap_year(t->year)][t->month - 1];
+    days += days_before_year(year);
+    days += days_before_month[is_leap_year(year)][t->month - 1];
     days += t->day_of_month - 1;
 
     ts.sec = days * 86400ULL + t->hours * 3600ULL + t->minutes * 60ULL + t->seconds;
@@ -112,10 +113,14 @@ static void timespec_split(const struct time_spec *ts, i32 *year, i32 *month, i3
         days--;
     }
 
-    *hour = rem / 3600;
+    i64 h = rem / 3600;
     rem %= 3600;
-    *min = rem / 60;
-    *sec = rem % 60;
+    i64 mi = rem / 60;
+    i64 se = rem % 60;
+
+    if (hour) *hour = (i32)h;
+    if (min) *min = (i32)mi;
+    if (sec) *sec = (i32)se;
 
     int y = 1970;
     while (1)
