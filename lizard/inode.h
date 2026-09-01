@@ -11,6 +11,7 @@ struct inode_ops {
     int (*create)(struct inode *dir, struct dentry *dentry, int mode);
     int (*mkdir)(struct inode *dir, struct dentry *dentry, int mode);
     int (*unlink)(struct inode *dir, struct dentry *dentry);
+    int (*rmdir)(struct inode *dir, struct dentry *dentry);
     int (*rename)(struct inode *old, struct inode *new);
 };
 

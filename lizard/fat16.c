@@ -1,433 +1,158 @@
-#include <lizard/ata.h>
 #include <lizard/blk_dev.h>
-#include <lizard/blkdev_manager.h>
 #include <lizard/debug.h>
 #include <lizard/fat16.h>
+#include <lizard/fat16_helpers.h>
 #include <lizard/fs.h>
-#include <lizard/helpers.h>
 #include <lizard/init.h>
 #include <lizard/kmalloc.h>
-#include <lizard/setup.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
 #include <lizard/vfs.h>
 
-/* ===== CONSTANTS ===== */
-
-/* FAT16 Boot Sector Signatures */
-
-#define FAT16_BOOT_SIGNATURE 0x29
-/* Sizes */
-#define FAT16_FAT_ENTRY_SIZE 2
-#define FAT16_DIR_ENTRY_SIZE 32
-#define FILE_NAME_SIZE 11
-
-/* Special directory entry values */
-#define FAT16_DIR_ENTRY_DELETED 0xE5
-#define FAT16_DIR_ENTRY_END 0x00
-
-/* Cluster values */
-#define FAT16_FREE_CLUSTER 0x0000
-#define FAT16_RESERVED_CLUSTER 0x0001
-#define FAT16_BAD_CLUSTER 0xFFF7
-#define FAT16_EOC 0xFFF8
-
-#define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
+/* inode->mode for the two entry kinds we expose */
+#define FAT16_MODE_DIR  040777
+#define FAT16_MODE_FILE 0100666
 
 static const char name[] = "fat16";
 
-/* Forward declarations */
+/*
+ * Per-inode state: a copy of the on-disk directory entry plus where that entry
+ * lives, so writes can persist size / first-cluster changes. For the root
+ * directory `loc` is unused (loc.lba == 0).
+ */
+struct fat16_inode_info {
+    struct fat16_directory ent;
+    struct fat16_dir_loc loc;
+};
+
 static int fat16_lookup(struct inode *dir, struct dentry *dentry);
+static int fat16_create(struct inode *dir, struct dentry *dentry, int mode);
+static int fat16_mkdir(struct inode *dir, struct dentry *dentry, int mode);
+static int fat16_unlink(struct inode *dir, struct dentry *dentry);
+static int fat16_rmdir(struct inode *dir, struct dentry *dentry);
+
+static int fat16_open(struct inode *inode, struct file *file);
+static int fat16_release(struct inode *inode, struct file *file);
 static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offset);
+static ssize_t fat16_write(struct file *file, const char *buf, size_t count, off_t offset);
 static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, struct dirent *));
 
 static struct inode_ops fat16_inode_ops = {
     .lookup = fat16_lookup,
+    .create = fat16_create,
+    .mkdir  = fat16_mkdir,
+    .unlink = fat16_unlink,
+    .rmdir  = fat16_rmdir,
 };
 
 static struct file_ops fat16_file_ops = {
-    .read = fat16_read,
+    .open    = fat16_open,
+    .read    = fat16_read,
+    .write   = fat16_write,
     .readdir = fat16_readdir,
+    .release = fat16_release,
 };
 
-/* ===== INTERNAL HELPERS ===== */
+/* ===== helpers ===== */
 
-static inline bool is_valid_entry(const struct fat16_directory *entry)
+static struct fat16 *fs_of(struct inode *inode)
 {
-    if (entry->name[0] == FAT16_DIR_ENTRY_DELETED || entry->name[0] == FAT16_DIR_ENTRY_END)
-    {
-        return false;
-    }
-
-    if (entry->attributes == 0x0F)
-        return false;
-
-    if (entry->attributes & FAT16_ATTR_VOLUME_ID)
-        return false;
-
-    /* Sanity check: Ensure filename contains only printable ASCII characters. */
-    for (int i = 0; i < 8; i++)
-    {
-        if (entry->name[i] < 0x20 || entry->name[i] > 0x7E)
-            return false;
-    }
-
-    for (int i = 0; i < 3; i++)
-    {
-        if (entry->extension[i] < 0x20 || entry->extension[i] > 0x7E)
-            return false;
-    }
-
-    return true;
+    return inode->sb->fs_info;
 }
 
-static u32 cluster_to_lba(struct fat16 *fs, u16 cluster)
+static struct fat16_directory *ent_of(struct inode *inode)
 {
-    if (cluster < 2) return 0;
-    return ((u32)(cluster - 2) * fs->header.sectors_per_cluster) + fs->data_region_lba;
+    return &((struct fat16_inode_info *)inode->private_data)->ent;
 }
 
-static int read_fat_entry(struct fat16 *fs, u16 cluster, u16 *next)
+static bool is_dir(const struct fat16_directory *ent)
 {
-    u32 fat_offset = (u32)cluster * FAT16_FAT_ENTRY_SIZE;
-    u32 fat_sector = fs->fat_start_lba + (fat_offset / fs->header.bytes_per_sector);
-    u32 entry_offset = fat_offset % fs->header.bytes_per_sector;
+    return ent->attributes & FAT16_ATTR_DIRECTORY;
+}
 
-    char sector[512];
-    if (blk_dev_read(fs->dev, fat_sector, sector, 1) != 0) return -1;
+static struct inode *fat16_make_inode(struct super_block *sb,
+                                      const struct fat16_directory *ent,
+                                      struct fat16_dir_loc loc)
+{
+    struct inode *inode = inode_alloc(sb);
+    if (!inode) return NULL;
 
-    memcpy(next, sector + entry_offset, sizeof(u16));
+    struct fat16_inode_info *info = zalloc(sizeof(*info));
+    if (!info)
+    {
+        inode_free(inode);
+        return NULL;
+    }
+
+    info->ent = *ent;
+    info->loc = loc;
+
+    inode->private_data = info;
+    inode->size = ent->file_size_bytes;
+    inode->mode = is_dir(ent) ? FAT16_MODE_DIR : FAT16_MODE_FILE;
+    inode->i_ops = &fat16_inode_ops;
+    inode->f_ops = &fat16_file_ops;
+    return inode;
+}
+
+/* Build a fresh, time-stamped 8.3 entry with the given name and attributes. */
+static int fat16_fill_entry(struct fat16_directory *ent, const char *name_str, u8 attributes)
+{
+    memset(ent, 0, sizeof(*ent));
+    if (!fat16_str_to_name(name_str, ent->name, ent->extension))
+        return -1;
+    ent->attributes = attributes;
+    fat16_entry_stamp(ent);
     return 0;
 }
 
-static u16 get_next_cluster(struct fat16 *fs, u16 cluster)
-{
-    u16 next = FAT16_EOC;
-    if (read_fat_entry(fs, cluster, &next) != 0) return FAT16_EOC;
-    return next;
-}
-
-static void convert_83_to_string(const u8 name[8], const u8 ext[3], char *out_string)
-{
-    int pos = 0;
-
-    for (int i = 0; i < 8; i++)
-    {
-        if (name[i] != ' ') out_string[pos++] = name[i];
-    }
-
-    if (ext[0] != ' ')
-    {
-        out_string[pos++] = '.';
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (ext[i] != ' ') out_string[pos++] = ext[i];
-        }
-    }
-
-    out_string[pos] = '\0';
-}
-
-static int compare_filenames(const char *filename, const struct fat16_directory *entry)
-{
-    char entry_name[13];
-    convert_83_to_string(entry->name, entry->extension, entry_name);
-
-    /* Skip leading slashes in the filename */
-    while (*filename == '/') filename++;
-
-    return strcasecmp(filename, entry_name);
-}
+/* ===== superblock / mount ===== */
 
 int fat16_detect(struct block_dev *dev)
 {
     if (!dev || !dev->present) return -1;
 
-    char boot_sector[512];
+    char boot_sector[FAT16_SECTOR_SIZE];
     if (dev->ops->read(dev, 0, boot_sector, 1) != 0) return -1;
 
-    struct fat_header *header = (struct fat_header *)boot_sector;
+    const struct fat_header *header = (const struct fat_header *)boot_sector;
 
-    if (header->boot_signature == FAT16_BOOT_SIGNATURE) return 1;
-
-    return -1;
+    return header->boot_signature == FAT16_BOOT_SIGNATURE ? 1 : -1;
 }
 
 int fat16_mount(struct block_dev *dev, struct fat16 *fs)
 {
     if (!dev || !fs) return -1;
 
-    fs->dev = dev;
-    
-    char buffer[512] = {0};
-    if (dev->ops->read(dev, 0, buffer, 1) != 0)
+    char boot_sector[FAT16_SECTOR_SIZE];
+    if (dev->ops->read(dev, 0, boot_sector, 1) != 0)
     {
-        debug_printf("ERROR reading boot sector\n");
+        debug_printf("fat16: failed to read boot sector\n");
         return -1;
     }
-    memcpy(&fs->header, buffer, sizeof(struct fat_header));
 
-    /* Calculate LBA values */
+    fs->dev = dev;
+    memcpy(&fs->header, boot_sector, sizeof(fs->header));
+
     fs->fat_start_lba = fs->header.reserved_sector_count;
     fs->root_dir_lba = fs->fat_start_lba + (fs->header.num_fats * fs->header.fat_size_16);
-    fs->root_dir_sectors = (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) / fs->header.bytes_per_sector;
+    fs->root_dir_sectors =
+        (fs->header.root_entry_count * FAT16_DIR_ENTRY_SIZE + fs->header.bytes_per_sector - 1) /
+        fs->header.bytes_per_sector;
     fs->data_region_lba = fs->root_dir_lba + fs->root_dir_sectors;
 
+    u32 total = fs->header.total_sectors_16 ? fs->header.total_sectors_16
+                                            : fs->header.total_sectors_32;
+    fs->total_clusters = (total - fs->data_region_lba) / fs->header.sectors_per_cluster;
+
     return 0;
-}
-
-static int fat16_lookup(struct inode *dir, struct dentry *dentry)
-{
-    struct fat16 *fs = (struct fat16 *)dir->sb->fs_info;
-    struct fat16_directory *dir_entry = (struct fat16_directory *)dir->private_data;
-    char buffer[512];
-
-    if (dir_entry->first_cluster_low == 0) /* root */
-    {
-        for (u32 sector = 0; sector < fs->root_dir_sectors; sector++)
-        {
-            if (blk_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0) return -1;
-
-            for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++)
-            {
-                struct fat16_directory *entry = (struct fat16_directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
-
-                if (entry->name[0] == FAT16_DIR_ENTRY_END) return -1;
-                if (!is_valid_entry(entry)) continue;
-
-                if (compare_filenames(dentry->name, entry) == 0)
-                {
-                    struct inode *inode = inode_alloc(dir->sb);
-                    if (!inode) return -1;
-
-                    struct fat16_directory *p = (struct fat16_directory *)zalloc(sizeof(struct fat16_directory));
-                    memcpy(p, entry, sizeof(struct fat16_directory));
-
-                    inode->private_data = p;
-                    inode->size = entry->file_size_bytes;
-                    inode->mode = (entry->attributes & FAT16_ATTR_DIRECTORY) ? 040777 : 0100666;
-                    inode->i_ops = &fat16_inode_ops;
-                    inode->f_ops = &fat16_file_ops;
-
-                    dentry->inode = inode;
-                    return 0;
-                }
-            }
-        }
-    }
-    else
-    {
-        u16 current_cluster = dir_entry->first_cluster_low;
-        do
-        {
-            u32 lba = cluster_to_lba(fs, current_cluster);
-            for (u8 sector = 0; sector < fs->header.sectors_per_cluster; sector++)
-            {
-                if (blk_dev_read(fs->dev, lba + sector, buffer, 1) != 0) return -1;
-
-                for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++)
-                {
-                    struct fat16_directory *entry = (struct fat16_directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
-
-                    if (entry->name[0] == FAT16_DIR_ENTRY_END) return -1;
-                    if (!is_valid_entry(entry)) continue;
-
-                    if (compare_filenames(dentry->name, entry) == 0)
-                    {
-                        struct inode *inode = inode_alloc(dir->sb);
-                        if (!inode) return -1;
-
-                        struct fat16_directory *p = (struct fat16_directory *)zalloc(sizeof(struct fat16_directory));
-                        memcpy(p, entry, sizeof(struct fat16_directory));
-
-                        inode->private_data = p;
-                        inode->size = entry->file_size_bytes;
-                        inode->mode = (entry->attributes & FAT16_ATTR_DIRECTORY) ? 040777 : 0100666;
-                        inode->i_ops = &fat16_inode_ops;
-                        inode->f_ops = &fat16_file_ops;
-
-                        dentry->inode = inode;
-                        return 0;
-                    }
-                }
-            }
-            current_cluster = get_next_cluster(fs, current_cluster);
-        } while (current_cluster >= 0x0002 && current_cluster <= 0xFFEF);
-    }
-
-    return -1;
-}
-
-static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offset)
-{
-    struct inode *inode = file->inode;
-    struct fat16 *fs = (struct fat16 *)inode->sb->fs_info;
-    struct fat16_directory *entry = (struct fat16_directory *)inode->private_data;
-
-    if (offset >= (off_t)inode->size) return 0;
-    if (offset + (off_t)count > (off_t)inode->size) count = inode->size - offset;
-
-    u16 current_cluster = entry->first_cluster_low;
-    u32 bytes_to_skip = (u32)offset;
-    u32 bytes_read_total = 0;
-
-    char sector_buffer[512];
-    u32 sector_size = fs->header.bytes_per_sector;
-    u32 sectors_per_cluster = fs->header.sectors_per_cluster;
-
-    /* Skip clusters */
-    while (bytes_to_skip >= sectors_per_cluster * sector_size)
-    {
-        bytes_to_skip -= sectors_per_cluster * sector_size;
-        current_cluster = get_next_cluster(fs, current_cluster);
-        if (current_cluster < 0x0002 || current_cluster > 0xFFEF) return 0;
-    }
-
-    while (current_cluster >= 0x0002 && current_cluster <= 0xFFEF && bytes_read_total < count)
-    {
-        u32 cluster_lba = cluster_to_lba(fs, current_cluster);
-
-        for (u32 i = 0; i < sectors_per_cluster && bytes_read_total < count; i++)
-        {
-            if (bytes_to_skip >= sector_size)
-            {
-                bytes_to_skip -= sector_size;
-                continue;
-            }
-
-            if (blk_dev_read(fs->dev, cluster_lba + i, sector_buffer, 1) != 0)
-            {
-                return bytes_read_total > 0 ? (ssize_t)bytes_read_total : -1;
-            }
-
-            u32 offset_in_sector = bytes_to_skip;
-            u32 available = sector_size - offset_in_sector;
-            u32 to_copy = (available < (count - bytes_read_total)) ? available : (u32)(count - bytes_read_total);
-
-            memcpy(buf + bytes_read_total, sector_buffer + offset_in_sector, to_copy);
-            bytes_read_total += to_copy;
-            bytes_to_skip = 0;
-        }
-
-        current_cluster = get_next_cluster(fs, current_cluster);
-    }
-
-    return (ssize_t)bytes_read_total;
-}
-
-static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, struct dirent *))
-{
-    struct inode *inode = file->inode;
-    struct fat16 *fs = (struct fat16 *)inode->sb->fs_info;
-    struct fat16_directory *dir_entry = (struct fat16_directory *)inode->private_data;
-
-    u32 offset = (u32)file->offset;
-    int count = 0;
-    char buffer[512];
-
-    if (dir_entry->first_cluster_low == 0) /* root */
-    {
-        u32 start_entry = offset / FAT16_DIR_ENTRY_SIZE;
-        for (u32 i = start_entry; i < fs->header.root_entry_count; i++)
-        {
-            u32 sector = i * FAT16_DIR_ENTRY_SIZE / fs->header.bytes_per_sector;
-            u32 entry_in_sector = (i * FAT16_DIR_ENTRY_SIZE) % fs->header.bytes_per_sector;
-
-            if (blk_dev_read(fs->dev, fs->root_dir_lba + sector, buffer, 1) != 0) break;
-
-            struct fat16_directory *entry = (struct fat16_directory *)(buffer + entry_in_sector);
-
-            if (entry->name[0] == FAT16_DIR_ENTRY_END) break;
-            if (!is_valid_entry(entry))
-            {
-                offset += FAT16_DIR_ENTRY_SIZE;
-                continue;
-            }
-
-            char name_str[13];
-            convert_83_to_string(entry->name, entry->extension, name_str);
-
-            struct dirent d = {
-                .inode = 0,
-                .offset = offset,
-                .reclen = sizeof(struct dirent),
-                .type = DT_UNKNOWN,
-            };
-            strncpy(d.name, name_str, sizeof(d.name));
-
-            if (filldir(dirent, &d) < 0) break;
-
-            offset += FAT16_DIR_ENTRY_SIZE;
-            count++;
-        }
-    }
-    else
-    {
-        u16 current_cluster = dir_entry->first_cluster_low;
-        u32 current_offset = 0;
-        
-        /* Skip clusters based on offset */
-        while (offset >= current_offset + fs->header.sectors_per_cluster * fs->header.bytes_per_sector) {
-            current_offset += fs->header.sectors_per_cluster * fs->header.bytes_per_sector;
-            current_cluster = get_next_cluster(fs, current_cluster);
-            if (current_cluster < 0x0002 || current_cluster > 0xFFEF) goto out;
-        }
-
-        while (current_cluster >= 0x0002 && current_cluster <= 0xFFEF)
-        {
-            u32 lba = cluster_to_lba(fs, current_cluster);
-            for (u8 sector = 0; sector < fs->header.sectors_per_cluster; sector++)
-            {
-                if (blk_dev_read(fs->dev, lba + sector, buffer, 1) != 0) goto out;
-
-                for (u16 i = 0; i < fs->header.bytes_per_sector / FAT16_DIR_ENTRY_SIZE; i++)
-                {
-                    if (current_offset < offset) {
-                        current_offset += FAT16_DIR_ENTRY_SIZE;
-                        continue;
-                    }
-
-                    struct fat16_directory *entry = (struct fat16_directory *)(buffer + (i * FAT16_DIR_ENTRY_SIZE));
-                    if (entry->name[0] == FAT16_DIR_ENTRY_END) goto out;
-                    if (!is_valid_entry(entry))
-                    {
-                        offset += FAT16_DIR_ENTRY_SIZE;
-                        current_offset += FAT16_DIR_ENTRY_SIZE;
-                        continue;
-                    }
-
-                    char name_str[13];
-                    convert_83_to_string(entry->name, entry->extension, name_str);
-
-                    struct dirent d = {
-                        .inode = 0,
-                        .offset = offset,
-                        .reclen = sizeof(struct dirent),
-                        .type = DT_UNKNOWN,
-                    };
-                    strncpy(d.name, name_str, sizeof(d.name));
-
-                    if (filldir(dirent, &d) < 0) goto out;
-
-                    offset += FAT16_DIR_ENTRY_SIZE;
-                    current_offset += FAT16_DIR_ENTRY_SIZE;
-                    count++;
-                }
-            }
-            current_cluster = get_next_cluster(fs, current_cluster);
-        }
-    }
-
-out:
-    file->offset = offset;
-    return count;
 }
 
 struct dentry *fat16_mount_fs(struct super_block *sb, const void *data)
 {
     struct block_dev *dev = (struct block_dev *)data;
-    struct fat16 *fs = (struct fat16 *)zalloc(sizeof(struct fat16));
+
+    struct fat16 *fs = zalloc(sizeof(*fs));
     if (!fs) return NULL;
 
     if (fat16_mount(dev, fs) != 0)
@@ -435,26 +160,22 @@ struct dentry *fat16_mount_fs(struct super_block *sb, const void *data)
         kfree(fs);
         return NULL;
     }
-
     sb->fs_info = fs;
 
-    struct inode *root_inode = inode_alloc(sb);
-    if (!root_inode)
+    struct fat16_directory root_ent;
+    memset(&root_ent, 0, sizeof(root_ent));
+    root_ent.attributes = FAT16_ATTR_DIRECTORY;
+    root_ent.first_cluster_low = 0;
+
+    struct inode *root_inode = fat16_make_inode(sb, &root_ent, (struct fat16_dir_loc){0, 0});
+    struct dentry *root_dentry = dentry_alloc("/");
+
+    if (!root_inode || !root_dentry)
     {
         kfree(fs);
         return NULL;
     }
 
-    struct fat16_directory *root_entry = (struct fat16_directory *)zalloc(sizeof(struct fat16_directory));
-    root_entry->attributes = FAT16_ATTR_DIRECTORY;
-    root_entry->first_cluster_low = 0;
-
-    root_inode->private_data = root_entry;
-    root_inode->mode = 040777; /* Directory */
-    root_inode->i_ops = &fat16_inode_ops;
-    root_inode->f_ops = &fat16_file_ops;
-
-    struct dentry *root_dentry = dentry_alloc("/");
     root_dentry->inode = root_inode;
     root_dentry->parent = root_dentry;
     sb->root = root_dentry;
@@ -462,13 +183,380 @@ struct dentry *fat16_mount_fs(struct super_block *sb, const void *data)
     return root_dentry;
 }
 
+/* ===== lookup / readdir ===== */
+
+struct lookup_ctx {
+    struct super_block *sb;
+    const char *name;
+    struct dentry *dentry;
+};
+
+static int lookup_cb(const struct fat16_directory *entry, u32 offset,
+                     struct fat16_dir_loc loc, void *ctxp)
+{
+    struct lookup_ctx *ctx = ctxp;
+    (void)offset;
+
+    if (!fat16_entry_valid(entry)) return FAT16_WALK_CONTINUE;
+    if (fat16_name_cmp(ctx->name, entry) != 0) return FAT16_WALK_CONTINUE;
+
+    struct inode *inode = fat16_make_inode(ctx->sb, entry, loc);
+    if (!inode) return -1;
+
+    ctx->dentry->inode = inode;
+    return FAT16_WALK_STOP;
+}
+
+static int fat16_lookup(struct inode *dir, struct dentry *dentry)
+{
+    struct lookup_ctx ctx = {
+        .sb = dir->sb,
+        .name = dentry->name,
+        .dentry = dentry,
+    };
+
+    return fat16_walk_dir(fs_of(dir), ent_of(dir)->first_cluster_low, lookup_cb, &ctx) ==
+                   FAT16_WALK_STOP
+               ? 0
+               : -1;
+}
+
+struct readdir_ctx {
+    int (*filldir)(void *, struct dirent *);
+    void *dirent;
+    u32 start; /* file->offset: entries before this were already returned */
+    u32 next;  /* where the next readdir() call should resume */
+    int count;
+};
+
+static int readdir_cb(const struct fat16_directory *entry, u32 offset,
+                      struct fat16_dir_loc loc, void *ctxp)
+{
+    struct readdir_ctx *ctx = ctxp;
+    (void)loc;
+
+    if (offset < ctx->start) return FAT16_WALK_CONTINUE;
+    ctx->next = offset + FAT16_DIR_ENTRY_SIZE;
+
+    if (!fat16_entry_valid(entry)) return FAT16_WALK_CONTINUE;
+
+    char name_str[FAT16_NAME_MAX];
+    fat16_name_to_str(entry->name, entry->extension, name_str);
+
+    struct dirent d = {
+        .inode = 0,
+        .offset = offset,
+        .reclen = sizeof(struct dirent),
+        .type = is_dir(entry) ? DT_DIR : DT_REG,
+    };
+    strncpy(d.name, name_str, sizeof(d.name));
+
+    if (ctx->filldir(ctx->dirent, &d) < 0) return FAT16_WALK_STOP;
+
+    ctx->count++;
+    return FAT16_WALK_CONTINUE;
+}
+
+static int fat16_readdir(struct file *file, void *dirent, int (*filldir)(void *, struct dirent *))
+{
+    struct readdir_ctx ctx = {
+        .filldir = filldir,
+        .dirent = dirent,
+        .start = (u32)file->offset,
+        .next = (u32)file->offset,
+        .count = 0,
+    };
+
+    fat16_walk_dir(fs_of(file->inode), ent_of(file->inode)->first_cluster_low, readdir_cb, &ctx);
+
+    file->offset = ctx.next;
+    return ctx.count;
+}
+
+/* ===== file I/O ===== */
+
+static int fat16_open(struct inode *inode, struct file *file)
+{
+    (void)inode;
+    (void)file;
+    return 0;
+}
+
+static int fat16_release(struct inode *inode, struct file *file)
+{
+    (void)inode;
+    (void)file;
+    return 0;
+}
+
+static ssize_t fat16_read(struct file *file, char *buf, size_t count, off_t offset)
+{
+    struct inode *inode = file->inode;
+    struct fat16 *fs = fs_of(inode);
+    struct fat16_directory *entry = ent_of(inode);
+
+    if (offset >= (off_t)inode->size) return 0;
+    if (offset + (off_t)count > (off_t)inode->size) count = inode->size - offset;
+
+    const u32 sector_size = fs->header.bytes_per_sector;
+    const u32 cluster_size = sector_size * fs->header.sectors_per_cluster;
+
+    u16 cluster = entry->first_cluster_low;
+    u32 skip = (u32)offset;
+    u32 done = 0;
+
+    for (; skip >= cluster_size; skip -= cluster_size)
+    {
+        cluster = fat16_next_cluster(fs, cluster);
+        if (!fat16_cluster_valid(cluster)) return 0;
+    }
+
+    char sector[FAT16_SECTOR_SIZE];
+
+    while (fat16_cluster_valid(cluster) && done < count)
+    {
+        u32 lba = fat16_cluster_to_lba(fs, cluster);
+
+        for (u32 i = 0; i < fs->header.sectors_per_cluster && done < count; i++)
+        {
+            if (skip >= sector_size)
+            {
+                skip -= sector_size;
+                continue;
+            }
+
+            if (blk_dev_read(fs->dev, lba + i, sector, 1) != 0)
+                return done > 0 ? (ssize_t)done : -1;
+
+            u32 avail = sector_size - skip;
+            u32 to_copy = avail < (count - done) ? avail : (u32)(count - done);
+
+            memcpy(buf + done, sector + skip, to_copy);
+            done += to_copy;
+            skip = 0;
+        }
+
+        cluster = fat16_next_cluster(fs, cluster);
+    }
+
+    return (ssize_t)done;
+}
+
+/* Follow `cluster`'s chain by one link, allocating and linking a new cluster if
+ * the chain ends. Returns the next cluster or 0 on failure. */
+static u16 chain_step(struct fat16 *fs, u16 cluster)
+{
+    u16 next = fat16_next_cluster(fs, cluster);
+    if (fat16_cluster_valid(next)) return next;
+
+    if (fat16_cluster_alloc(fs, &next) != 0) return 0;
+    if (fat16_fat_set(fs, cluster, next) != 0) return 0;
+    return next;
+}
+
+static ssize_t fat16_write(struct file *file, const char *buf, size_t count, off_t offset)
+{
+    struct inode *inode = file->inode;
+    struct fat16 *fs = fs_of(inode);
+    struct fat16_inode_info *info = inode->private_data;
+    struct fat16_directory *ent = &info->ent;
+
+    if (is_dir(ent) || fs->dev->read_only) return -1;
+    if (count == 0) return 0;
+
+    const u32 sector_size = fs->header.bytes_per_sector;
+    const u32 cluster_size = sector_size * fs->header.sectors_per_cluster;
+
+    if (ent->first_cluster_low == 0)
+    {
+        u16 c;
+        if (fat16_cluster_alloc(fs, &c) != 0) return -1;
+        ent->first_cluster_low = c;
+    }
+
+    u16 cluster = ent->first_cluster_low;
+    for (u32 pos = cluster_size; pos <= (u32)offset; pos += cluster_size)
+    {
+        cluster = chain_step(fs, cluster);
+        if (!cluster) return -1;
+    }
+
+    u32 skip = (u32)offset % cluster_size;
+    u32 done = 0;
+    char sector[FAT16_SECTOR_SIZE];
+
+    while (done < count)
+    {
+        u32 lba = fat16_cluster_to_lba(fs, cluster);
+
+        for (u32 i = 0; i < fs->header.sectors_per_cluster && done < count; i++)
+        {
+            if (skip >= sector_size)
+            {
+                skip -= sector_size;
+                continue;
+            }
+
+            u32 avail = sector_size - skip;
+            u32 chunk = avail < (count - done) ? avail : (u32)(count - done);
+
+            if (skip != 0 || chunk != sector_size)
+            {
+                if (blk_dev_read(fs->dev, lba + i, sector, 1) != 0) goto out;
+            }
+            memcpy(sector + skip, buf + done, chunk);
+            if (blk_dev_write(fs->dev, lba + i, sector, 1) != 0) goto out;
+
+            done += chunk;
+            skip = 0;
+        }
+
+        if (done < count)
+        {
+            cluster = chain_step(fs, cluster);
+            if (!cluster) goto out;
+        }
+    }
+
+out:
+    if ((u64)offset + done > inode->size)
+    {
+        inode->size = (u64)offset + done;
+        ent->file_size_bytes = (u32)inode->size;
+    }
+    if (done > 0) fat16_entry_touch(ent);
+    fat16_dir_write(fs, info->loc, ent);
+
+    return done > 0 ? (ssize_t)done : -1;
+}
+
+/* ===== namespace ops ===== */
+
+static int fat16_create(struct inode *dir, struct dentry *dentry, int mode)
+{
+    (void)mode;
+    struct fat16 *fs = fs_of(dir);
+    if (fs->dev->read_only) return -1;
+
+    struct fat16_directory ent;
+    if (fat16_fill_entry(&ent, dentry->name, FAT16_ATTR_ARCHIVE) != 0) return -1;
+
+    u16 dir_first = ent_of(dir)->first_cluster_low;
+    if (fat16_dir_find(fs, dir_first, dentry->name, &(struct fat16_dir_loc){0}, NULL) == 0)
+        return -1; /* already exists */
+
+    struct fat16_dir_loc loc;
+    if (fat16_dir_alloc_slot(fs, dir_first, &loc) != 0) return -1;
+    if (fat16_dir_write(fs, loc, &ent) != 0) return -1;
+
+    struct inode *inode = fat16_make_inode(dir->sb, &ent, loc);
+    if (!inode) return -1;
+
+    dentry->inode = inode;
+    return 0;
+}
+
+static int fat16_mkdir(struct inode *dir, struct dentry *dentry, int mode)
+{
+    (void)mode;
+    struct fat16 *fs = fs_of(dir);
+    if (fs->dev->read_only) return -1;
+
+    struct fat16_directory ent;
+    if (fat16_fill_entry(&ent, dentry->name, FAT16_ATTR_DIRECTORY) != 0) return -1;
+
+    u16 dir_first = ent_of(dir)->first_cluster_low;
+    if (fat16_dir_find(fs, dir_first, dentry->name, &(struct fat16_dir_loc){0}, NULL) == 0)
+        return -1;
+
+    u16 cluster;
+    if (fat16_cluster_alloc(fs, &cluster) != 0) return -1;
+    ent.first_cluster_low = cluster;
+
+    /* Zero the new directory cluster, then lay down "." and "..". */
+    char buf[FAT16_SECTOR_SIZE];
+    memset(buf, 0, sizeof(buf));
+    u32 base = fat16_cluster_to_lba(fs, cluster);
+    for (u8 s = 1; s < fs->header.sectors_per_cluster; s++)
+        if (blk_dev_write(fs->dev, base + s, buf, 1) != 0) return -1;
+
+    struct fat16_directory dot;
+    memset(&dot, 0, sizeof(dot));
+    memset(dot.name, ' ', sizeof(dot.name));
+    memset(dot.extension, ' ', sizeof(dot.extension));
+    dot.name[0] = '.';
+    dot.attributes = FAT16_ATTR_DIRECTORY;
+    dot.first_cluster_low = cluster;
+    fat16_entry_stamp(&dot);
+
+    struct fat16_directory dotdot = dot;
+    dotdot.name[1] = '.';
+    dotdot.first_cluster_low = dir_first; /* 0 == root, per the FAT convention */
+
+    memcpy(buf, &dot, sizeof(dot));
+    memcpy(buf + FAT16_DIR_ENTRY_SIZE, &dotdot, sizeof(dotdot));
+    if (blk_dev_write(fs->dev, base, buf, 1) != 0) return -1;
+
+    struct fat16_dir_loc loc;
+    if (fat16_dir_alloc_slot(fs, dir_first, &loc) != 0) goto undo;
+    if (fat16_dir_write(fs, loc, &ent) != 0) goto undo;
+
+    struct inode *inode = fat16_make_inode(dir->sb, &ent, loc);
+    if (!inode) goto undo;
+
+    dentry->inode = inode;
+    return 0;
+
+undo:
+    fat16_chain_free(fs, cluster);
+    return -1;
+}
+
+static int fat16_unlink(struct inode *dir, struct dentry *dentry)
+{
+    struct fat16 *fs = fs_of(dir);
+    if (fs->dev->read_only) return -1;
+
+    struct fat16_dir_loc loc;
+    struct fat16_directory ent;
+    if (fat16_dir_find(fs, ent_of(dir)->first_cluster_low, dentry->name, &loc, &ent) != 0)
+        return -1;
+
+    if (is_dir(&ent)) return -1; /* directories go through rmdir */
+
+    if (fat16_cluster_valid(ent.first_cluster_low))
+        fat16_chain_free(fs, ent.first_cluster_low);
+
+    ent.name[0] = FAT16_DIR_ENTRY_DELETED;
+    return fat16_dir_write(fs, loc, &ent);
+}
+
+static int fat16_rmdir(struct inode *dir, struct dentry *dentry)
+{
+    struct fat16 *fs = fs_of(dir);
+    if (fs->dev->read_only) return -1;
+
+    struct fat16_dir_loc loc;
+    struct fat16_directory ent;
+    if (fat16_dir_find(fs, ent_of(dir)->first_cluster_low, dentry->name, &loc, &ent) != 0)
+        return -1;
+
+    if (!is_dir(&ent)) return -1;
+    if (!fat16_dir_empty(fs, ent.first_cluster_low)) return -1; /* not empty */
+
+    if (fat16_cluster_valid(ent.first_cluster_low))
+        fat16_chain_free(fs, ent.first_cluster_low);
+
+    ent.name[0] = FAT16_DIR_ENTRY_DELETED;
+    return fat16_dir_write(fs, loc, &ent);
+}
+
+/* ===== registration ===== */
+
 int fat16_init()
 {
-    struct fs_type *type = (struct fs_type *)zalloc(sizeof(struct fs_type));
-    if (!type)
-    {
-        return -1;
-    }
+    struct fs_type *type = zalloc(sizeof(*type));
+    if (!type) return -1;
 
     strcpy(type->name, name);
     type->mount = fat16_mount_fs;
