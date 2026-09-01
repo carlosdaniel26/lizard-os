@@ -41,25 +41,26 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
     task->regs.rip = (u64)entry_point;
     task->regs.rflags = RFLAGS_DEFAULT;
 
-    u64 flags = PAGE_PRESENT | PAGE_WRITABLE;
+    vaddr_t kstack = buddy_alloc(KSTACK_ORDER);
+    memset((void *)kstack, 0, KSTACK_PAGES * PAGE_SIZE);
+    task->kernel_stack = kstack + (KSTACK_PAGES * PAGE_SIZE);
+
     if (is_user) {
         task->regs.cs = USER_CS;
         task->regs.ss = USER_SS;
-        flags |= PAGE_USER;
-    } 
+
+        u64 uflags = PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
+        for (int i = 0; i < USER_STACK_PAGES; i++) {
+            void *ptr = vmm_alloc(task->pml4, USER_STACK_BASE + (i * PAGE_SIZE), uflags);
+            memset(ptr, 0, PAGE_SIZE);
+        }
+        task->regs.rsp = USER_STACK_BASE + (USER_STACK_PAGES * PAGE_SIZE);
+    }
     else {
         task->regs.cs = KERNEL_CS;
         task->regs.ss = KERNEL_SS;
+        task->regs.rsp = task->kernel_stack;
     }
-
-    /* Allocate one stack for the task (user or kernel) at a fixed address */
-    for (int i = 0; i < USER_STACK_PAGES; i++) {
-        void *ptr = vmm_alloc(task->pml4, USER_STACK_BASE + (i * PAGE_SIZE), flags);
-        memset(ptr, 0, PAGE_SIZE);
-    }
-    
-    task->regs.rsp = USER_STACK_BASE + (USER_STACK_PAGES * PAGE_SIZE);
-    task->kernel_stack = USER_STACK_BASE + (USER_STACK_PAGES * PAGE_SIZE);
 
     list_add(&task->list, &task_list);
     task->state = TASK_STATE_READY;

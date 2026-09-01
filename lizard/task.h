@@ -9,6 +9,9 @@
 #define USER_STACK_BASE  0x700000000000
 #define USER_STACK_PAGES 4
 
+#define KSTACK_ORDER 2
+#define KSTACK_PAGES (1 << KSTACK_ORDER)
+
 #define RFLAGS_DEFAULT 0x202
 
 #define TASK_USER   true

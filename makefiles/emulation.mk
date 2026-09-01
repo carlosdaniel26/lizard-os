@@ -4,6 +4,7 @@ HDD        := hda.img
 HDD_SIZE   := 64
 HDD_LABEL  := LIZARD
 HDD_PART_LBA := 2048
+HDD_PART_OFFSET := $(shell expr $(HDD_PART_LBA) \* 512)
 ISO       := lizard-os_x86_64.iso
 ISO_ROOT  := build/iso_root
 LIMINE_DIR := limine
@@ -12,6 +13,14 @@ LIMINE_BRANCH := v9.x-binary
 ## /sbin is usually off a non-root PATH, so resolve these host tools explicitly.
 MKFS_FAT  := $(shell command -v mkfs.fat 2>/dev/null || echo /sbin/mkfs.fat)
 SFDISK    := $(shell command -v sfdisk 2>/dev/null || echo /sbin/sfdisk)
+MCOPY     := $(shell command -v mcopy 2>/dev/null || echo /usr/bin/mcopy)
+
+## Userspace programs staged into the FAT16 root. main.c does
+## vfs_read_all("/hello") + load_elf(), so /hello must be an ET_EXEC ELF.
+HELLO := userspace/hello
+
+$(HELLO): userspace/hello.c userspace/crt0.c userspace/syscall.c userspace/Makefile
+	$(MAKE) -C userspace
 
 ## ---- Root disk image (MBR + FAT16 partition) --------------------------------
 ## The kernel boots with root=ata0p0, so the image needs a real MBR partition
@@ -20,18 +29,19 @@ SFDISK    := $(shell command -v sfdisk 2>/dev/null || echo /sbin/sfdisk)
 ## *partition* block device (blk_dev_part_read adds the partition start), which
 ## is where mkfs.fat --offset writes it. mkfs.fat auto-sizes the filesystem to
 ## (image size - offset); sfdisk auto-sizes the partition the same way, so they
-## match. Geometry (4 sec/cluster, 512 root entries) is what the driver expects.
+## match. mcopy (mtools) stages files into the partition without a loop mount.
 
-$(HDD):
-	@command -v $(MKFS_FAT) >/dev/null 2>&1 || { \
-		echo "ERROR: mkfs.fat not found - install it with: sudo apt install dosfstools"; \
-		exit 1; }
-	@command -v $(SFDISK) >/dev/null 2>&1 || { \
-		echo "ERROR: sfdisk not found - install it with: sudo apt install fdisk"; \
-		exit 1; }
+$(HDD): $(HELLO)
+	@for pair in "$(MKFS_FAT):dosfstools" "$(SFDISK):fdisk" "$(MCOPY):mtools"; do \
+		bin=$${pair%:*}; pkg=$${pair##*:}; \
+		command -v $$bin >/dev/null 2>&1 || { \
+			echo "ERROR: $$(basename $$bin) not found - install it with: sudo apt install $$pkg"; \
+			exit 1; }; \
+	done
 	dd if=/dev/zero of=$@ bs=1M count=$(HDD_SIZE) status=none
 	printf 'label: dos\nstart=%s, type=0e, bootable\n' $(HDD_PART_LBA) | $(SFDISK) -q $@
 	$(MKFS_FAT) -F 16 -s 4 -S 512 -r 512 -R 1 --offset $(HDD_PART_LBA) -n $(HDD_LABEL) $@
+	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(HELLO) ::/HELLO
 
 hdd: $(HDD)
 
