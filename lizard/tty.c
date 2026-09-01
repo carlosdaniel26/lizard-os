@@ -1,5 +1,6 @@
 #include <lizard/framebuffer.h>
 #include <lizard/init.h>
+#include <lizard/io.h>
 #include <lizard/spinlock.h>
 #include <lizard/ss.h>
 #include <nolibc/stdbool.h>
@@ -84,8 +85,19 @@ void tty_putentryat(char c, u32 color, size_t x, size_t y)
     text_buffer[(y * terminal_text_width) + x] = c;
 }
 
+/* Best-effort COM1 mirror of console output; bounded so a missing UART can't hang. */
+static void serial_putc(char c)
+{
+    for (int i = 0; i < 100000 && !(inb(0x3f8 + 5) & 0x20); i++)
+        ;
+    outb(0x3f8, (u8)c);
+}
+
 char tty_putchar(char c)
 {
+    if (c == '\n') serial_putc('\r');
+    serial_putc(c);
+
     spinlock_lock(&tty_lock);
     if (c == '\n')
     {

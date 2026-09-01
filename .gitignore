@@ -5,6 +5,7 @@
 *.iso
 *.img
 qemu_log.txt
+kernel_log.txt
 .vscode/
 
 kernel.map.txt

@@ -85,6 +85,10 @@ $(ISO): all limine.conf $(LIMINE_DIR)/limine
 
 ## ---- QEMU --------------------------------------------------------------------
 
+## Kernel console (COM1) is mirrored to the terminal and to KERNEL_LOG.
+KERNEL_LOG := kernel_log.txt
+SERIAL     := -chardev stdio,id=com1,logfile=$(KERNEL_LOG) -serial chardev:com1
+
 run: $(ISO) $(HDD)
 	@echo "(QEMU)"
 	qemu-system-$(ARCH) \
@@ -92,7 +96,7 @@ run: $(ISO) $(HDD)
 		-drive file=$(HDD),format=raw,if=ide \
 		-cdrom $(ISO) \
 		-boot d \
-		-m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt
+		-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt
 
 debug: $(ISO) $(HDD)
 	@echo "(QEMU)"
@@ -101,5 +105,5 @@ debug: $(ISO) $(HDD)
 		-drive file=$(HDD),format=raw,if=ide \
 		-cdrom $(ISO) \
 		-boot d \
-		-m 3G -no-reboot -d int,cpu_reset -D qemu_log.txt \
+		-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt \
 		-S -s
