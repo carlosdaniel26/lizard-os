@@ -105,9 +105,21 @@ int ata_detect_devices()
         ata_dev->heads = identify_data[3];
         ata_dev->sectors = identify_data[6];
 
-        if ((u16)identify_data[60])
+        /* Total sectors: prefer LBA48 (words 100-103), then the full 32-bit
+         * LBA28 value (words 60-61), then legacy CHS. Word 60 alone is only the
+         * low 16 bits, so reading it in isolation truncates any disk that is a
+         * multiple of 65536 sectors (e.g. 64 MiB) down to garbage. */
+        u64 lba48 = (u64)identify_data[100] | ((u64)identify_data[101] << 16) |
+                    ((u64)identify_data[102] << 32) | ((u64)identify_data[103] << 48);
+        u32 lba28 = (u32)identify_data[60] | ((u32)identify_data[61] << 16);
+
+        if ((identify_data[83] & (1 << 10)) && lba48)
         {
-            ata_dev->total_sectors = (u16)identify_data[60];
+            ata_dev->total_sectors = lba48;
+        }
+        else if (lba28)
+        {
+            ata_dev->total_sectors = lba28;
         }
         else
         {

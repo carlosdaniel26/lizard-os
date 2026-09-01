@@ -13,7 +13,7 @@ PHDRS
     text PT_LOAD FLAGS(5);           /* R E */
     rodata PT_LOAD FLAGS(4);         /* R */
     data PT_LOAD FLAGS(6);           /* RW */
-    init PT_LOAD FLAGS(5);           /* R E */
+    init PT_LOAD FLAGS(7);           /* R W E - holds .init.text and writable .init.data */
 }
 
 SECTIONS

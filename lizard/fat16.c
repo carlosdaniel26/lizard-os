@@ -159,6 +159,7 @@ int fat16_mount(struct block_dev *dev, struct fat16 *fs)
     if (!dev || !fs) return -1;
 
     fs->dev = dev;
+    
     char buffer[512] = {0};
     if (dev->ops->read(dev, 0, buffer, 1) != 0)
     {

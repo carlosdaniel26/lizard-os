@@ -50,7 +50,7 @@ isr_common_stub:
 global isr_vector_%1
 isr_vector_%1:
     mov rdi, %1
-    jmp [rel isr_common_stub]
+    jmp isr_common_stub
 %endmacro
 
 %assign i 0

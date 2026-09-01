@@ -76,8 +76,10 @@ int init_idt()
 {
     memset(isr_table, 0, sizeof(isr_table));
 
+    /* isr_stub_table[i] is the absolute address of isr_vector_<i> (dq in
+     * isr_vector.asm), so use it directly as the gate handler. */
     for (int i = 0; i < IDT_ENTRIES; i++)
-        set_idt_gate(i, (void *)((u64)&isr_stub_table[0] + (i * 4) + (i32)isr_stub_table[i]), 0x8E);
+        set_idt_gate(i, (void *)isr_stub_table[i], 0x8E);
 
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base = (u64)&idt;
