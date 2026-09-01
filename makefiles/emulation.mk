@@ -1,4 +1,4 @@
-.PHONY: run debug hdd iso limine-clean
+.PHONY: run debug gdb _debug-qemu hdd iso limine-clean
 
 HDD        := hda.img
 HDD_SIZE   := 64
@@ -98,7 +98,17 @@ run: $(ISO) $(HDD)
 		-boot d \
 		-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt
 
-debug: $(ISO) $(HDD)
+## `make debug` (alias: `make gdb`) opens a tmux split: QEMU halted with its
+## gdbstub on :1234 in one pane, gdb -tui attached in the other. Set NO_TMUX=1
+## to just run the halted QEMU and connect gdb yourself.
+debug gdb:
+ifdef NO_TMUX
+	$(MAKE) _debug-qemu
+else
+	scripts/debug.sh
+endif
+
+_debug-qemu: $(ISO) $(HDD)
 	@echo "(QEMU)"
 	qemu-system-$(ARCH) \
 		-M pc \

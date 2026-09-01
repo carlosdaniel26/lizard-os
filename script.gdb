@@ -1,3 +1,3 @@
-file build/x86_64/kernel/x86_64/kernel
+file build/bin/kernel
 break kmain
 continue

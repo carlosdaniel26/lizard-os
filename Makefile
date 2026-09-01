@@ -26,6 +26,4 @@ clean:
 distclean: clean
 	rm -rf lizard/limine.h
 
-gdb:
-	gdb -tui -ex "target remote :1234" -x script.gdb
 include makefiles/emulation.mk
