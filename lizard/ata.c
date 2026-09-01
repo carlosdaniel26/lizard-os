@@ -186,6 +186,32 @@ static void ata_setup_lba(u16 ata, u64 lba)
     outb(ata + ATA_REG_LBA2, (lba >> 16) & 0xFF);
 }
 
+/* ~400ns settle: the status register is not valid for the first few reads
+ * after a command byte is written, so poll it a few times before trusting it. */
+static inline void ata_io_delay(u16 ata)
+{
+    for (int i = 0; i < 4; i++)
+        (void)inb(ata + ATA_REG_STATUS);
+}
+
+/* Wait for a PIO data block to become available: BSY clears, no ERR/DF, DRQ set. */
+static int ata_poll_data(u16 ata)
+{
+    for (int i = 0; i < 1000000; i++)
+    {
+        u8 st = inb(ata + ATA_REG_STATUS);
+        if (st & ATA_SR_BSY)
+        {
+            io_wait();
+            continue;
+        }
+        if (st & (ATA_SR_ERR | 0x20 /* DF */)) return -1;
+        if (st & ATA_SR_DRQ) return 0;
+        io_wait();
+    }
+    return -1;
+}
+
 static int block_read(struct block_dev *dev, u64 sector, void *buffer, size_t count)
 {
     struct ata_device *ata_dev = (struct ata_device *)dev->private_data;
@@ -194,14 +220,18 @@ static int block_read(struct block_dev *dev, u64 sector, void *buffer, size_t co
 
     for (u64 s = sector; s < sector + count; s++, buf += ata_dev->sector_size)
     {
+        if (ata_wait(ata, ATA_SR_BSY, 0) != 0) return -1;
+
         ata_setup_lba(ata, s);
         outb(ata + ATA_REG_COMMAND, ATA_CMD_READ_SECT);
 
-        if (ata_wait(ata, ATA_SR_BSY, 0) != 0) return -1;
-        if (ata_wait(ata, ATA_SR_DRQ, 1) != 0) return -1;
+        ata_io_delay(ata);
+        if (ata_poll_data(ata) != 0) return -1;
 
         for (int i = 0; i < 256; ++i)
             ((u16 *)buf)[i] = inw(ata + ATA_REG_DATA);
+
+        ata_io_delay(ata); /* let DRQ/status settle before the next command */
     }
 
     return 0;
@@ -215,16 +245,19 @@ static int block_write(struct block_dev *dev, u64 sector, void *buffer, size_t c
 
     for (u64 s = sector; s < sector + count; s++, buf += ata_dev->sector_size)
     {
+        if (ata_wait(ata, ATA_SR_BSY, 0) != 0) return -1;
+
         ata_setup_lba(ata, s);
         outb(ata + ATA_REG_COMMAND, ATA_CMD_WRITE_SECT);
 
-        if (ata_wait(ata, ATA_SR_BSY, 0) != 0) return -1;
-        if (ata_wait(ata, ATA_SR_DRQ, 1) != 0) return -1;
+        ata_io_delay(ata);
+        if (ata_poll_data(ata) != 0) return -1;
 
         for (int i = 0; i < 256; ++i)
             outw(ata + ATA_REG_DATA, ((const u16 *)buf)[i]);
 
         /* Let the drive commit the sector before the next command. */
+        ata_io_delay(ata);
         if (ata_wait(ata, ATA_SR_BSY, 0) != 0) return -1;
     }
 

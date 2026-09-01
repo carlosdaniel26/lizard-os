@@ -3,7 +3,7 @@
 
 int main(void)
 {
-    puts("hello from userspace");
+    printf("hello from userspace, pid=%d\n", sys_getpid());
     puts("goodbye");
-    return 7;
+    return 0;
 }
