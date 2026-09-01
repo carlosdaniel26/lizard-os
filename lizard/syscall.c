@@ -6,7 +6,9 @@
 #include <lizard/isr_vector.h>
 #include <lizard/keyboard.h>
 #include <lizard/ktime.h>
+#include <lizard/loader.h>
 #include <lizard/syscall.h>
+#include <lizard/task.h>
 #include <lizard/tty.h>
 #include <lizard/vfs.h>
 #include <nolibc/stdio.h>
@@ -236,6 +238,40 @@ static long sys_exit(long code, long a1, long a2, long a3, long a4, long a5)
     __builtin_unreachable();
 }
 
+static long sys_spawn(long upath, long uargv, long a2, long a3, long a4, long a5)
+{
+    (void)uargv; (void)a2; (void)a3; (void)a4; (void)a5;
+
+    char path[128];
+    long err = copy_user_str(upath, path, sizeof(path));
+    if (err) return err;
+
+    int pid = spawn(path);
+    if (pid < 0) return -ENOENT; /* open / ELF / OOM - spawn() does not distinguish */
+    return pid;
+}
+
+static long sys_waitpid(long pid, long ustatus, long options, long a3, long a4, long a5)
+{
+    (void)options; (void)a3; (void)a4; (void)a5; /* WNOHANG et al. not supported yet */
+
+    if (ustatus && !user_ptr_ok(ustatus, (long)sizeof(int))) return -EFAULT;
+
+    int status = 0;
+    int rpid = task_waitpid((int)pid, &status);
+    if (rpid < 0) return rpid;
+
+    if (ustatus) *(int *)ustatus = status;
+    return rpid;
+}
+
+static long sys_yield(long a0, long a1, long a2, long a3, long a4, long a5)
+{
+    (void)a0; (void)a1; (void)a2; (void)a3; (void)a4; (void)a5;
+    task_yield();
+    return 0;
+}
+
 /* ---- dispatch ---------------------------------------------------------- */
 
 void syscall_handler_c(struct cpu_state *regs)
@@ -266,6 +302,9 @@ static int syscall_init(void)
     syscall_table[SYS_fb_blit]   = sys_fb_blit;
     syscall_table[SYS_key_get]   = sys_key_get;
     syscall_table[SYS_uptime_ms] = sys_uptime_ms;
+    syscall_table[SYS_spawn]     = sys_spawn;
+    syscall_table[SYS_waitpid]   = sys_waitpid;
+    syscall_table[SYS_yield]     = sys_yield;
 
     /* DPL 3 interrupt gate to a dedicated stub that preserves RDI (arg1). */
     set_idt_gate(SYSCALL_ISR_INDEX, isr_syscall_stub, 0xEE);

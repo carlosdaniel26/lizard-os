@@ -59,7 +59,16 @@ struct cpu_state {
 #define TASK_STATE_RUNNING 0
 #define TASK_STATE_READY 1
 #define TASK_STATE_WAITING 2
-#define TASK_STATE_TERMINATED 3
+#define TASK_STATE_TERMINATED 3 /* also the zombie state: dead, not yet waited on */
+
+/* Why a WAITING task is off the run queue. task_tick() only auto-wakes
+ * WAIT_SLEEP; the rest are woken explicitly by task_wake(). */
+enum {
+    WAIT_NONE = 0,
+    WAIT_SLEEP,  /* task_sleep() - wake when pit_ticks >= sleep_until */
+    WAIT_CHILD,  /* sys_waitpid() - wake when a child terminates      */
+    WAIT_INPUT,  /* blocked in sys_read() on the tty - wake on a line  */
+};
 
 struct task {
     struct list_head list;
@@ -69,13 +78,22 @@ struct task {
     int exit_code;
 
     u8 state;
+    u8 wait_kind; /* WAIT_* - valid while state == TASK_STATE_WAITING */
     bool is_user;
     bool on_heap; /* task struct was kmalloc'd - reaper should kfree it */
+    bool reaped;  /* zombie already collected by waitpid - reaper may free it */
 
     struct cpu_state regs;
     vaddr_t pml4;
 
     u64 kernel_stack;
+
+    /* Process tree. parent == NULL means orphaned (or never parented); the
+     * reaper frees such a task's corpse without anyone waiting. children is
+     * this task's list head, sibling is its link in parent->children. */
+    struct task *parent;
+    struct list_head children;
+    struct list_head sibling;
 
     u32 priority;
     u32 ticks_remaining;
@@ -95,6 +113,19 @@ struct task *next_ready_task();
 void task_exit();
 
 void task_sleep(u32 ms);
+void task_yield(void); /* voluntary reschedule (int 48) */
+
+/* Block the current task off the run queue with the given WAIT_* reason, then
+ * reschedule. Returns once someone has moved it back to READY. */
+void task_block(u8 wait_kind);
+/* Move a WAITING task back to READY (no-op if it is not WAITING). */
+void task_wake(struct task *t);
+
+/* Wait for a child to terminate. pid > 0 waits for that pid, pid <= 0 for any
+ * child. On success returns the reaped child's pid and, if status != NULL,
+ * stores its exit code there; -ECHILD if there are no matching children. */
+int task_waitpid(int pid, int *status);
+
 void idle_func();
 
 extern u8 scheduler_enabled;

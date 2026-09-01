@@ -27,6 +27,11 @@ enum {
     SYS_key_get   = 10, /* ()  -> set-1 scancode (bit7 = release), 0 if none    */
     SYS_uptime_ms = 11, /* ()  -> milliseconds since boot                      */
 
+    /* --- process control ---------------------------------------------- */
+    SYS_spawn   = 12, /* (const char *path, char *const argv[]) -> pid | -errno */
+    SYS_waitpid = 13, /* (int pid, int *status, int options)    -> pid | -errno */
+    SYS_yield   = 14, /* ()                                     -> 0            */
+
     SYS_NR_MAX
 };
 

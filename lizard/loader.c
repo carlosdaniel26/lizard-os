@@ -126,10 +126,16 @@ int spawn(const char *path)
     if (load_elf(file, t) != 0)
     {
         vfs_close(file);
+        t->reaped = true;                 /* unparented - reaper frees it */
         t->state = TASK_STATE_TERMINATED; /* reaper reclaims pml4 / kstack / t */
         return -1;
     }
 
     vfs_close(file);
+
+    /* Join the process tree so the caller can waitpid() on us. */
+    t->parent = current_task;
+    list_add_tail(&t->sibling, &current_task->children);
+
     return (int)t->pid;
 }

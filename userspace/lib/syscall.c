@@ -71,6 +71,21 @@ unsigned long sys_uptime_ms(void)
     return (unsigned long)__syscall0(SYS_uptime_ms);
 }
 
+int sys_spawn(const char *path, char *const argv[])
+{
+    return (int)__syscall2(SYS_spawn, path, argv);
+}
+
+int sys_waitpid(int pid, int *status, int options)
+{
+    return (int)__syscall3(SYS_waitpid, pid, status, options);
+}
+
+int sys_yield(void)
+{
+    return (int)__syscall0(SYS_yield);
+}
+
 __attribute__((noreturn)) void _exit(int code)
 {
     __syscall1(SYS_exit, code);

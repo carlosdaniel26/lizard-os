@@ -27,4 +27,12 @@ int          sys_fb_blit(const void *xrgb, unsigned w, unsigned h);
 int          sys_key_get(void);
 unsigned long sys_uptime_ms(void);
 
+/* Process control. sys_spawn loads path as a new user task (argv NULL-terminated,
+ * argv[0] conventionally the program name) and returns its pid without waiting.
+ * sys_waitpid blocks until a child exits: pid > 0 for that child, pid <= 0 for
+ * any; *status gets the raw exit code; returns the child's pid or -ECHILD. */
+int sys_spawn(const char *path, char *const argv[]);
+int sys_waitpid(int pid, int *status, int options);
+int sys_yield(void);
+
 __attribute__((noreturn)) void _exit(int code);

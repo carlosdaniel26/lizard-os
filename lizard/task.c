@@ -1,4 +1,5 @@
 #include "syscall.h"
+#include <abi/errno.h>
 #include <lizard/buddy.h>
 #include <lizard/debug.h>
 #include <lizard/gdt.h>
@@ -35,6 +36,11 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
     /* task->name = name */
     memset(task, 0, sizeof(struct task));
     memcpy(task->name, name, strlen(name));
+
+    InitListHead(&task->children);
+    InitListHead(&task->sibling);
+    task->parent = NULL;
+    task->wait_kind = WAIT_NONE;
 
     task->pid = ++pid_counter;
     task->priority = priority;
@@ -129,13 +135,38 @@ static inline void scheduler_trigger()
     asm volatile("int $48");
 }
 
+void task_yield(void)
+{
+    scheduler_trigger();
+}
+
 void task_sleep(u32 ms)
 {
     if (!current_task) return;
 
     current_task->sleep_until = pit_ticks + ms;
+    current_task->wait_kind = WAIT_SLEEP;
     current_task->state = TASK_STATE_WAITING;
     scheduler_trigger();
+}
+
+void task_block(u8 wait_kind)
+{
+    if (!current_task || current_task == &idle) return;
+
+    current_task->wait_kind = wait_kind;
+    current_task->state = TASK_STATE_WAITING;
+    scheduler_trigger();
+    /* back here once task_wake() flipped us to READY and the scheduler
+     * picked us again */
+}
+
+void task_wake(struct task *t)
+{
+    if (!t || t->state != TASK_STATE_WAITING) return;
+
+    t->wait_kind = WAIT_NONE;
+    t->state = TASK_STATE_READY;
 }
 
 /*
@@ -162,12 +193,16 @@ void task_tick()
     struct task *t = &idle;
     struct list_head *pos, *tmp;
 
-    /* Wake up sleeping tasks */
+    /* Wake up sleeping tasks. Only WAIT_SLEEP is timer-driven - a task parked
+     * in WAIT_CHILD / WAIT_INPUT has sleep_until == 0 and must not be woken
+     * here, only by task_wake(). */
     list_for_each(pos, tmp, &task_list)
     {
         t = (struct task *)pos;
-        if (t->state == TASK_STATE_WAITING && pit_ticks >= t->sleep_until)
+        if (t->state == TASK_STATE_WAITING && t->wait_kind == WAIT_SLEEP &&
+            pit_ticks >= t->sleep_until)
         {
+            t->wait_kind = WAIT_NONE;
             t->state = TASK_STATE_READY;
         }
     }
@@ -200,13 +235,76 @@ struct task *next_ready_task()
 
 void task_exit()
 {
-    if (current_task && current_task != &idle)
+    struct task *me = current_task;
+
+    if (me && me != &idle)
     {
-        current_task->state = TASK_STATE_TERMINATED;
+        /* Re-parent any children onto idle (pid 1 / init). idle never calls
+         * waitpid, so reap_terminated() frees an idle-owned corpse directly. */
+        struct list_head *pos, *tmp;
+        list_for_each(pos, tmp, &me->children)
+        {
+            struct task *c = container_of(pos, struct task, sibling);
+            list_del(&c->sibling);
+            list_add_tail(&c->sibling, &idle.children);
+            c->parent = &idle;
+        }
+
+        me->state = TASK_STATE_TERMINATED;
+
+        if (me->parent && me->parent != &idle)
+        {
+            /* a real parent may be parked in waitpid - let it collect us */
+            if (me->parent->state == TASK_STATE_WAITING && me->parent->wait_kind == WAIT_CHILD)
+                task_wake(me->parent);
+        }
+        else
+        {
+            me->reaped = true; /* nobody will wait - hand straight to the reaper */
+        }
     }
 
     while (1)
     {
         scheduler_trigger();
+    }
+}
+
+int task_waitpid(int pid, int *status)
+{
+    struct task *me = current_task;
+    if (!me) return -EINVAL;
+
+    for (;;)
+    {
+        struct list_head *pos, *tmp;
+        struct task *zombie = NULL;
+        int matches = 0;
+
+        list_for_each(pos, tmp, &me->children)
+        {
+            struct task *c = container_of(pos, struct task, sibling);
+            if (pid > 0 && (int)c->pid != pid) continue;
+            matches++;
+            if (c->state == TASK_STATE_TERMINATED)
+            {
+                zombie = c;
+                break;
+            }
+        }
+
+        if (matches == 0) return -ECHILD;
+
+        if (zombie)
+        {
+            int rpid = (int)zombie->pid;
+            if (status) *status = zombie->exit_code;
+            list_del(&zombie->sibling);
+            zombie->parent = NULL;
+            zombie->reaped = true; /* reap_terminated() frees pml4 / kstack / struct */
+            return rpid;
+        }
+
+        task_block(WAIT_CHILD); /* a child terminating wakes us via task_wake() */
     }
 }
