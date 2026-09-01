@@ -28,9 +28,10 @@
 #define ATA_REG_STATUS 0x07    /* Status register (R) */
 
 /* Commands */
-#define ATA_CMD_WRITE_SECT 0x30 /* Write sector */
-#define ATA_CMD_READ_SECT 0x20  /* Read sector */
-#define ATA_CMD_IDENTIFY 0xEC   /* Identify Device */
+#define ATA_CMD_WRITE_SECT 0x30  /* Write sector */
+#define ATA_CMD_READ_SECT 0x20   /* Read sector */
+#define ATA_CMD_IDENTIFY 0xEC    /* Identify Device */
+#define ATA_CMD_CACHE_FLUSH 0xE7 /* Flush write cache */
 
 /* Status: */
 #define ATA_SR_BSY 0x80 /* Busy */
