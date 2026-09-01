@@ -29,6 +29,10 @@ void tty_breakline();
 void tty_write(const char *data, size_t size);
 void tty_writestring(const char *data);
 void tty_handler_input(char scancode);
+
+/* Canonical stdin queue drained by SYS_read(fd 0). */
+int    tty_stdin_available(void);
+size_t tty_stdin_read(char *dst, size_t max);
 void tty_backspace();
 void tty_breakline();
 void tty_tab();

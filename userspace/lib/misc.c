@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -17,6 +18,26 @@ int usleep(unsigned usec)
 int getpid(void)
 {
     return sys_getpid();
+}
+
+ssize_t read(int fd, void *buf, size_t n)
+{
+    return sys_read(fd, buf, n);
+}
+
+ssize_t write(int fd, const void *buf, size_t n)
+{
+    return sys_write(fd, buf, n);
+}
+
+int close(int fd)
+{
+    return sys_close(fd);
+}
+
+long lseek(int fd, long off, int whence)
+{
+    return sys_lseek(fd, off, whence);
 }
 
 int isatty(int fd)

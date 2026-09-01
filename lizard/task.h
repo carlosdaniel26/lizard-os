@@ -120,6 +120,8 @@ void task_yield(void); /* voluntary reschedule (int 48) */
 void task_block(u8 wait_kind);
 /* Move a WAITING task back to READY (no-op if it is not WAITING). */
 void task_wake(struct task *t);
+/* Wake every task blocked with this wait_kind; returns how many. */
+int task_wake_all(u8 wait_kind);
 
 /* Wait for a child to terminate. pid > 0 waits for that pid, pid <= 0 for any
  * child. On success returns the reaped child's pid and, if status != NULL,

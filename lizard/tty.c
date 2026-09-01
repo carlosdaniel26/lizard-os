@@ -3,6 +3,7 @@
 #include <lizard/io.h>
 #include <lizard/spinlock.h>
 #include <lizard/ss.h>
+#include <lizard/task.h>
 #include <nolibc/stdbool.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
@@ -197,6 +198,35 @@ void tty_backspace()
 #define KEY_BACKSAPCE 0x0E
 #define KEY_ENTER 0x1C
 
+/* Canonical input ring: completed lines the keyboard ISR hands to userspace
+ * via SYS_read(fd 0). Single producer (ISR line editor), single consumer
+ * (sys_read); the syscall gate keeps IF clear so the two never overlap. */
+#define STDIN_RING_SIZE 1024
+static volatile char stdin_ring[STDIN_RING_SIZE];
+static volatile u32 stdin_head;
+static volatile u32 stdin_tail;
+
+static void stdin_push(char c)
+{
+    if (stdin_head - stdin_tail >= STDIN_RING_SIZE)
+        stdin_tail++; /* ring full - drop the oldest byte */
+    stdin_ring[stdin_head % STDIN_RING_SIZE] = c;
+    stdin_head++;
+}
+
+int tty_stdin_available(void)
+{
+    return stdin_head != stdin_tail;
+}
+
+size_t tty_stdin_read(char *dst, size_t max)
+{
+    size_t n = 0;
+    while (n < max && stdin_tail != stdin_head)
+        dst[n++] = stdin_ring[stdin_tail++ % STDIN_RING_SIZE];
+    return n;
+}
+
 /* The line being edited. Tracking it directly is safe: scraping it back out of
  * text_buffer by cursor position blew up whenever scrolling drifted the
  * bookkeeping, overflowing the on-stack command buffer. */
@@ -219,11 +249,22 @@ void tty_handler_input(char scancode)
     if (scancode == KEY_ENTER)
     {
         tty_line[tty_line_len] = '\0';
-        tty_line_len = 0;
-
         tty_breakline();
-        runcmd(tty_line);
-        kprint_prompt();
+
+        /* Hand the line to a userspace reader if one is blocked in read(0);
+         * otherwise fall back to the in-kernel shell. */
+        for (size_t i = 0; i < tty_line_len; i++)
+            stdin_push(tty_line[i]);
+        stdin_push('\n');
+
+        if (task_wake_all(WAIT_INPUT) == 0)
+        {
+            stdin_tail = stdin_head; /* no reader - discard, kernel shell runs it */
+            runcmd(tty_line);
+            kprint_prompt();
+        }
+
+        tty_line_len = 0;
         return;
     }
 

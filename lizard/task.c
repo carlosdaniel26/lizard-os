@@ -169,6 +169,22 @@ void task_wake(struct task *t)
     t->state = TASK_STATE_READY;
 }
 
+int task_wake_all(u8 wait_kind)
+{
+    int n = 0;
+    struct list_head *pos, *tmp;
+    list_for_each(pos, tmp, &task_list)
+    {
+        struct task *t = container_of(pos, struct task, list);
+        if (t->state == TASK_STATE_WAITING && t->wait_kind == wait_kind)
+        {
+            task_wake(t);
+            n++;
+        }
+    }
+    return n;
+}
+
 /*
  * Clean this code up to make sleep work properly
  */

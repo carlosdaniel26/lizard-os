@@ -102,7 +102,18 @@ static long sys_read(long fd, long ubuf, long len, long a3, long a4, long a5)
 {
     (void)a3; (void)a4; (void)a5;
     if (!user_ptr_ok(ubuf, len)) return -EFAULT;
-    if (fd == 0 || fd == 1 || fd == 2) return -ENOSYS; /* no console input yet */
+    if (len == 0) return 0;
+
+    if (fd == 0)
+    {
+        /* Canonical tty input: block until the keyboard ISR has queued at
+         * least one line, then return whatever fits. The syscall gate keeps
+         * IF clear, so the check and the block cannot race the ISR. */
+        while (!tty_stdin_available())
+            task_block(WAIT_INPUT);
+        return (long)tty_stdin_read((char *)ubuf, (size_t)len);
+    }
+    if (fd == 1 || fd == 2) return -EBADF;
 
     struct file *f = fd_get(fd);
     if (!f) return -EBADF;
