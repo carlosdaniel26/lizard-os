@@ -1,4 +1,4 @@
-.PHONY: run debug gdb _debug-qemu hdd iso limine-clean
+.PHONY: run debug gdb ddd _debug-qemu hdd iso limine-clean
 
 HDD        := hda.img
 HDD_SIZE   := 64
@@ -98,15 +98,15 @@ run: $(ISO) $(HDD)
 		-boot d \
 		-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt
 
-## `make debug` (alias: `make gdb`) opens a tmux split: QEMU halted with its
-## gdbstub on :1234 in one pane, gdb -tui attached in the other. Set NO_TMUX=1
-## to just run the halted QEMU and connect gdb yourself.
-debug gdb:
-ifdef NO_TMUX
-	$(MAKE) _debug-qemu
-else
-	scripts/debug.sh
-endif
+## `make debug` opens a tmux split: QEMU halted with its gdbstub on :1234 in the
+## top pane, a debugger attached below. `make ddd` forces DDD, `make gdb` forces
+## gdb -tui; `DBG={ddd,gdb}` does the same. NO_TMUX=1 runs just the halted QEMU.
+## Inside the debugger, `kheap on` tracks the buddy / slab / kmalloc allocators
+## (scripts/kheap.py, auto-sourced by script.gdb).
+gdb: DBG := gdb
+ddd: DBG := ddd
+debug gdb ddd:
+	@DBG='$(DBG)' scripts/debug.sh
 
 _debug-qemu: $(ISO) $(HDD)
 	@echo "(QEMU)"
