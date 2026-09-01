@@ -22,11 +22,14 @@ SFDISK    := $(shell command -v sfdisk 2>/dev/null || echo /sbin/sfdisk)
 MCOPY     := $(shell command -v mcopy 2>/dev/null || echo /usr/bin/mcopy)
 MMD       := $(shell command -v mmd 2>/dev/null || echo /usr/bin/mmd)
 
-## Userspace programs staged into the FAT16 root. main.c does
+## Userspace programs staged into the FAT16 root. lizard/main.c does
 ## vfs_read_all("/hello") + load_elf(), so /hello must be an ET_EXEC ELF.
-HELLO := userspace/hello
+HELLO := userspace/bin/hello
 
-$(HELLO): userspace/hello.c userspace/crt0.c userspace/syscall.c userspace/Makefile
+USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/bin/*.c \
+                            userspace/include/*.h userspace/include/sys/*.h abi/*.h)
+
+$(HELLO): $(USERSPACE_SRC) userspace/Makefile
 	$(MAKE) -C userspace
 
 ## ---- Root disk image (MBR + FAT16 partition) --------------------------------

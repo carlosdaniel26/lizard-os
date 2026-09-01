@@ -34,6 +34,8 @@ struct cpu_state {
     u64 r14;
     u64 r15;
 
+    u64 vec; /* interrupt / exception vector, pushed by the per-vector stub */
+
     /* Interrupt Frame */
     u64 rip;
     u64 cs;
@@ -51,6 +53,9 @@ struct cpu_state {
 struct task {
     struct list_head list;
     char name[TASK_NAME_MAX_LEN];
+
+    u32 pid;
+    int exit_code;
 
     u8 state;
     bool is_user;

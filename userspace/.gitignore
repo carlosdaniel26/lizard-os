@@ -1,2 +1,4 @@
 *.o
-hello
+*.a
+bin/*
+!bin/*.c

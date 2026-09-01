@@ -28,12 +28,15 @@ void idle_func()
     yield();
 }
 
+static u32 pid_counter;
+
 void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority, bool is_user)
 {
     /* task->name = name */
     memset(task, 0, sizeof(struct task));
     memcpy(task->name, name, strlen(name));
 
+    task->pid = ++pid_counter;
     task->priority = priority;
     task->is_user = is_user;
     task->pml4 = pgtable_create();
