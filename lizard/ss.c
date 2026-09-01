@@ -156,7 +156,7 @@ void runcmd(const char *command)
         }
         path[sizeof(path) - 1] = '\0';
 
-        if (spawn(path) < 0)
+        if (spawn(path, 0) < 0)
             kprintf("Command not found: %s\n", command);
     }
 }

@@ -249,15 +249,42 @@ static long sys_exit(long code, long a1, long a2, long a3, long a4, long a5)
     __builtin_unreachable();
 }
 
+#define SPAWN_MAX_ARGS 32
+
 static long sys_spawn(long upath, long uargv, long a2, long a3, long a4, long a5)
 {
-    (void)uargv; (void)a2; (void)a3; (void)a4; (void)a5;
+    (void)a2; (void)a3; (void)a4; (void)a5;
 
     char path[128];
     long err = copy_user_str(upath, path, sizeof(path));
     if (err) return err;
 
-    int pid = spawn(path);
+    /* Flatten the user argv (array of user char*, NULL-terminated) into one
+     * kernel-stack buffer so spawn()/load_elf() never touch user memory. */
+    char *kargv[SPAWN_MAX_ARGS + 1];
+    char argbuf[1024];
+    int argc = 0;
+
+    if (uargv)
+    {
+        size_t off = 0;
+        for (;; argc++)
+        {
+            long slot = uargv + (long)argc * (long)sizeof(char *);
+            if (!user_ptr_ok(slot, (long)sizeof(char *))) return -EFAULT;
+            char *uptr = *(char **)slot;
+            if (!uptr) break;
+            if (argc >= SPAWN_MAX_ARGS) return -EINVAL;
+
+            err = copy_user_str((long)uptr, argbuf + off, sizeof(argbuf) - off);
+            if (err) return err;
+            kargv[argc] = argbuf + off;
+            off += strlen(argbuf + off) + 1;
+        }
+    }
+    kargv[argc] = NULL;
+
+    int pid = spawn(path, argc ? kargv : NULL);
     if (pid < 0) return -ENOENT; /* open / ELF / OOM - spawn() does not distinguish */
     return pid;
 }

@@ -13,6 +13,7 @@
 extern u64 hhdm_offset;
 
 #define MAX_PHDRS 16
+#define MAX_ARGS  32 /* argv entries handed to a new task, argv[0] included */
 
 /* Read exactly `len` bytes from `file` at absolute `off` into `dst`.
  * Returns 0 on success, -1 on short read / error. */
@@ -31,10 +32,53 @@ static int read_at(struct file *file, u64 off, void *dst, u64 len)
     return 0;
 }
 
+/* Build the initial user stack in-place (task->pml4 must be the live CR3):
+ * the arg strings, then a System V x86-64 startup block
+ * [ argc | argv[0..argc-1] | NULL | envp NULL | auxv AT_NULL ], with the
+ * returned rsp 16-byte aligned as _start expects. */
+static u64 setup_user_stack(struct task *task, char *const argv[])
+{
+    int argc = 0;
+    if (argv)
+        while (argv[argc] && argc < MAX_ARGS)
+            argc++;
+
+    u64 sp = task->regs.rsp;
+    u64 argp[MAX_ARGS];
+
+    for (int i = argc - 1; i >= 0; i--)
+    {
+        size_t len = strlen(argv[i]) + 1;
+        sp -= len;
+        memcpy((void *)sp, argv[i], len);
+        argp[i] = sp;
+    }
+
+    sp &= ~0xFUL; /* realign after the byte-granular string copies */
+
+    /* slots below: argc, argv[], NULL, envp NULL, auxv AT_NULL. Pad so the
+     * final rsp (pointing at argc) stays 16-aligned. */
+    if ((argc & 1) == 1)
+        sp -= 8;
+
+    sp -= 8; *(u64 *)sp = 0; /* auxv: AT_NULL           */
+    sp -= 8; *(u64 *)sp = 0; /* envp[0] = NULL          */
+    sp -= 8; *(u64 *)sp = 0; /* argv[argc] = NULL       */
+    for (int i = argc - 1; i >= 0; i--)
+    {
+        sp -= 8;
+        *(u64 *)sp = argp[i];
+    }
+    sp -= 8; *(u64 *)sp = (u64)argc;
+
+    return sp;
+}
+
 /* Load an ET_EXEC ELF straight from the VFS into `task`'s address space. The
  * file is streamed segment by segment - no whole-image buffer - so multi-MB
- * binaries (doom) don't need a giant kmalloc. */
-int load_elf(struct file *file, struct task *task)
+ * binaries (doom) don't need a giant kmalloc. argv (NULL-terminated, may be
+ * NULL) is copied onto the new task's stack for _start. */
+int load_elf(struct file *file, struct task *task, char *const argv[])
 {
     elf64_ehdr_t ehdr;
 
@@ -98,12 +142,14 @@ int load_elf(struct file *file, struct task *task)
     }
 
     task->regs.rip = ehdr.e_entry;
+    if (rc == 0)
+        task->regs.rsp = setup_user_stack(task, argv);
 
     vmm_switch_pml4(old_pml4);
     return rc;
 }
 
-int spawn(const char *path)
+int spawn(const char *path, char *const argv[])
 {
     struct file *file = vfs_open(path, O_RDONLY);
     if (!file)
@@ -123,7 +169,12 @@ int spawn(const char *path)
     task_create(t, (void (*)(void))0, name, 1, TASK_USER);
     t->on_heap = true;
 
-    if (load_elf(file, t) != 0)
+    /* Default argv is just the program name so argv[0] is always valid. */
+    char *defargv[2] = {(char *)name, NULL};
+    if (!argv || !argv[0])
+        argv = defargv;
+
+    if (load_elf(file, t, argv) != 0)
     {
         vfs_close(file);
         t->reaped = true;                 /* unparented - reaper frees it */

@@ -33,7 +33,7 @@ void kmain()
     boot_info_relocate();
     kernel_bootstrap();
 
-    spawn("/hello");
+    spawn("/hello", 0);
 
     enable_scheduler();
 
