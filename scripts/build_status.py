@@ -20,7 +20,7 @@ def main():
     BRIGHT_YELLOW = hex_to_ansi("#ffffaf")
     print(f"{GREEN}Compilation Succeed{RESET}")
     print(f"{BRIGHT_YELLOW}Kernel size:{RESET} {format_size('build/bin/kernel')}  "
-          f"{BRIGHT_YELLOW}ISO size:{RESET} {format_size('lizard-os_x86_64.iso')}")
+          f"{BRIGHT_YELLOW}Loader size:{RESET} {format_size('boot/BOOTX64.EFI')}")
 
 if __name__ == "__main__":
     main()

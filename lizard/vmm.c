@@ -1,10 +1,10 @@
+#include <lizard/boot.h>
 #include <lizard/buddy.h>
 #include <lizard/debug.h>
 #include <lizard/early_alloc.h>
 #include <lizard/framebuffer.h>
 #include <lizard/helpers.h>
 #include <lizard/kernelcfg.h>
-#include <lizard/limine.h>
 #include <lizard/memory_map.h>
 #include <lizard/panic.h>
 #include <lizard/pgtable.h>
@@ -24,44 +24,47 @@ extern u32 kernel_end;
 vaddr_t current_pml4 = 0;
 vaddr_t kernel_pml4 = 0;
 extern u64 hhdm_offset;
-extern struct limine_executable_address_request kernel_address_request;
-extern volatile struct limine_memmap_request memmap_request;
 
 static int vmm_init(void)
 {
+    struct boot_info *bi = boot_info_ptr;
+    if (!bi) kpanic("VMM: No boot_info");
+
     kernel_pml4 = pgtable_alloc_table();
     current_pml4 = kernel_pml4;
 
     /* 1. Map the kernel */
     vaddr_t vstart = align_down((u64)&kernel_start, PAGE_SIZE);
     vaddr_t vend = align_up((u64)&kernel_end, PAGE_SIZE);
-    paddr_t phys = kernel_address_request.response->physical_base;
+    paddr_t phys = bi->kernel_phys_base;
     paddr_t pstart = phys - ((u64)&kernel_start - vstart);
     u64 kernel_pages = (vend - vstart) / PAGE_SIZE;
 
     pgtable_maprange(kernel_pml4, vstart, pstart, kernel_pages, PAGE_PRESENT | PAGE_WRITABLE);
 
-    /* 2. Map the framebuffer */
-    pgtable_maprange(kernel_pml4, (vaddr_t)framebuffer, (paddr_t)framebuffer - hhdm_offset,
-                     framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
+    /* 2. Map the framebuffer (if the loader gave us one) */
+    if (framebuffer_length)
+        pgtable_maprange(kernel_pml4, (vaddr_t)framebuffer, (paddr_t)framebuffer - hhdm_offset,
+                         framebuffer_length / PAGE_SIZE, PAGE_PRESENT | PAGE_WRITABLE);
 
     /* 3. Map every region in the memory map to HHDM */
-    struct limine_memmap_response *memmap = memmap_request.response;
-    if (!memmap) kpanic("VMM: No memory map from Limine");
-
-    for (u64 i = 0; i < memmap->entry_count; i++)
+    for (u64 i = 0; i < bi->mmap_count; i++)
     {
-        struct limine_memmap_entry *entry = memmap->entries[i];
+        struct bi_mmap_entry *entry = &bi->mmap[i];
 
         /* Align to page boundaries */
         paddr_t start = align_down(entry->base, PAGE_SIZE);
-        paddr_t end = align_up(entry->base + entry->length, PAGE_SIZE);
+        paddr_t end = align_up(entry->base + entry->len, PAGE_SIZE);
 
         u64 pages = (end - start) / PAGE_SIZE;
         pgtable_maprange(kernel_pml4, (vaddr_t)start + hhdm_offset, start, pages, PAGE_PRESENT | PAGE_WRITABLE);
     }
 
     pgtable_switch(kernel_pml4);
+
+    /* Framebuffer is reachable now - wipe the firmware's leftover text. */
+    if (framebuffer_length)
+        clear_framebuffer();
 
     return 0;
 }

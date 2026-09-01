@@ -1,8 +1,8 @@
+#include <lizard/boot.h>
 #include <lizard/buddy.h>
 #include <lizard/early_alloc.h>
 #include <lizard/helpers.h>
 #include <lizard/init.h>
-#include <lizard/limine.h>
 #include <lizard/panic.h>
 #include <lizard/pgtable.h>
 #include <nolibc/stdio.h>
@@ -18,9 +18,6 @@ extern u32 kernel_end;
 #define KERNEL_STACK_SIZE 0x4000 /* 16 KiB */
 extern u8 kernel_stack[KERNEL_STACK_SIZE];
 
-__attribute__((used, section(".limine_requests"))) volatile struct limine_executable_address_request
-    kernel_address_request = {.id = LIMINE_EXECUTABLE_ADDRESS_REQUEST, .revision = 0};
-
 struct buddy_allocator buddy;
 
 unsigned int pages_to_order(unsigned int pages)
@@ -33,24 +30,23 @@ unsigned int pages_to_order(unsigned int pages)
 
 static size_t detect_page_count(void)
 {
-    struct limine_memmap_response *resp = memmap_request.response;
+    struct boot_info *bi = boot_info_ptr;
     paddr_t max_addr = 0;
 
-    if (!resp) return 0;
+    if (!bi) return 0;
 
-    const uint64_t entry_count = resp->entry_count;
-    for (uint64_t i = 0; i < entry_count; i++)
+    for (u64 i = 0; i < bi->mmap_count; i++)
     {
-        struct limine_memmap_entry *e = resp->entries[i];
-        if (e->type != LIMINE_MEMMAP_USABLE) continue;
-        paddr_t end = e->base + e->length;
+        struct bi_mmap_entry *e = &bi->mmap[i];
+        if (e->type != BI_USABLE) continue;
+        paddr_t end = e->base + e->len;
         if (end > max_addr) max_addr = end;
     }
 
     return (size_t)(align_up(max_addr, PAGE_SIZE) / PAGE_SIZE);
 }
 
-static inline void buddy_add_block(struct buddy_page *page, uint8_t order)
+static inline void buddy_add_block(struct buddy_page *page, u8 order)
 {
     page->flags = PAGE_FREE;
     page->order = order;
@@ -80,7 +76,7 @@ int buddy_init()
     }
 
     /* Determine kernel and early_alloc ranges to keep them reserved. */
-    paddr_t kernel_phys_start = kernel_address_request.response->physical_base;
+    paddr_t kernel_phys_start = boot_info_ptr->kernel_phys_base;
     vaddr_t kernel_virt_start = (vaddr_t)&kernel_start;
     vaddr_t kernel_virt_end = (vaddr_t)&kernel_end;
     size_t kernel_size = kernel_virt_end - kernel_virt_start;
@@ -93,16 +89,16 @@ int buddy_init()
     u64 early_end_pfn = align_up(early_current, PAGE_SIZE) / PAGE_SIZE;
 
     /* Mark usable pages, but AVOID kernel and early_alloc regions. */
-    struct limine_memmap_response *resp = memmap_request.response;
-    if (!resp) return -1;
+    struct boot_info *bi = boot_info_ptr;
+    if (!bi) return -1;
 
-    for (u64 i = 0; i < resp->entry_count; i++)
+    for (u64 i = 0; i < bi->mmap_count; i++)
     {
-        struct limine_memmap_entry *e = resp->entries[i];
-        if (e->type != LIMINE_MEMMAP_USABLE) continue;
+        struct bi_mmap_entry *e = &bi->mmap[i];
+        if (e->type != BI_USABLE) continue;
 
         paddr_t base = align_up(e->base, PAGE_SIZE);
-        paddr_t end = align_down(e->base + e->length, PAGE_SIZE);
+        paddr_t end = align_down(e->base + e->len, PAGE_SIZE);
         if (base >= end) continue;
 
         u64 start_pfn = base / PAGE_SIZE;

@@ -1,20 +1,14 @@
 #include <lizard/early_alloc.h>
 
+#include <lizard/boot.h>
 #include <lizard/debug.h>
 #include <lizard/helpers.h>
-#include <lizard/limine.h>
 #include <lizard/panic.h>
 #include <lizard/pgtable.h>
 
 #include <lizard/init.h>
 #include <nolibc/stdio.h>
 #include <nolibc/types.h>
-
-__attribute__((used, section(".limine_requests"))) volatile struct limine_memmap_request memmap_request = {
-    .id = LIMINE_MEMMAP_REQUEST, .revision = 0};
-
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
-    .id = LIMINE_HHDM_REQUEST, .revision = 0};
 
 u64 highest_addr = 0;
 u64 hhdm_offset = 0;
@@ -25,27 +19,28 @@ vaddr_t early_current;
 
 static int early_alloc_init()
 {
-    struct limine_memmap_response *response = memmap_request.response;
-    if (!response || !response->entry_count) kpanic("NO MEMORY MAP FROM LIMINE");
+    struct boot_info *bi = boot_info_ptr;
+    if (!bi || bi->magic != BOOT_INFO_MAGIC || !bi->mmap_count)
+        kpanic("NO MEMORY MAP FROM LOADER");
 
     paddr_t largest_base = 0;
     size_t largest_size = 0;
 
-    for (size_t i = 0; i < response->entry_count; i++)
+    for (u64 i = 0; i < bi->mmap_count; i++)
     {
-        struct limine_memmap_entry *entry = response->entries[i];
+        struct bi_mmap_entry *entry = &bi->mmap[i];
 
-        if (entry->type == LIMINE_MEMMAP_USABLE)
+        if (entry->type == BI_USABLE)
         {
-            if (entry->length > largest_size)
+            if (entry->len > largest_size)
             {
                 largest_base = entry->base;
-                largest_size = entry->length;
+                largest_size = entry->len;
             }
 
-            if (entry->base + entry->length > highest_addr)
+            if (entry->base + entry->len > highest_addr)
             {
-                highest_addr = entry->base + entry->length;
+                highest_addr = entry->base + entry->len;
             }
         }
     }
@@ -54,7 +49,7 @@ static int early_alloc_init()
     early_end = align_down(largest_base + largest_size, PAGE_SIZE);
     early_current = early_base;
 
-    hhdm_offset = (u64)hhdm_request.response->offset;
+    hhdm_offset = bi->hhdm_base;
 
     return 0;
 }

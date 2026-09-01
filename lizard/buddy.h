@@ -1,6 +1,5 @@
 #pragma once
 
-#include <lizard/limine.h>
 #include <nolibc/list.h>
 #include <nolibc/string.h>
 #include <nolibc/types.h>

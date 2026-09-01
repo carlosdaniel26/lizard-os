@@ -1,5 +1,5 @@
+#include <lizard/boot.h>
 #include <lizard/init.h>
-#include <lizard/limine.h>
 #include <lizard/setup.h>
 #include <nolibc/string.h>
 
@@ -8,9 +8,6 @@ __initdata char boot_cmdline[MAX_CMDLINE_LEN] = {0};
 
 extern const struct setup_entry __setup_start[];
 extern const struct setup_entry __setup_end[];
-
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_cmdline_request
-    cmdline_req = {.id = LIMINE_EXECUTABLE_CMDLINE_REQUEST, .revision = 0};
 
 static inline char *skip_spaces(char *s)
 {
@@ -29,7 +26,10 @@ static inline char *next_arg(char *cmdline)
 
 static int setup_params()
 {
-    char *cmdline = cmdline_req.response->cmdline;
+    strncpy(boot_cmdline, boot_info_ptr->cmdline, MAX_CMDLINE_LEN - 1);
+    boot_cmdline[MAX_CMDLINE_LEN - 1] = '\0';
+
+    char *cmdline = boot_cmdline;
     while (*cmdline)
     {
         cmdline = skip_spaces(cmdline);

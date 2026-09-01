@@ -1,16 +1,15 @@
 #include <lizard/init.h>
 #include <nolibc/types.h>
+#include <lizard/boot.h>
 #include <lizard/buddy.h>
 #include <nolibc/stdio.h>
 #include <lizard/helpers.h>
-#include <lizard/limine.h>
 #include <lizard/pgtable.h>
 #include <nolibc/stddef.h>
 #include <lizard/gdt.h>
 #include <lizard/ktime.h>
 #include <lizard/timer.h>
 
-extern struct limine_executable_address_request kernel_address_request;
 extern u64 hhdm_offset;
 extern u32 kernel_start;
 
@@ -52,7 +51,7 @@ void free_init_sections()
     u64 end = align_up((u64)__init_end, PAGE_SIZE);
     u64 pages = (end - start) / PAGE_SIZE;
 
-    u64 phys_base = kernel_address_request.response->physical_base;
+    u64 phys_base = boot_info_ptr->kernel_phys_base;
     u64 virt_base = (u64)&kernel_start;
 
     for (u64 addr = start; addr < end; addr += PAGE_SIZE)

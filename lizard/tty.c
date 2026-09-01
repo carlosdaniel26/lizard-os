@@ -32,12 +32,25 @@ static struct spinlock_t tty_lock;
 
 static int tty_init()
 {
-    terminal_width = width;
-    terminal_height = height;
     fb = framebuffer;
 
-    terminal_text_width = width / FONT_WIDTH;
-    terminal_text_height = height / FONT_HEIGHT;
+    if (framebuffer)
+    {
+        terminal_width = width;
+        terminal_height = height;
+        terminal_text_width = width / FONT_WIDTH;
+        terminal_text_height = height / FONT_HEIGHT;
+    }
+    else
+    {
+        /* Serial-only console: keep a sane virtual grid so the cursor /
+         * text_buffer bookkeeping stays in bounds. Real output goes to COM1
+         * via serial_putc(). */
+        terminal_text_width = 80;
+        terminal_text_height = 25;
+        terminal_width = terminal_text_width * FONT_WIDTH;
+        terminal_height = terminal_text_height * FONT_HEIGHT;
+    }
 
     terminal_row = 0;
     terminal_column = 0;

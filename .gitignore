@@ -1,11 +1,14 @@
 /kernel-deps
-/limine
 /ovmf
 /build
 *.iso
 *.img
+*.fd
 qemu_log.txt
 kernel_log.txt
 .vscode/
+
+boot/*.o
+boot/BOOTX64.EFI
 
 kernel.map.txt

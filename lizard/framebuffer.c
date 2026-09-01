@@ -1,12 +1,14 @@
+#include <lizard/boot.h>
 #include <lizard/early_alloc.h>
 #include <lizard/framebuffer.h>
+#include <lizard/helpers.h>
 
 #include <lizard/init.h>
+#include <nolibc/stddef.h>
 #include <nolibc/string.h>
 #include <nolibc/types.h>
 
-__attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request
-    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
+extern u64 hhdm_offset;
 
 u32 *framebuffer;
 u64 height;
@@ -262,6 +264,8 @@ static unsigned char font[] = {
 
 void clear_framebuffer()
 {
+    if (!framebuffer) return;
+
     for (u64 y = 0; y < height; y++)
     {
         for (u64 x = 0; x < width; x++)
@@ -271,10 +275,25 @@ void clear_framebuffer()
     }
 }
 
+/*
+ * The UEFI loader hands over a linear framebuffer (GOP) in struct boot_info.
+ * fb_base is physical; we address it through the HHDM. vmm_init() maps
+ * [fb_base, fb_base + framebuffer_length) into the kernel PML4, so nothing
+ * must draw before vmm_init runs - which holds, since the console only starts
+ * emitting well after it (see kernel_bootstrap ordering).
+ */
 static int init_framebuffer()
 {
-    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-    setup_framebuffer(framebuffer->width, framebuffer->height, framebuffer->address, framebuffer->pitch);
+    struct boot_info *bi = boot_info_ptr;
+
+    if (!bi || bi->fb_base == 0 || bi->fb_format == BI_FB_NONE) {
+        setup_framebuffer(0, 0, NULL, 0);
+        return 0;
+    }
+
+    setup_framebuffer(bi->fb_width, bi->fb_height,
+                      (u32 *)(bi->fb_base + hhdm_offset), bi->fb_pitch);
+    framebuffer_length = align_up((u32)bi->fb_size, PAGE_SIZE);
 
     return 0;
 }
@@ -287,26 +306,19 @@ void setup_framebuffer(u64 w, u64 h, u32 *fb, u32 pth)
     pitch = pth;
     width = w;
     height = h;
-
-    /* Iterate on limine's memmap to get framebuffer length */
-    for (size_t i = 0; i < memmap_request.response->entry_count; i++)
-    {
-        struct limine_memmap_entry *entry = memmap_request.response->entries[i];
-        if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
-        {
-            framebuffer_length = entry->length;
-            break; /* done */
-        }
-    }
+    framebuffer_length = fb ? (u32)(h * pth) : 0;
 }
 
 void draw_pixel(u64 x, u64 y, u32 color)
 {
+    if (!framebuffer) return;
     framebuffer[(y * (pitch / 4)) + x] = color;
 }
 
 void draw_char(u64 x_index, u64 y_index, u32 color, char character)
 {
+    if (!framebuffer) return;
+
     u64 first_byte_idx = character * FONT_HEIGHT;
     u32 bg_color = tty_bg_color;
     for (size_t y = 0; y < FONT_HEIGHT; y++)
@@ -322,6 +334,7 @@ void draw_char(u64 x_index, u64 y_index, u32 color, char character)
 
 void scroll_framebuffer(u32 pixels)
 {
+    if (!framebuffer) return;
     if (pixels == 0 || pixels >= height) return;
 
     u32 *fb_ptr = (u32 *)framebuffer;

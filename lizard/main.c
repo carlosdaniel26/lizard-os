@@ -1,11 +1,10 @@
+#include <lizard/boot.h>
 #include <lizard/helpers.h>
 #include <lizard/init.h>
 #include <lizard/kernelcfg.h>
-#include <lizard/limine.h>
 #include <lizard/loader.h>
 #include <lizard/pit.h>
 #include <lizard/sched.h>
-#include <lizard/stack.h>
 #include <nolibc/stdbool.h>
 #include <lizard/task.h>
 #include <nolibc/types.h>
@@ -22,15 +21,16 @@
  * because its not solved yet. - Carlos, 03:46 30th December, 2025
  */
 
-__attribute__((used, section(".limine_requests"))) static volatile LIMINE_BASE_REVISION(3);
-__attribute__((used, section(".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
-__attribute__((used, section(".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;
-
 u8 kernel_stack[KERNEL_STACK_SIZE];
 
+/* Entered from head.S (_start_high) after the higher-half jump. head.S has
+ * already switched RSP to the top of kernel_stack and published boot_info_ptr,
+ * so - unlike under Limine - kmain must NOT move the stack itself: doing so
+ * after the prologue set up %rbp leaves its locals in the dead gap above the
+ * new RSP, where the next call stomps them. */
 void kmain()
 {
-    stack_init(kernel_stack, KERNEL_STACK_SIZE);
+    boot_info_relocate();
     kernel_bootstrap();
 
     /* Test loading */

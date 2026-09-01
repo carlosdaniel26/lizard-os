@@ -1,15 +1,15 @@
 /* Tell the linker that we want an x86_64 ELF64 output file */
 OUTPUT_FORMAT(elf64-x86-64)
 
-/* We want the symbol kmain to be our entry point */
-ENTRY(kmain)
+/* Entry point: the hand-written stub in lizard/head.S */
+ENTRY(_start)
 
-/* Define the program headers we want so the bootloader gives us the right */
+/* Define the program headers we want so the loader gives us the right */
 /* MMU permissions; this also allows us to exert more control over the linking */
 /* process. */
 PHDRS
 {
-    limine_requests PT_LOAD FLAGS(4); /* R */
+    head PT_LOAD FLAGS(5);           /* R E - lizard/head.S early stub */
     text PT_LOAD FLAGS(5);           /* R E */
     rodata PT_LOAD FLAGS(4);         /* R */
     data PT_LOAD FLAGS(6);           /* RW */
@@ -18,17 +18,16 @@ PHDRS
 
 SECTIONS
 {
-    /* We want to be placed in the topmost 2GiB of the address space, for optimisations */
-    /* and because that is what the Limine spec mandates. */
+    /* Topmost 2 GiB of the address space, for -mcmodel=kernel. */
     . = 0xffffffff80000000;
     kernel_start = .;
 
-    /* Define a section to contain the Limine requests and assign it to its own PHDR */
-    .limine_requests : {
-        KEEP(*(.limine_requests_start))
-        KEEP(*(.limine_requests))
-        KEEP(*(.limine_requests_end))
-    } :limine_requests
+    /* The early boot stub (head.S). e_entry points here; the loader jumps to
+     * its physical copy, so it must be position-independent up to the CR3 load
+     * and the absolute jump into the higher half. */
+    .head : {
+        KEEP(*(.head))
+    } :head
 
     /* Initialization section */
     . = ALIGN(CONSTANT(MAXPAGESIZE));

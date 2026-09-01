@@ -4,7 +4,7 @@ export ARCH := x86_64
 LDFLAGS := -no-pie -z max-page-size=0x1000 -Wl,--gc-sections -Wl,--build-id=none
 
 
-.PHONY: all lizard nolibc runtime clean distclean
+.PHONY: all lizard nolibc runtime boot clean distclean
 
 all: lizard nolibc runtime
 	@mkdir -p $(BIN)
@@ -20,10 +20,14 @@ nolibc:
 runtime:
 	$(MAKE) -C runtime
 
+boot:
+	$(MAKE) -C boot
+
 clean:
 	rm -rf build
+	$(MAKE) -C boot clean
 
 distclean: clean
-	rm -rf lizard/limine.h
+	rm -f esp.img ovmf_vars.fd
 
 include makefiles/emulation.mk

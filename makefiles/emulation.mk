@@ -1,19 +1,26 @@
-.PHONY: run debug gdb ddd _debug-qemu hdd iso limine-clean
+.PHONY: run debug gdb ddd _debug-qemu hdd esp
 
 HDD        := hda.img
 HDD_SIZE   := 64
 HDD_LABEL  := LIZARD
 HDD_PART_LBA := 2048
 HDD_PART_OFFSET := $(shell expr $(HDD_PART_LBA) \* 512)
-ISO       := lizard-os_x86_64.iso
-ISO_ROOT  := build/iso_root
-LIMINE_DIR := limine
-LIMINE_BRANCH := v9.x-binary
+
+ESP        := esp.img
+ESP_SIZE   := 48
+ESP_LABEL  := LIZEFI
+LOADER     := boot/BOOTX64.EFI
+
+## UEFI firmware (OVMF). VARS is copied to a writable per-tree file.
+OVMF_CODE  := /usr/share/OVMF/OVMF_CODE_4M.fd
+OVMF_VARS  := ovmf_vars.fd
+OVMF_VARS_SRC := /usr/share/OVMF/OVMF_VARS_4M.fd
 
 ## /sbin is usually off a non-root PATH, so resolve these host tools explicitly.
 MKFS_FAT  := $(shell command -v mkfs.fat 2>/dev/null || echo /sbin/mkfs.fat)
 SFDISK    := $(shell command -v sfdisk 2>/dev/null || echo /sbin/sfdisk)
 MCOPY     := $(shell command -v mcopy 2>/dev/null || echo /usr/bin/mcopy)
+MMD       := $(shell command -v mmd 2>/dev/null || echo /usr/bin/mmd)
 
 ## Userspace programs staged into the FAT16 root. main.c does
 ## vfs_read_all("/hello") + load_elf(), so /hello must be an ET_EXEC ELF.
@@ -27,9 +34,7 @@ $(HELLO): userspace/hello.c userspace/crt0.c userspace/syscall.c userspace/Makef
 ## table. Layout: one bootable FAT16 (type 0x0e) partition starting at LBA 2048,
 ## spanning the rest of the disk. lizard/fat16.c reads the BPB from LBA 0 of the
 ## *partition* block device (blk_dev_part_read adds the partition start), which
-## is where mkfs.fat --offset writes it. mkfs.fat auto-sizes the filesystem to
-## (image size - offset); sfdisk auto-sizes the partition the same way, so they
-## match. mcopy (mtools) stages files into the partition without a loop mount.
+## is where mkfs.fat --offset writes it.
 
 $(HDD): $(HELLO)
 	@for pair in "$(MKFS_FAT):dosfstools" "$(SFDISK):fdisk" "$(MCOPY):mtools"; do \
@@ -45,43 +50,25 @@ $(HDD): $(HELLO)
 
 hdd: $(HDD)
 
-## ---- Limine bootloader ------------------------------------------------------
-## get-deps only fetches limine.h; the bootloader binaries + host tool that
-## build the bootable ISO are pulled here on first use.
+## ---- EFI System Partition image -------------------------------------------------
+## Raw FAT32 volume (no partition table - OVMF boots it as removable media) with
+## the loader at the fallback path and the kernel ELF at the root. boot/BOOTX64.EFI
+## is built by `make boot` from the top Makefile.
 
-$(LIMINE_DIR)/limine:
-	rm -rf $(LIMINE_DIR)
-	git clone https://github.com/limine-bootloader/limine.git \
-		--branch=$(LIMINE_BRANCH) --depth=1 $(LIMINE_DIR)
-	$(MAKE) -C $(LIMINE_DIR)
+$(LOADER):
+	$(MAKE) -C boot
 
-limine-clean:
-	rm -rf $(LIMINE_DIR)
+$(ESP): all $(LOADER)
+	dd if=/dev/zero of=$@ bs=1M count=$(ESP_SIZE) status=none
+	$(MKFS_FAT) -F 32 -n $(ESP_LABEL) $@
+	$(MMD)   -i $@ ::/EFI ::/EFI/BOOT
+	$(MCOPY) -D o -i $@ $(LOADER)      ::/EFI/BOOT/BOOTX64.EFI
+	$(MCOPY) -D o -i $@ $(BIN)/$(OUTPUT) ::/kernel.elf
 
-## ---- Bootable ISO ---------------------------------------------------------------
+esp: $(ESP)
 
-iso: $(ISO)
-
-$(ISO): all limine.conf $(LIMINE_DIR)/limine
-	@command -v xorriso >/dev/null || { \
-		echo "ERROR: xorriso not found - install it with: sudo apt install xorriso"; \
-		exit 1; }
-	rm -rf $(ISO_ROOT)
-	mkdir -p $(ISO_ROOT)/boot/limine $(ISO_ROOT)/EFI/BOOT
-	cp $(BIN)/$(OUTPUT) $(ISO_ROOT)/boot/kernel
-	cp limine.conf $(ISO_ROOT)/boot/limine/limine.conf
-	cp $(LIMINE_DIR)/limine-bios.sys \
-	   $(LIMINE_DIR)/limine-bios-cd.bin \
-	   $(LIMINE_DIR)/limine-uefi-cd.bin $(ISO_ROOT)/boot/limine/
-	cp $(LIMINE_DIR)/BOOTX64.EFI $(LIMINE_DIR)/BOOTIA32.EFI $(ISO_ROOT)/EFI/BOOT/
-	xorriso -as mkisofs -R -r -J \
-		-b boot/limine/limine-bios-cd.bin \
-		-no-emul-boot -boot-load-size 4 -boot-info-table \
-		--efi-boot boot/limine/limine-uefi-cd.bin \
-		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		$(ISO_ROOT) -o $(ISO)
-	$(LIMINE_DIR)/limine bios-install $(ISO)
-	rm -rf $(ISO_ROOT)
+$(OVMF_VARS):
+	cp $(OVMF_VARS_SRC) $@
 
 ## ---- QEMU --------------------------------------------------------------------
 
@@ -89,14 +76,19 @@ $(ISO): all limine.conf $(LIMINE_DIR)/limine
 KERNEL_LOG := kernel_log.txt
 SERIAL     := -chardev stdio,id=com1,logfile=$(KERNEL_LOG) -serial chardev:com1
 
-run: $(ISO) $(HDD)
+## -M pc keeps the PIIX IDE controller lizard/ata.c drives; hda.img stays IDE
+## index 0 so root=ata0p0 is unchanged, the ESP is index 1. OVMF is supplied as
+## two pflash units (read-only code + writable vars).
+QEMU_UEFI = qemu-system-$(ARCH) -M pc \
+	-drive if=pflash,format=raw,unit=0,readonly=on,file=$(OVMF_CODE) \
+	-drive if=pflash,format=raw,unit=1,file=$(OVMF_VARS) \
+	-drive file=$(HDD),format=raw,if=ide,index=0 \
+	-drive file=$(ESP),format=raw,if=ide,index=1 \
+	-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt
+
+run: $(ESP) $(HDD) $(OVMF_VARS)
 	@echo "(QEMU)"
-	qemu-system-$(ARCH) \
-		-M pc \
-		-drive file=$(HDD),format=raw,if=ide \
-		-cdrom $(ISO) \
-		-boot d \
-		-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt
+	$(QEMU_UEFI)
 
 ## `make debug` opens a tmux split: QEMU halted with its gdbstub on :1234 in the
 ## top pane, a debugger attached below. `make ddd` forces DDD, `make gdb` forces
@@ -108,12 +100,6 @@ ddd: DBG := ddd
 debug gdb ddd:
 	@DBG='$(DBG)' scripts/debug.sh
 
-_debug-qemu: $(ISO) $(HDD)
+_debug-qemu: $(ESP) $(HDD) $(OVMF_VARS)
 	@echo "(QEMU)"
-	qemu-system-$(ARCH) \
-		-M pc \
-		-drive file=$(HDD),format=raw,if=ide \
-		-cdrom $(ISO) \
-		-boot d \
-		-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt \
-		-S -s
+	$(QEMU_UEFI) -S -s
