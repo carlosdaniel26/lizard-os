@@ -1,4 +1,5 @@
-*.o
-*.a
-bin/*
-!bin/*.c
+# libc build output (sources live alongside)
+lib/*.o
+lib/*.a
+# built programs
+/bin/

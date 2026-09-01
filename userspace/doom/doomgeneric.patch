@@ -38,8 +38,8 @@ index 0000000..44616dd
 +.PHONY: all clean
 +all: $(OUT)
 +
-+$(OUT): $(OBJS) $(US)lib/crt0.o $(US)libc.a
-+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(US)lib/crt0.o $(OBJS) $(US)libc.a
++$(OUT): $(OBJS) $(US)lib/crt0.o $(US)lib/libc.a
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(US)lib/crt0.o $(OBJS) $(US)lib/libc.a
 +
 +$(OBJDIR)/%.o: %.c | $(OBJDIR)
 +	$(CC) $(CFLAGS) -c $< -o $@

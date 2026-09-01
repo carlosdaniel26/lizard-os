@@ -35,9 +35,10 @@ ARGTEST := userspace/bin/argtest
 DOOM_ELF := userspace/doom/doom
 DOOM_WAD := userspace/doom/wad/doom1.wad
 
-USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/bin/*.c \
+USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/lib/*.h \
+                            userspace/src/*.c \
                             userspace/include/*.h userspace/include/sys/*.h abi/*.h) \
-                 userspace/doom/Makefile userspace/doom/doomgeneric.patch
+                 userspace/Makefile userspace/doom/Makefile userspace/doom/doomgeneric.patch
 
 $(SH) $(HELLO) $(ARGTEST) $(DOOM_ELF): $(USERSPACE_SRC) userspace/Makefile
 	$(MAKE) -C userspace
