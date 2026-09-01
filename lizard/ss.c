@@ -5,6 +5,7 @@
 #include <lizard/framebuffer.h>
 #include <lizard/helpers.h>
 #include <lizard/ktime.h>
+#include <lizard/loader.h>
 #include <lizard/rtc.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
@@ -140,8 +141,22 @@ void runcmd(const char *command)
     {
         ms();
     }
-    else
+    else if (command[0] != '\0')
     {
-        kprintf("Command not found: %s\n", command);
+        /* not a builtin - try to run it as a program from the root fs */
+        char path[96];
+        if (command[0] == '/')
+        {
+            strncpy(path, command, sizeof(path) - 1);
+        }
+        else
+        {
+            path[0] = '/';
+            strncpy(path + 1, command, sizeof(path) - 2);
+        }
+        path[sizeof(path) - 1] = '\0';
+
+        if (spawn(path) < 0)
+            kprintf("Command not found: %s\n", command);
     }
 }

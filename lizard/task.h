@@ -63,6 +63,7 @@ struct task {
 
     u8 state;
     bool is_user;
+    bool on_heap; /* task struct was kmalloc'd - reaper should kfree it */
 
     struct cpu_state regs;
     vaddr_t pml4;

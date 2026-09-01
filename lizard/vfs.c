@@ -97,7 +97,11 @@ struct dentry *vfs_lookup(struct dentry *parent, const char *name)
     {
         if (parent->inode->i_ops->lookup(parent->inode, d) == 0)
         {
+            /* d->refcount is 1 from dentry_alloc - that is the dcache's ref.
+             * The caller needs its own, exactly like the dentry_lookup() hit
+             * path, or its dentry_put() would free a still-linked dentry. */
             dentry_add(parent, d);
+            dentry_get(d);
             return d;
         }
     }

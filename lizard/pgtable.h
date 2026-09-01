@@ -15,6 +15,8 @@ vaddr_t pgtable_create(void);
 vaddr_t pgtable_alloc_table(void);
 void pgtable_free(vaddr_t pml4);
 
+void pgtable_free_tree(vaddr_t pml4); /* free the user half + all leaf frames */
+
 void pgtable_map(vaddr_t pml4, vaddr_t vaddr, paddr_t paddr, u64 flags);
 void pgtable_unmap(vaddr_t pml4, vaddr_t vaddr);
 void pgtable_maprange(vaddr_t pml4, vaddr_t vaddr, paddr_t paddr, u64 length, u64 flags);

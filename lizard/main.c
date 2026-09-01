@@ -33,14 +33,8 @@ void kmain()
     boot_info_relocate();
     kernel_bootstrap();
 
-    /* Test loading */
-    struct task *t = (struct task *)zalloc(sizeof(struct task));
-    void *buffer = vfs_read_all("/hello");
-    if (buffer) {
-        task_create(t, (void (*)(void))0, "hello", 1, TASK_USER);
-        load_elf(buffer, t);
-    }
-    
+    spawn("/hello");
+
     enable_scheduler();
 
     yield();

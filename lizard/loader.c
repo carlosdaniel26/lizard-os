@@ -1,10 +1,12 @@
 #include <lizard/elf.h>
 #include <lizard/gdt.h>
 #include <lizard/kmalloc.h>
+#include <lizard/loader.h>
 #include <lizard/pgtable.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
 #include <lizard/task.h>
+#include <lizard/vfs.h>
 #include <lizard/vmm.h>
 
 extern u64 hhdm_offset;
@@ -50,4 +52,35 @@ int load_elf(void *buffer, struct task *task)
     vmm_switch_pml4(old_pml4);
 
     return 0;
+}
+
+int spawn(const char *path)
+{
+    void *buf = vfs_read_all(path);
+    if (!buf)
+        return -1;
+
+    struct task *t = zalloc(sizeof(struct task));
+    if (!t)
+    {
+        kfree(buf);
+        return -1;
+    }
+
+    const char *name = path;
+    for (const char *p = path; *p; p++)
+        if (*p == '/') name = p + 1;
+
+    task_create(t, (void (*)(void))0, name, 1, TASK_USER);
+    t->on_heap = true;
+
+    if (load_elf(buf, t) != 0)
+    {
+        kfree(buf);
+        t->state = TASK_STATE_TERMINATED; /* reaper reclaims pml4 / kstack / t */
+        return -1;
+    }
+
+    kfree(buf);
+    return (int)t->pid;
 }

@@ -159,6 +159,47 @@ void pgtable_unmap(vaddr_t pml4_addr, vaddr_t vaddr)
     }
 }
 
+/* Recursively free a task's page-table tree: every PT/PD/PDPT page plus the
+ * leaf frames they map, then the PML4 itself. Only the user half of the PML4
+ * (entries 0..KERNEL_PML4_INDEX-1) is walked - entries 256..511 are the shared
+ * higher-half kernel mapping and must NOT be freed. `level`: 3=PML4 2=PDPT
+ * 1=PD 0=PT. */
+static void pgtable_free_level(u64 *table, int level)
+{
+    int end = (level == 3) ? KERNEL_PML4_INDEX : 512;
+
+    for (int i = 0; i < end; i++)
+    {
+        u64 e = table[i];
+        if (!(e & PAGE_PRESENT)) continue;
+
+        vaddr_t child = (e & ~0xFFFUL) + hhdm_offset;
+
+        if (level == 0)
+        {
+            buddy_free(child, 0); /* leaf: a user data page */
+        }
+        else if ((e & PAGE_HUGE))
+        {
+            /* task page tables never use huge pages; skip rather than
+             * mis-free a single frame of a 2 MiB/1 GiB mapping */
+        }
+        else
+        {
+            pgtable_free_level((u64 *)child, level - 1);
+            pgtable_free(child);
+        }
+        table[i] = 0;
+    }
+}
+
+void pgtable_free_tree(vaddr_t pml4_addr)
+{
+    if (!pml4_addr) return;
+    pgtable_free_level((u64 *)pml4_addr, 3);
+    pgtable_free(pml4_addr);
+}
+
 void pgtable_switch(vaddr_t pml4)
 {
     register paddr_t paddr = (paddr_t)pml4 - hhdm_offset;

@@ -2,6 +2,7 @@
 #include <lizard/idt.h>
 #include <lizard/init.h>
 #include <lizard/kmalloc.h>
+#include <lizard/pgtable.h>
 #include <lizard/sched.h>
 #include <lizard/task.h>
 #include <nolibc/stddef.h>
@@ -43,6 +44,10 @@ static void reap_terminated(void)
         list_del(&t->list);
         if (t->kernel_stack)
             buddy_free(t->kernel_stack - (KSTACK_PAGES * PAGE_SIZE), KSTACK_ORDER);
+        if (t->pml4)
+            pgtable_free_tree(t->pml4);
+        if (t->on_heap)
+            kfree(t);
     }
 }
 
