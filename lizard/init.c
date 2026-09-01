@@ -1,5 +1,6 @@
 #include <lizard/init.h>
 #include <nolibc/types.h>
+#include <lizard/alias.h>
 #include <lizard/boot.h>
 #include <lizard/buddy.h>
 #include <nolibc/stdio.h>
@@ -37,6 +38,13 @@ void __init kernel_bootstrap()
     time_init();
     timer_init();
     timer_start();
+
+    /* Unmask interrupts now so PIT ticks actually advance the monotonic clock
+     * during the rest of boot. Without this the clock only starts moving at the
+     * yield() in kmain(), so every boot-time debug_printf timestamp is [0.000].
+     * Task switching stays off until enable_scheduler() - scheduler() bails out
+     * while scheduler_enabled == 0. */
+    start_interrupts();
 
     do_initcalls(__initcall5_start, __initcall5_end); /* filesystem */
     do_initcalls(__initcall6_start, __initcall6_end); /* device */

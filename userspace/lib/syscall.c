@@ -1,4 +1,5 @@
 #include <sys/syscall.h>
+#include <abi/syscall.h>
 
 long __syscall6(long n, long a, long b, long c, long d, long e, long f)
 {
@@ -33,6 +34,41 @@ int sys_sleep(unsigned ms)
 int sys_getpid(void)
 {
     return (int)__syscall0(SYS_getpid);
+}
+
+int sys_open(const char *path, int flags)
+{
+    return (int)__syscall2(SYS_open, path, flags);
+}
+
+int sys_close(int fd)
+{
+    return (int)__syscall1(SYS_close, fd);
+}
+
+long sys_lseek(int fd, long off, int whence)
+{
+    return __syscall3(SYS_lseek, fd, off, whence);
+}
+
+int sys_fb_info(struct fb_info *out)
+{
+    return (int)__syscall1(SYS_fb_info, out);
+}
+
+int sys_fb_blit(const void *xrgb, unsigned w, unsigned h)
+{
+    return (int)__syscall3(SYS_fb_blit, xrgb, w, h);
+}
+
+int sys_key_get(void)
+{
+    return (int)__syscall0(SYS_key_get);
+}
+
+unsigned long sys_uptime_ms(void)
+{
+    return (unsigned long)__syscall0(SYS_uptime_ms);
 }
 
 __attribute__((noreturn)) void _exit(int code)

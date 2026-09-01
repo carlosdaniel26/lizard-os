@@ -349,3 +349,52 @@ void scroll_framebuffer(u32 pixels)
         clear_start[i] = tty_bg_color;
     }
 }
+
+/* Nearest-neighbour upscale + centre of a packed sw x sh XRGB image onto the
+ * live framebuffer. Called once per rendered frame, so it is written to stay
+ * cheap even though the kernel is built -O0: expand one destination row with a
+ * flat loop, then memcpy it down for the vertical replication - no per-pixel
+ * branching, no inner multiplies. */
+void fb_present_xrgb(const u32 *src, u32 sw, u32 sh)
+{
+    if (!framebuffer || !src || sw == 0 || sh == 0) return;
+
+    u32 stride = pitch / 4;
+
+    u32 scale = 1;
+    while (sw * (scale + 1) <= width && sh * (scale + 1) <= height)
+        scale++;
+
+    /* Fully off-screen source is clamped by the scale search above; the
+     * destination rectangle is guaranteed to fit, so no clipping in the loop. */
+    u32 dw = sw * scale;
+    u32 dh = sh * scale;
+    u32 ox = (width - dw) / 2;
+    u32 oy = (height - dh) / 2;
+
+    for (u32 sy = 0; sy < sh; sy++)
+    {
+        const u32 *srow = src + (u64)sy * sw;
+        u32 *drow = framebuffer + (u64)(oy + sy * scale) * stride + ox;
+
+        /* build the first output row: each source pixel written `scale` times */
+        if (scale == 1)
+        {
+            memcpy(drow, srow, sw * sizeof(u32));
+        }
+        else
+        {
+            u32 *d = drow;
+            for (u32 sx = 0; sx < sw; sx++)
+            {
+                u32 px = srow[sx];
+                for (u32 k = 0; k < scale; k++)
+                    *d++ = px;
+            }
+        }
+
+        /* replicate it down for the remaining (scale - 1) rows */
+        for (u32 k = 1; k < scale; k++)
+            memcpy(drow + (u64)k * stride, drow, dw * sizeof(u32));
+    }
+}

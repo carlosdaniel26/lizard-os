@@ -26,11 +26,28 @@ MMD       := $(shell command -v mmd 2>/dev/null || echo /usr/bin/mmd)
 ## vfs_read_all("/hello") + load_elf(), so /hello must be an ET_EXEC ELF.
 HELLO := userspace/bin/hello
 
-USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/bin/*.c \
-                            userspace/include/*.h userspace/include/sys/*.h abi/*.h)
+## doomgeneric port: ELF + IWAD, both copied into the image root. The port is a
+## patch over an upstream clone (userspace/doom/), launched with `-iwad
+## /doom1.wad`. First build of it needs network.
+DOOM_ELF := userspace/doom/doom
+DOOM_WAD := userspace/doom/wad/doom1.wad
 
-$(HELLO): $(USERSPACE_SRC) userspace/Makefile
+USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/bin/*.c \
+                            userspace/include/*.h userspace/include/sys/*.h abi/*.h) \
+                 userspace/doom/Makefile userspace/doom/doomgeneric.patch
+
+$(HELLO) $(DOOM_ELF): $(USERSPACE_SRC) userspace/Makefile
 	$(MAKE) -C userspace
+
+## Freely redistributable IWAD (Freedoom Phase 1), fetched on demand and staged
+## as doom1.wad. Swap in a real doom1.wad / doom2.wad here if you have one.
+$(DOOM_WAD):
+	@mkdir -p $(dir $@)
+	@echo "fetching Freedoom (one-time)..."
+	curl -fsSL -o $@.zip https://github.com/freedoom/freedoom/releases/download/v0.13.0/freedoom-0.13.0.zip
+	cd $(dir $@) && unzip -o $(notdir $@).zip 'freedoom-0.13.0/freedoom1.wad' >/dev/null
+	mv $(dir $@)/freedoom-0.13.0/freedoom1.wad $@
+	rm -rf $@.zip $(dir $@)/freedoom-0.13.0
 
 ## ---- Root disk image (MBR + FAT16 partition) --------------------------------
 ## The kernel boots with root=ata0p0, so the image needs a real MBR partition
@@ -39,7 +56,7 @@ $(HELLO): $(USERSPACE_SRC) userspace/Makefile
 ## *partition* block device (blk_dev_part_read adds the partition start), which
 ## is where mkfs.fat --offset writes it.
 
-$(HDD): $(HELLO)
+$(HDD): $(HELLO) $(DOOM_ELF) $(DOOM_WAD)
 	@for pair in "$(MKFS_FAT):dosfstools" "$(SFDISK):fdisk" "$(MCOPY):mtools"; do \
 		bin=$${pair%:*}; pkg=$${pair##*:}; \
 		command -v $$bin >/dev/null 2>&1 || { \
@@ -50,6 +67,8 @@ $(HDD): $(HELLO)
 	printf 'label: dos\nstart=%s, type=0e, bootable\n' $(HDD_PART_LBA) | $(SFDISK) -q $@
 	$(MKFS_FAT) -F 16 -s 4 -S 512 -r 512 -R 1 --offset $(HDD_PART_LBA) -n $(HDD_LABEL) $@
 	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(HELLO) ::/HELLO
+	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(DOOM_ELF) ::/DOOM
+	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(DOOM_WAD) ::/DOOM1.WAD
 
 hdd: $(HDD)
 
@@ -87,11 +106,17 @@ QEMU_UEFI = qemu-system-$(ARCH) -M pc \
 	-drive if=pflash,format=raw,unit=1,file=$(OVMF_VARS) \
 	-drive file=$(HDD),format=raw,if=ide,index=0 \
 	-drive file=$(ESP),format=raw,if=ide,index=1 \
-	-m 3G -no-reboot $(SERIAL) -d int,cpu_reset -D qemu_log.txt
+	-m 3G -no-reboot $(SERIAL)
+
+## `run` is for actually using the OS, so make it fast: host virtualisation when
+## it's available, and no per-interrupt trace log (that alone throttles anything
+## interrupt-heavy - a PIT tick + an int 0x80 per frame - to a crawl). The debug
+## targets below keep TCG + `-d int` since the gdbstub and the trace want them.
+ACCEL := $(shell test -w /dev/kvm && echo '-enable-kvm -cpu host' || echo '-accel tcg')
 
 run: $(ESP) $(HDD) $(OVMF_VARS)
-	@echo "(QEMU)"
-	$(QEMU_UEFI)
+	@echo "(QEMU $(ACCEL))"
+	$(QEMU_UEFI) $(ACCEL)
 
 ## `make debug` opens a tmux split: QEMU halted with its gdbstub on :1234 in the
 ## top pane, a debugger attached below. `make ddd` forces DDD, `make gdb` forces
@@ -105,4 +130,4 @@ debug gdb ddd:
 
 _debug-qemu: $(ESP) $(HDD) $(OVMF_VARS)
 	@echo "(QEMU)"
-	$(QEMU_UEFI) -S -s
+	$(QEMU_UEFI) -d int,cpu_reset -D qemu_log.txt -S -s

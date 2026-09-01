@@ -92,4 +92,10 @@ struct fat16 {
 
     u32 root_dir_sectors;
     u32 total_clusters;
+
+    /* Whole first FAT held in RAM: without it every cluster-chain step is a
+     * PIO sector read, which makes reading a multi-MB file (a doom WAD) take
+     * minutes. NULL if the allocation failed - callers fall back to disk. */
+    u8 *fat_cache;
+    u32 fat_bytes;
 };

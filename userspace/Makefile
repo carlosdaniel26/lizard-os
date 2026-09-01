@@ -1,7 +1,7 @@
-## Freestanding userspace: a tiny libc (lib/ -> libc.a) plus one ELF per bin/*.c.
-## -I .. puts the repo root on the path so <abi/syscall.h> resolves; the private
-## headers live in include/.
-.PHONY: all clean
+## Freestanding userspace: a tiny libc (lib/ -> libc.a), one ELF per bin/*.c,
+## plus the doom/ port. -I .. puts the repo root on the path so <abi/syscall.h>
+## resolves; the private headers live in include/.
+.PHONY: all clean doom
 
 CC      := gcc
 CFLAGS  := -I include -I .. -ffreestanding -nostdlib -fno-pie -fno-stack-protector \
@@ -10,10 +10,11 @@ CFLAGS  := -I include -I .. -ffreestanding -nostdlib -fno-pie -fno-stack-protect
 LDFLAGS := -nostdlib -no-pie -static -Wl,-Ttext,0x400000 -Wl,--build-id=none \
            -Wl,--gc-sections -e _start
 
-LIBOBJ := lib/crt0.o lib/syscall.o lib/string.o lib/puts.o lib/printf.o
+LIBOBJ := lib/crt0.o lib/syscall.o lib/string.o lib/stdlib.o lib/printf.o \
+          lib/scanf.o lib/stdio_file.o lib/misc.o lib/math.o lib/errno.o
 BINS   := $(patsubst bin/%.c,bin/%,$(wildcard bin/*.c))
 
-all: $(BINS)
+all: $(BINS) doom
 
 libc.a: $(LIBOBJ)
 	ar rcs $@ $^
@@ -27,5 +28,9 @@ lib/%.o: lib/%.c
 lib/%.o: lib/%.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
+doom: libc.a
+	$(MAKE) -C doom
+
 clean:
 	rm -f $(LIBOBJ) libc.a $(BINS)
+	$(MAKE) -C doom clean

@@ -1,0 +1,194 @@
+diff --git a/doomgeneric/Makefile.lizard b/doomgeneric/Makefile.lizard
+new file mode 100644
+index 0000000..44616dd
+--- /dev/null
++++ b/doomgeneric/Makefile.lizard
+@@ -0,0 +1,45 @@
++## lizard-os build for doomgeneric. Added by userspace/doom/doomgeneric.patch;
++## driven by userspace/doom/Makefile after the clone. Runs from inside the
++## cloned tree at userspace/doom/doomgeneric/doomgeneric/, so paths reach back
++## three levels to userspace/.
++##
++## Compiles upstream's SRC_DOOM set (doomgeneric_xlib -> dg_lizard, sha1 kept)
++## against the freestanding libc in userspace/lib.
++
++US      := ../../../
++CC      := gcc
++CFLAGS  := -I $(US)include -I $(US).. -ffreestanding -nostdlib -fno-pie \
++           -fno-stack-protector -fno-stack-check -m64 -std=gnu11 -O2 \
++           -fcommon -fno-strict-aliasing -w -DNORMALUNIX -DLINUX
++LDFLAGS := -nostdlib -no-pie -static -Wl,-Ttext,0x400000 -Wl,--build-id=none -e _start
++
++OBJDIR := build
++OUT    := ../../doom
++
++DOOM_SRC := \
++	dummy am_map doomdef doomstat dstrings d_event d_items d_iwad d_loop d_main \
++	d_mode d_net f_finale f_wipe g_game hu_lib hu_stuff info i_cdmus i_endoom \
++	i_joystick i_scale i_sound i_system i_timer memio m_argv m_bbox m_cheat \
++	m_config m_controls m_fixed m_menu m_misc m_random p_ceilng p_doors p_enemy \
++	p_floor p_inter p_lights p_map p_maputl p_mobj p_plats p_pspr p_saveg \
++	p_setup p_sight p_spec p_switch p_telept p_tick p_user r_bsp r_data r_draw \
++	r_main r_plane r_segs r_sky r_things sounds statdump st_lib st_stuff s_sound \
++	tables v_video wi_stuff w_checksum w_file w_main w_wad z_zone w_file_stdc \
++	sha1 i_input i_video doomgeneric dg_lizard
++
++OBJS := $(addprefix $(OBJDIR)/,$(addsuffix .o,$(DOOM_SRC)))
++
++.PHONY: all clean
++all: $(OUT)
++
++$(OUT): $(OBJS) $(US)lib/crt0.o $(US)libc.a
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(US)lib/crt0.o $(OBJS) $(US)libc.a
++
++$(OBJDIR)/%.o: %.c | $(OBJDIR)
++	$(CC) $(CFLAGS) -c $< -o $@
++
++$(OBJDIR):
++	mkdir -p $(OBJDIR)
++
++clean:
++	rm -rf $(OBJDIR) $(OUT)
+diff --git a/doomgeneric/dg_lizard.c b/doomgeneric/dg_lizard.c
+new file mode 100644
+index 0000000..2cc5f55
+--- /dev/null
++++ b/doomgeneric/dg_lizard.c
+@@ -0,0 +1,137 @@
++/* doomgeneric platform layer for lizard-os.
++ *
++ * Screen  : SYS_fb_blit hands the 640x400 XRGB buffer to the kernel, which
++ *           centers + integer-scales it onto the GOP framebuffer.
++ * Input   : SYS_key_get returns raw set-1 scancodes (bit 7 = release); we
++ *           translate to doom keycodes here.
++ * Time    : SYS_uptime_ms / SYS_sleep.
++ */
++#include "doomkeys.h"
++#include "doomgeneric.h"
++
++#include <stdint.h>
++#include <string.h>
++#include <abi/syscall.h>
++#include <sys/syscall.h>
++
++/* ---- keyboard: set-1 scancode -> doom key --------------------------- */
++
++static unsigned char scancode_to_doom(unsigned char sc)
++{
++    switch (sc) {
++    case 0x1C: return KEY_ENTER;
++    case 0x01: return KEY_ESCAPE;
++    case 0x4B: return KEY_LEFTARROW;
++    case 0x4D: return KEY_RIGHTARROW;
++    case 0x48: return KEY_UPARROW;
++    case 0x50: return KEY_DOWNARROW;
++    case 0x1D: return KEY_FIRE;      /* left ctrl  */
++    case 0x38: return KEY_LALT;      /* left alt   */
++    case 0x39: return KEY_USE;       /* space      */
++    case 0x2A: return KEY_RSHIFT;    /* left shift */
++    case 0x36: return KEY_RSHIFT;    /* right shift*/
++    case 0x0F: return KEY_TAB;
++    case 0x0E: return KEY_BACKSPACE;
++    case 0x3B: return KEY_F1;
++    case 0x3C: return KEY_F2;
++    case 0x3D: return KEY_F3;
++    case 0x3E: return KEY_F4;
++    case 0x3F: return KEY_F5;
++    case 0x40: return KEY_F6;
++    case 0x41: return KEY_F7;
++    case 0x42: return KEY_F8;
++    case 0x43: return KEY_F9;
++    case 0x44: return KEY_F10;
++    case 0x57: return KEY_F11;
++    case 0x58: return KEY_F12;
++    case 0x0C: return KEY_MINUS;
++    case 0x0D: return KEY_EQUALS;
++    case 0x3A: return KEY_CAPSLOCK;
++    }
++
++    /* main letter / digit rows: map through the set-1 ASCII table */
++    static const char row[] =
++        "\0\0" "1234567890" "-=\0\0"
++        "qwertyuiop[]\0\0"
++        "asdfghjkl;'`\0\\"
++        "zxcvbnm,./";
++    if (sc < sizeof(row) && row[sc])
++        return (unsigned char)row[sc];
++
++    return 0;
++}
++
++#define KQ_SIZE 32
++static unsigned short kq[KQ_SIZE];
++static unsigned int kq_w, kq_r;
++
++static void pump_keys(void)
++{
++    int sc;
++    while ((sc = sys_key_get()) != 0) {
++        int pressed = !(sc & 0x80);
++        unsigned char k = scancode_to_doom((unsigned char)(sc & 0x7F));
++        if (!k)
++            continue;
++        kq[kq_w % KQ_SIZE] = (unsigned short)((pressed << 8) | k);
++        kq_w++;
++        if (kq_w - kq_r > KQ_SIZE)
++            kq_r = kq_w - KQ_SIZE;
++    }
++}
++
++/* ---- doomgeneric hooks -------------------------------------------- */
++
++void DG_Init(void)
++{
++}
++
++void DG_DrawFrame(void)
++{
++    pump_keys();
++    sys_fb_blit(DG_ScreenBuffer, DOOMGENERIC_RESX, DOOMGENERIC_RESY);
++}
++
++void DG_SleepMs(uint32_t ms)
++{
++    sys_sleep(ms);
++}
++
++uint32_t DG_GetTicksMs(void)
++{
++    return (uint32_t)sys_uptime_ms();
++}
++
++int DG_GetKey(int *pressed, unsigned char *key)
++{
++    pump_keys();
++    if (kq_r == kq_w)
++        return 0;
++
++    unsigned short d = kq[kq_r % KQ_SIZE];
++    kq_r++;
++    *pressed = d >> 8;
++    *key = d & 0xFF;
++    return 1;
++}
++
++void DG_SetWindowTitle(const char *title)
++{
++    (void)title;
++}
++
++int main(int argc, char **argv)
++{
++    (void)argc;
++    (void)argv;
++
++    /* crt0 gives us argc=0; force the iwad path so D_DoomMain doesn't go
++     * hunting through directories that don't exist. */
++    static char *fake[] = { "doom", "-iwad", "/doom1.wad", 0 };
++    doomgeneric_Create(3, fake);
++
++    for (;;)
++        doomgeneric_Tick();
++
++    return 0;
++}

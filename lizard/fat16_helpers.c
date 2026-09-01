@@ -140,6 +140,13 @@ void fat16_entry_touch(struct fat16_directory *entry)
 int fat16_fat_get(struct fat16 *fs, u16 cluster, u16 *out)
 {
     u32 byte = (u32)cluster * FAT16_FAT_ENTRY_SIZE;
+
+    if (fs->fat_cache && byte + sizeof(*out) <= fs->fat_bytes)
+    {
+        memcpy(out, fs->fat_cache + byte, sizeof(*out));
+        return 0;
+    }
+
     u32 sector = fs->fat_start_lba + byte / fs->header.bytes_per_sector;
     u32 off = byte % fs->header.bytes_per_sector;
 
@@ -165,6 +172,9 @@ int fat16_fat_set(struct fat16 *fs, u16 cluster, u16 value)
         memcpy(buf + off, &value, sizeof(value));
         if (blk_dev_write(fs->dev, sector, buf, 1) != 0) return -1;
     }
+
+    if (fs->fat_cache && byte + sizeof(value) <= fs->fat_bytes)
+        memcpy(fs->fat_cache + byte, &value, sizeof(value));
 
     return 0;
 }

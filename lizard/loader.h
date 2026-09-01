@@ -1,9 +1,11 @@
 #pragma once
 
 struct task;
+struct file;
 
-int load_elf(void *buffer, struct task *task);
+/* Stream an ET_EXEC ELF from `file` into `task`'s address space. */
+int load_elf(struct file *file, struct task *task);
 
-/* Read an ET_EXEC ELF from `path` (VFS), create a user task for it and make it
- * runnable. Returns the new pid, or -1 on any failure. Does not wait. */
+/* Open `path` (VFS), create a user task for it and make it runnable.
+ * Returns the new pid, or -1 on any failure. Does not wait. */
 int spawn(const char *path);

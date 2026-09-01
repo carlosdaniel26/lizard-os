@@ -16,5 +16,29 @@ enum {
     SYS_sleep  = 3,
     SYS_getpid = 4,
 
+    /* --- file I/O (fd >= 3; 0/1/2 are the tty) --------------------------- */
+    SYS_open   = 5,  /* (const char *path, int flags)          -> fd | -errno   */
+    SYS_close  = 6,  /* (int fd)                               -> 0 | -errno    */
+    SYS_lseek  = 7,  /* (int fd, long off, int whence)         -> pos | -errno  */
+
+    /* --- framebuffer / input / time (for doomgeneric & friends) --------- */
+    SYS_fb_info   = 8,  /* (struct fb_info *out)              -> 0 | -errno     */
+    SYS_fb_blit   = 9,  /* (const void *xrgb, u32 w, u32 h)   -> 0 | -errno     */
+    SYS_key_get   = 10, /* ()  -> set-1 scancode (bit7 = release), 0 if none    */
+    SYS_uptime_ms = 11, /* ()  -> milliseconds since boot                      */
+
     SYS_NR_MAX
+};
+
+/* whence for SYS_lseek */
+#define LZ_SEEK_SET 0
+#define LZ_SEEK_CUR 1
+#define LZ_SEEK_END 2
+
+/* SYS_fb_info output: plain 32-bit fields, shared by kernel and userspace. */
+struct fb_info {
+    unsigned int width;
+    unsigned int height;
+    unsigned int pitch; /* bytes per scanline */
+    unsigned int bpp;   /* bits per pixel (always 32 for now) */
 };

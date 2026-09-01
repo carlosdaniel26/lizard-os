@@ -145,6 +145,23 @@ int fat16_mount(struct block_dev *dev, struct fat16 *fs)
                                             : fs->header.total_sectors_32;
     fs->total_clusters = (total - fs->data_region_lba) / fs->header.sectors_per_cluster;
 
+    /* Pull the first FAT into RAM so chain walks are memory lookups. */
+    fs->fat_bytes = (u32)fs->header.fat_size_16 * fs->header.bytes_per_sector;
+    fs->fat_cache = kmalloc(fs->fat_bytes);
+    if (fs->fat_cache)
+    {
+        for (u32 i = 0; i < fs->header.fat_size_16; i++)
+        {
+            if (blk_dev_read(fs->dev, fs->fat_start_lba + i,
+                             fs->fat_cache + i * fs->header.bytes_per_sector, 1) != 0)
+            {
+                kfree(fs->fat_cache);
+                fs->fat_cache = NULL;
+                break;
+            }
+        }
+    }
+
     return 0;
 }
 

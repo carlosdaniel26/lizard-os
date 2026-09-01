@@ -12,6 +12,11 @@ void draw_pixel(u64 x, u64 y, u32 color);
 void draw_char(u64 x_index, u64 y_index, u32 color, char character);
 void scroll_framebuffer(u32 pixels);
 
+/* Copy a sw x sh block of 0x00RRGGBB pixels (packed, no padding) onto the
+ * screen, centered and scaled up by the largest integer factor that fits.
+ * Backs SYS_fb_blit. */
+void fb_present_xrgb(const u32 *src, u32 sw, u32 sh);
+
 extern u32 *framebuffer;
 extern u64 height;
 extern u64 width;

@@ -6,8 +6,15 @@
 
 #define TASK_NAME_MAX_LEN 32
 
+struct file; /* lizard/file.h - tasks only hold pointers */
+
 #define USER_STACK_BASE  0x700000000000
-#define USER_STACK_PAGES 4
+#define USER_STACK_PAGES 64 /* 256 KiB - doomgeneric's BSP recursion wants room */
+
+/* Per-task open files. 0/1/2 are the tty and are not stored here; real
+ * descriptors start at 3 and index fd_table[fd - 3]. */
+#define TASK_FD_BASE 3
+#define TASK_MAX_FDS 16
 
 #define KSTACK_ORDER 2
 #define KSTACK_PAGES (1 << KSTACK_ORDER)
@@ -73,6 +80,8 @@ struct task {
     u32 priority;
     u32 ticks_remaining;
     u32 sleep_until; /* Absolute wake-up time in ms */
+
+    struct file *fd_table[TASK_MAX_FDS]; /* NULL = free slot; see TASK_FD_BASE */
 };
 
 void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority, bool is_user);
