@@ -197,46 +197,47 @@ void tty_backspace()
 #define KEY_BACKSAPCE 0x0E
 #define KEY_ENTER 0x1C
 
+/* The line being edited. Tracking it directly is safe: scraping it back out of
+ * text_buffer by cursor position blew up whenever scrolling drifted the
+ * bookkeeping, overflowing the on-stack command buffer. */
+#define TTY_LINE_MAX 256
+static char tty_line[TTY_LINE_MAX];
+static size_t tty_line_len;
+
 void tty_handler_input(char scancode)
 {
-
     if (scancode == KEY_BACKSAPCE)
     {
-        tty_backspace();
+        if (tty_line_len > 0)
+        {
+            tty_line_len--;
+            tty_backspace();
+        }
+        return;
     }
 
-    else if (scancode == KEY_ENTER)
+    if (scancode == KEY_ENTER)
     {
-        char cmd_buffer[512];
-
-        size_t i = 0;
-        size_t j = 0;
-
-        for (i = (cmd_start_row * terminal_text_width) + cmd_start_column;
-             i < (terminal_row * terminal_text_width) + terminal_column; i++)
-        {
-            cmd_buffer[j++] = text_buffer[i];
-        }
-
-        cmd_buffer[j] = '\0';
+        tty_line[tty_line_len] = '\0';
+        tty_line_len = 0;
 
         tty_breakline();
-        runcmd(cmd_buffer);
-
+        runcmd(tty_line);
         kprint_prompt();
+        return;
     }
-    else if ((unsigned)scancode < 0x80) /* dont handle break codes (scancode >= 0x80)*/
-    {
-        char c = convertScancode[(unsigned)scancode];
 
-        if (is_ascii_character(c))
+    if ((unsigned char)scancode < 0x80) /* ignore break codes */
+    {
+        char c = convertScancode[(unsigned char)scancode];
+
+        if (is_ascii_character(c) && tty_line_len < TTY_LINE_MAX - 1)
         {
+            tty_line[tty_line_len++] = c;
             tty_putchar(c);
 
             if (terminal_column == terminal_text_width)
-            {
                 tty_breakline();
-            }
         }
     }
 }
