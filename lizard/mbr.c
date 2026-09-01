@@ -31,7 +31,7 @@ int mbr_scan(struct block_dev *dev)
         return 0;
     }
 
-    int created = 0;
+    int registered = 0;
 
     for (int i = 0; i < MBR_PARTITION_COUNT; i++)
     {
@@ -50,9 +50,9 @@ int mbr_scan(struct block_dev *dev)
 
         kprintf("mbr: partition %u type=0x%x start=%u sectors=%u\n", i + 1, partition->type, start, count);
 
-        if (blkdev_create_partition(dev, i, start, count) == 0) 
-            created++;
+        if (blkdev_register_partition(dev, i, start, count) == 0)
+            registered++;
     }
 
-    return created;
+    return registered;
 }

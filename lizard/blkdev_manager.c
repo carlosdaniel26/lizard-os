@@ -80,7 +80,7 @@ int blkdev_manager_add(struct block_dev *dev)
     if (dev->type == BLKDEV_TYPE_PHYSICAL)
     {
         int parts = mbr_scan(dev);
-        debug_printf("created %u partitions on dev %s\n", parts, dev->name);
+        debug_printf("registered %u partitions on dev %s\n", parts, dev->name);
     }
 
     return 0;
@@ -131,7 +131,7 @@ struct block_dev *blkdev_manager_get_by_name(const char *name)
     return NULL;
 }
 
-int blkdev_create_partition(struct block_dev *parent, int part_num, u64 start, u64 secs)
+int blkdev_register_partition(struct block_dev *parent, int part_num, u64 start, u64 secs)
 {
     struct block_dev *part = zalloc(sizeof(struct block_dev));
     struct block_dev_ops *ops = zalloc(sizeof(struct block_dev_ops));
