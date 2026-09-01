@@ -22,9 +22,12 @@ SFDISK    := $(shell command -v sfdisk 2>/dev/null || echo /sbin/sfdisk)
 MCOPY     := $(shell command -v mcopy 2>/dev/null || echo /usr/bin/mcopy)
 MMD       := $(shell command -v mmd 2>/dev/null || echo /usr/bin/mmd)
 
-## Userspace programs staged into the FAT16 root. lizard/main.c does
-## vfs_read_all("/hello") + load_elf(), so /hello must be an ET_EXEC ELF.
-HELLO := userspace/bin/hello
+## Userspace programs staged into the FAT16 root. lizard/main.c spawns /sh as
+## the first user task; /hello and /argtest are throwaway test programs
+## (argtest echoes its argv). All must be ET_EXEC ELFs with 8.3-safe names.
+SH      := userspace/bin/sh
+HELLO   := userspace/bin/hello
+ARGTEST := userspace/bin/argtest
 
 ## doomgeneric port: ELF + IWAD, both copied into the image root. The port is a
 ## patch over an upstream clone (userspace/doom/), launched with `-iwad
@@ -36,7 +39,7 @@ USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/bin/*.
                             userspace/include/*.h userspace/include/sys/*.h abi/*.h) \
                  userspace/doom/Makefile userspace/doom/doomgeneric.patch
 
-$(HELLO) $(DOOM_ELF): $(USERSPACE_SRC) userspace/Makefile
+$(SH) $(HELLO) $(ARGTEST) $(DOOM_ELF): $(USERSPACE_SRC) userspace/Makefile
 	$(MAKE) -C userspace
 
 ## Freely redistributable IWAD (Freedoom Phase 1), fetched on demand and staged
@@ -56,7 +59,7 @@ $(DOOM_WAD):
 ## *partition* block device (blk_dev_part_read adds the partition start), which
 ## is where mkfs.fat --offset writes it.
 
-$(HDD): $(HELLO) $(DOOM_ELF) $(DOOM_WAD)
+$(HDD): $(SH) $(HELLO) $(ARGTEST) $(DOOM_ELF) $(DOOM_WAD)
 	@for pair in "$(MKFS_FAT):dosfstools" "$(SFDISK):fdisk" "$(MCOPY):mtools"; do \
 		bin=$${pair%:*}; pkg=$${pair##*:}; \
 		command -v $$bin >/dev/null 2>&1 || { \
@@ -66,7 +69,9 @@ $(HDD): $(HELLO) $(DOOM_ELF) $(DOOM_WAD)
 	dd if=/dev/zero of=$@ bs=1M count=$(HDD_SIZE) status=none
 	printf 'label: dos\nstart=%s, type=0e, bootable\n' $(HDD_PART_LBA) | $(SFDISK) -q $@
 	$(MKFS_FAT) -F 16 -s 4 -S 512 -r 512 -R 1 --offset $(HDD_PART_LBA) -n $(HDD_LABEL) $@
+	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(SH) ::/SH
 	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(HELLO) ::/HELLO
+	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(ARGTEST) ::/ARGTEST
 	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(DOOM_ELF) ::/DOOM
 	MTOOLS_SKIP_CHECK=1 $(MCOPY) -i $@@@$(HDD_PART_OFFSET) $(DOOM_WAD) ::/DOOM1.WAD
 

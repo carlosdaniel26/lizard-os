@@ -113,6 +113,26 @@ void pgtable_maprange(vaddr_t pml4, vaddr_t vaddr, paddr_t paddr, u64 pages, u64
     }
 }
 
+void *pgtable_kva(vaddr_t pml4_addr, vaddr_t vaddr)
+{
+    u64 *pml4 = (u64 *)pml4_addr;
+    u64 off = vaddr & 0xFFFUL;
+    u64 pml4_i = (vaddr >> 39) & 0x1FF;
+    u64 pdpt_i = (vaddr >> 30) & 0x1FF;
+    u64 pd_i = (vaddr >> 21) & 0x1FF;
+    u64 pt_i = (vaddr >> 12) & 0x1FF;
+
+    if (!(pml4[pml4_i] & PAGE_PRESENT)) return NULL;
+    u64 *pdpt = (u64 *)((pml4[pml4_i] & ~0xFFFUL) + hhdm_offset);
+    if (!(pdpt[pdpt_i] & PAGE_PRESENT)) return NULL;
+    u64 *pd = (u64 *)((pdpt[pdpt_i] & ~0xFFFUL) + hhdm_offset);
+    if (!(pd[pd_i] & PAGE_PRESENT)) return NULL;
+    u64 *pt = (u64 *)((pd[pd_i] & ~0xFFFUL) + hhdm_offset);
+    if (!(pt[pt_i] & PAGE_PRESENT)) return NULL;
+
+    return (void *)((pt[pt_i] & ~0xFFFUL) + hhdm_offset + off);
+}
+
 void pgtable_unmap(vaddr_t pml4_addr, vaddr_t vaddr)
 {
     u64 *pml4 = (u64 *)pml4_addr;

@@ -32,10 +32,33 @@ static int read_at(struct file *file, u64 off, void *dst, u64 len)
     return 0;
 }
 
-/* Build the initial user stack in-place (task->pml4 must be the live CR3):
- * the arg strings, then a System V x86-64 startup block
- * [ argc | argv[0..argc-1] | NULL | envp NULL | auxv AT_NULL ], with the
- * returned rsp 16-byte aligned as _start expects. */
+/* Copy into the new task's address space through its HHDM alias - the task's
+ * pml4 is not the live CR3 during load, so its user VAs cannot be touched
+ * directly. Splits at page boundaries. */
+static void ucopy(struct task *task, u64 uva, const void *src, size_t n)
+{
+    const u8 *s = src;
+    while (n)
+    {
+        u8 *k = pgtable_kva(task->pml4, uva);
+        size_t chunk = PAGE_SIZE - (uva & 0xFFF);
+        if (chunk > n)
+            chunk = n;
+        memcpy(k, s, chunk);
+        s += chunk;
+        uva += chunk;
+        n -= chunk;
+    }
+}
+
+static void uput64(struct task *task, u64 uva, u64 val)
+{
+    ucopy(task, uva, &val, sizeof(val));
+}
+
+/* Build the initial user stack: the arg strings, then a System V x86-64
+ * startup block [ argc | argv[0..argc-1] | NULL | envp NULL | auxv AT_NULL ],
+ * with the returned rsp 16-byte aligned as _start expects. */
 static u64 setup_user_stack(struct task *task, char *const argv[])
 {
     int argc = 0;
@@ -50,7 +73,7 @@ static u64 setup_user_stack(struct task *task, char *const argv[])
     {
         size_t len = strlen(argv[i]) + 1;
         sp -= len;
-        memcpy((void *)sp, argv[i], len);
+        ucopy(task, sp, argv[i], len);
         argp[i] = sp;
     }
 
@@ -61,15 +84,15 @@ static u64 setup_user_stack(struct task *task, char *const argv[])
     if ((argc & 1) == 1)
         sp -= 8;
 
-    sp -= 8; *(u64 *)sp = 0; /* auxv: AT_NULL           */
-    sp -= 8; *(u64 *)sp = 0; /* envp[0] = NULL          */
-    sp -= 8; *(u64 *)sp = 0; /* argv[argc] = NULL       */
+    sp -= 8; uput64(task, sp, 0); /* auxv: AT_NULL     */
+    sp -= 8; uput64(task, sp, 0); /* envp[0] = NULL    */
+    sp -= 8; uput64(task, sp, 0); /* argv[argc] = NULL */
     for (int i = argc - 1; i >= 0; i--)
     {
         sp -= 8;
-        *(u64 *)sp = argp[i];
+        uput64(task, sp, argp[i]);
     }
-    sp -= 8; *(u64 *)sp = (u64)argc;
+    sp -= 8; uput64(task, sp, (u64)argc);
 
     return sp;
 }
@@ -114,38 +137,51 @@ int load_elf(struct file *file, struct task *task, char *const argv[])
         return -1;
     }
 
-    vaddr_t old_pml4 = (vaddr_t)current_pml4;
-    vmm_switch_pml4(task->pml4);
-
+    /* The task's pml4 is not the live CR3, so map each PT_LOAD page into it and
+     * populate the page through its freshly allocated frame's HHDM alias -
+     * never through the target VA. This keeps load preemption-safe: no CR3
+     * borrow that a context switch could quietly undo mid-load. */
     int rc = 0;
     for (int i = 0; i < ehdr.e_phnum; i++)
     {
-        if (phdr[i].p_type != PT_LOAD || phdr[i].p_memsz == 0)
+        elf64_phdr_t *ph = &phdr[i];
+        if (ph->p_type != PT_LOAD || ph->p_memsz == 0)
             continue;
 
-        for (u64 j = 0; j < phdr[i].p_memsz; j += PAGE_SIZE)
-            vmm_alloc(task->pml4, phdr[i].p_vaddr + j,
-                      PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-
-        /* buddy_alloc hands back dirty pages: zero the whole segment so .bss
-         * (the [filesz, memsz) tail) starts clear, then stream the file bytes
-         * over it. */
-        memset((void *)phdr[i].p_vaddr, 0, phdr[i].p_memsz);
-
-        if (phdr[i].p_filesz &&
-            read_at(file, phdr[i].p_offset, (void *)phdr[i].p_vaddr, phdr[i].p_filesz) != 0)
+        if (ph->p_vaddr & 0xFFF)
         {
-            kprintf("load_elf: short read on segment %d\n", i);
+            kprintf("load_elf: segment %d vaddr not page aligned\n", i);
             rc = -1;
             break;
         }
+
+        for (u64 j = 0; j < ph->p_memsz; j += PAGE_SIZE)
+        {
+            void *frame = vmm_alloc(task->pml4, ph->p_vaddr + j,
+                                    PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
+
+            /* buddy_alloc hands back dirty pages: zero every page so the .bss
+             * tail [filesz, memsz) starts clear. */
+            memset(frame, 0, PAGE_SIZE);
+
+            u64 fill = (ph->p_filesz > j) ? ph->p_filesz - j : 0;
+            if (fill > PAGE_SIZE)
+                fill = PAGE_SIZE;
+            if (fill && read_at(file, ph->p_offset + j, frame, fill) != 0)
+            {
+                kprintf("load_elf: short read on segment %d\n", i);
+                rc = -1;
+                break;
+            }
+        }
+        if (rc)
+            break;
     }
 
     task->regs.rip = ehdr.e_entry;
     if (rc == 0)
         task->regs.rsp = setup_user_stack(task, argv);
 
-    vmm_switch_pml4(old_pml4);
     return rc;
 }
 
@@ -184,9 +220,11 @@ int spawn(const char *path, char *const argv[])
 
     vfs_close(file);
 
-    /* Join the process tree so the caller can waitpid() on us. */
+    /* Join the process tree so the caller can waitpid() on us, then - with the
+     * image and stack fully in place - make the task dispatchable. */
     t->parent = current_task;
     list_add_tail(&t->sibling, &current_task->children);
+    task_set_ready(t);
 
     return (int)t->pid;
 }

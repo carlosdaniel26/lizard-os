@@ -17,6 +17,7 @@ static int sched_init()
     isr_table[SCHEDULER_ISR_INDEX] = &isr_scheduler;
 
     task_create(&idle, &idle_func, "idle", 0, TASK_KERNEL); /* init idle */
+    idle.state = TASK_STATE_RUNNING;                        /* it is the boot context */
     current_task = &idle;
 
     return 0;

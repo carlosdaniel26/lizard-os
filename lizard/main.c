@@ -10,6 +10,7 @@
 #include <nolibc/types.h>
 #include <lizard/vfs.h>
 #include <lizard/kmalloc.h>
+#include <nolibc/stdio.h>
 #include <nolibc/string.h>
 #include <lizard/gdt.h>
 #include <lizard/timer.h>
@@ -23,6 +24,27 @@
 
 u8 kernel_stack[KERNEL_STACK_SIZE];
 
+static struct task init_task;
+
+/* pid 1-ish: keep a login shell alive. If /sh exits (or crashes) we just
+ * start another one, so the machine never drops to a dead prompt. */
+static void init_loop(void)
+{
+    for (;;)
+    {
+        int pid = spawn("/sh", 0);
+        if (pid < 0)
+        {
+            kprintf("init: cannot spawn /sh - halting\n");
+            task_exit();
+        }
+
+        int status = 0;
+        task_waitpid(pid, &status);
+        kprintf("init: /sh (pid %d) exited with %d, restarting\n", pid, status);
+    }
+}
+
 /* Entered from head.S (_start_high) after the higher-half jump. head.S has
  * already switched RSP to the top of kernel_stack and published boot_info_ptr,
  * so - unlike under Limine - kmain must NOT move the stack itself: doing so
@@ -33,7 +55,8 @@ void kmain()
     boot_info_relocate();
     kernel_bootstrap();
 
-    spawn("/hello", 0);
+    task_create(&init_task, init_loop, "init", 1, TASK_KERNEL);
+    task_set_ready(&init_task);
 
     enable_scheduler();
 

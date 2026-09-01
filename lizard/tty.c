@@ -2,7 +2,6 @@
 #include <lizard/init.h>
 #include <lizard/io.h>
 #include <lizard/spinlock.h>
-#include <lizard/ss.h>
 #include <lizard/task.h>
 #include <nolibc/stdbool.h>
 #include <nolibc/stdio.h>
@@ -123,6 +122,12 @@ char tty_putchar(char c)
     {
         spinlock_unlock(&tty_lock);
         tty_tab();
+        return c;
+    }
+    else if (c == '\f') /* form-feed: userspace `clear` */
+    {
+        tty_clean();
+        spinlock_unlock(&tty_lock);
         return c;
     }
 
@@ -248,21 +253,14 @@ void tty_handler_input(char scancode)
 
     if (scancode == KEY_ENTER)
     {
-        tty_line[tty_line_len] = '\0';
         tty_breakline();
 
-        /* Hand the line to a userspace reader if one is blocked in read(0);
-         * otherwise fall back to the in-kernel shell. */
+        /* Commit the line to the canonical ring and wake whoever is blocked
+         * in read(0) - normally the userspace shell. */
         for (size_t i = 0; i < tty_line_len; i++)
             stdin_push(tty_line[i]);
         stdin_push('\n');
-
-        if (task_wake_all(WAIT_INPUT) == 0)
-        {
-            stdin_tail = stdin_head; /* no reader - discard, kernel shell runs it */
-            runcmd(tty_line);
-            kprint_prompt();
-        }
+        task_wake_all(WAIT_INPUT);
 
         tty_line_len = 0;
         return;

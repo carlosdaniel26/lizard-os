@@ -8,7 +8,6 @@
 #include <lizard/ktime.h>
 #include <lizard/pgtable.h>
 #include <lizard/pit.h>
-#include <lizard/ss.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
 #include <lizard/task.h>
@@ -73,7 +72,16 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
     }
 
     list_add(&task->list, &task_list);
-    task->state = TASK_STATE_READY;
+    /* Not runnable yet: spawn() still has to load the image and lay out the
+     * stack. The scheduler ignores TASK_STATE_NEW; the caller flips it to
+     * READY once the task is safe to dispatch. */
+    task->state = TASK_STATE_NEW;
+}
+
+void task_set_ready(struct task *task)
+{
+    if (task->state == TASK_STATE_NEW)
+        task->state = TASK_STATE_READY;
 }
 
 void task_load_context(struct task *task)

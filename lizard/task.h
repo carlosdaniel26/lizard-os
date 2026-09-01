@@ -60,6 +60,7 @@ struct cpu_state {
 #define TASK_STATE_READY 1
 #define TASK_STATE_WAITING 2
 #define TASK_STATE_TERMINATED 3 /* also the zombie state: dead, not yet waited on */
+#define TASK_STATE_NEW 4        /* created but not yet runnable (image still loading) */
 
 /* Why a WAITING task is off the run queue. task_tick() only auto-wakes
  * WAIT_SLEEP; the rest are woken explicitly by task_wake(). */
@@ -103,6 +104,7 @@ struct task {
 };
 
 void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority, bool is_user);
+void task_set_ready(struct task *task); /* promote a TASK_STATE_NEW task onto the run queue */
 void task_save_context();
 void task_load_context(struct task *task);
 int task_switch_to(struct task *next_task);
