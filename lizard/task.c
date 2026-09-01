@@ -38,6 +38,7 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
 
     task->pid = ++pid_counter;
     task->priority = priority;
+    task->ticks_remaining = TASK_TIMESLICE;
     task->is_user = is_user;
     task->pml4 = pgtable_create();
 

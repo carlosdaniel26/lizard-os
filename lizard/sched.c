@@ -1,7 +1,10 @@
+#include <lizard/buddy.h>
 #include <lizard/idt.h>
 #include <lizard/init.h>
+#include <lizard/kmalloc.h>
 #include <lizard/sched.h>
 #include <lizard/task.h>
+#include <nolibc/stddef.h>
 #include <nolibc/types.h>
 
 #define SCHEDULER_ISR_INDEX 48
@@ -25,23 +28,70 @@ void isr_scheduler(struct cpu_state *regs)
     scheduler(regs);
 }
 
+/* Free the kernel resources of any TERMINATED task that is no longer the one
+ * we are running on. (The page-table tree and user pages are still leaked -
+ * that needs a recursive pgtable walk; TODO.) */
+static void reap_terminated(void)
+{
+    struct list_head *pos, *tmp;
+    list_for_each(pos, tmp, &task_list)
+    {
+        struct task *t = container_of(pos, struct task, list);
+        if (t == &idle || t == current_task || t->state != TASK_STATE_TERMINATED)
+            continue;
+
+        list_del(&t->list);
+        if (t->kernel_stack)
+            buddy_free(t->kernel_stack - (KSTACK_PAGES * PAGE_SIZE), KSTACK_ORDER);
+    }
+}
+
+/*
+ * Round-robin. Called every PIT tick and on every voluntary yield (int 48).
+ * A RUNNING task keeps the CPU until its quantum (ticks_remaining) drains;
+ * then the next READY task in list order gets a fresh quantum. idle is only
+ * chosen when nothing else is runnable.
+ */
 void scheduler()
 {
     if (!scheduler_enabled) return;
 
-    struct task *task = next_ready_task();
+    reap_terminated();
 
-    /* if no ready task is found, default to idle */
-    if (NULL == task)
+    struct task *cur = current_task;
+    bool cur_runnable = cur && cur->state == TASK_STATE_RUNNING;
+
+    /* Spend one tick of the current quantum. Voluntary entries (sleep/exit
+     * have already moved the state to WAITING/TERMINATED) skip this and
+     * reschedule immediately. */
+    if (cur_runnable && cur != &idle)
     {
-        task = &idle;
+        if (cur->ticks_remaining)
+            cur->ticks_remaining--;
+        if (cur->ticks_remaining)
+            return; /* quantum not up - keep running cur */
     }
 
-    if (task != current_task)
+    struct task *next = next_ready_task(); /* rotates from cur->list.next */
+
+    if (!next)
     {
-        task_switch_to(task);
-        current_task = task;
+        if (cur_runnable)
+        {
+            cur->ticks_remaining = TASK_TIMESLICE; /* sole runnable task */
+            return;
+        }
+        next = &idle; /* cur is blocked/dead and nobody is ready */
     }
+
+    if (cur_runnable && cur != &idle)
+        cur->state = TASK_STATE_READY; /* put cur back in the rotation */
+
+    next->state = TASK_STATE_RUNNING;
+    next->ticks_remaining = TASK_TIMESLICE;
+
+    if (next != cur)
+        task_switch_to(next); /* also sets current_task */
 }
 
 void enable_scheduler()

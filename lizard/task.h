@@ -14,6 +14,9 @@
 
 #define RFLAGS_DEFAULT 0x202
 
+/* Round-robin quantum, in timer ticks (~ms at the 1 kHz PIT). */
+#define TASK_TIMESLICE 5
+
 #define TASK_USER   true
 #define TASK_KERNEL false
 
