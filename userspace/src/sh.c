@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 #include <sys/syscall.h>
 
 #define LINE_MAX 256
@@ -92,7 +93,7 @@ int main(void)
 
         if (!strcmp(argv[0], "help"))
         {
-            printf("builtins: help  exit [code]  echo ...  clear  status  cd [dir]  pwd  ls [dir]\n");
+            printf("builtins: help  exit [code]  echo ...  clear  status  cd [dir]  pwd  mkdir dir...  ls [dir]\n");
             printf("else: ./prog or path/prog runs an external program (no PATH)\n");
             continue;
         }
@@ -115,6 +116,31 @@ int main(void)
             if (getcwd(line, sizeof(line)))
                 printf("%s\n", line);
             last = 0;
+            continue;
+        }
+
+        if (!strcmp(argv[0], "mkdir"))
+        {
+            if (argc < 2)
+            {
+                printf("mkdir: missing operand\n");
+                last = 1;
+                continue;
+            }
+            last = 0;
+            for (int i = 1; i < argc; i++)
+            {
+                int rc = sys_mkdir(argv[i], 0755);
+                if (rc < 0)
+                {
+                    printf("mkdir: %s: %s\n", argv[i],
+                           rc == -EEXIST ? "already exists"
+                           : rc == -ENOENT ? "no such parent directory"
+                           : rc == -ENOTDIR ? "not a directory"
+                           : "cannot create");
+                    last = 1;
+                }
+            }
             continue;
         }
 

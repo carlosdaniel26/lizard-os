@@ -62,6 +62,11 @@ long sys_getcwd(char *buf, size_t size)
     return __syscall2(SYS_getcwd, buf, size);
 }
 
+int sys_mkdir(const char *path, int mode)
+{
+    return (int)__syscall2(SYS_mkdir, path, mode);
+}
+
 int sys_fb_info(struct fb_info *out)
 {
     return (int)__syscall1(SYS_fb_info, out);

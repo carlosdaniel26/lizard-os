@@ -378,6 +378,49 @@ static long sys_getcwd(long ubuf, long size, long a2, long a3, long a4, long a5)
     return (long)len;
 }
 
+static long sys_mkdir(long upath, long mode, long a2, long a3, long a4, long a5)
+{
+    (void)a2; (void)a3; (void)a4; (void)a5;
+
+    char path[128];
+    char abspath[256];
+    long err = copy_user_str(upath, path, sizeof(path));
+    if (err) return err;
+
+    if (vfs_resolve_path(current_task->cwd, path, abspath, sizeof(abspath)) != 0)
+        return -ENAMETOOLONG;
+
+    /* "/" - or a path that normalised down to it - has no leaf to create. */
+    if (abspath[1] == '\0') return -EEXIST;
+
+    struct dentry *d = vfs_path_lookup(abspath);
+    if (d)
+    {
+        dentry_put(d);
+        return -EEXIST;
+    }
+
+    /* vfs_mkdir() only reports success vs. failure. Probe the parent so a
+     * missing intermediate component reads as ENOENT rather than a generic
+     * I/O error. */
+    char parent[256];
+    size_t cut = 0;
+    for (size_t i = 0; abspath[i]; i++)
+        if (abspath[i] == '/') cut = i;
+    size_t plen = cut ? cut : 1; /* keep the root's own slash */
+    memcpy(parent, abspath, plen);
+    parent[plen] = '\0';
+
+    struct dentry *pd = vfs_path_lookup(parent);
+    if (!pd) return -ENOENT;
+    int parent_is_dir = pd->inode && (pd->inode->mode & S_IFDIR_MASK);
+    dentry_put(pd);
+    if (!parent_is_dir) return -ENOTDIR;
+
+    if (vfs_mkdir(abspath, (int)mode) != 0) return -EIO;
+    return 0;
+}
+
 /* ---- dispatch ---------------------------------------------------------- */
 
 void syscall_handler_c(struct cpu_state *regs)
@@ -414,6 +457,7 @@ static int syscall_init(void)
     syscall_table[SYS_readdir]   = sys_readdir;
     syscall_table[SYS_chdir]     = sys_chdir;
     syscall_table[SYS_getcwd]    = sys_getcwd;
+    syscall_table[SYS_mkdir]     = sys_mkdir;
 
     /* DPL 3 interrupt gate to a dedicated stub that preserves RDI (arg1). */
     set_idt_gate(SYSCALL_ISR_INDEX, isr_syscall_stub, 0xEE);

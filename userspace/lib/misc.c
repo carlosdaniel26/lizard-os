@@ -70,9 +70,13 @@ char *getcwd(char *buf, size_t size)
 
 int mkdir(const char *path, int mode)
 {
-    (void)path;
-    (void)mode;
-    return -1; /* no directory creation on FAT16 yet */
+    int rc = sys_mkdir(path, mode);
+    if (rc < 0)
+    {
+        errno = -rc;
+        return -1;
+    }
+    return 0;
 }
 
 int unlink(const char *path)
