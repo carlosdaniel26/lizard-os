@@ -220,8 +220,7 @@ int spawn(const char *path, char *const argv[])
     if (load_elf(file, t, argv) != 0)
     {
         vfs_close(file);
-        t->reaped = true;                 /* unparented - reaper frees it */
-        t->state = TASK_STATE_TERMINATED; /* reaper reclaims pml4 / kstack / t */
+        t->state = TASK_STATE_TERMINATED; /* never parented - reaper reclaims pml4 / kstack / t */
         return -1;
     }
 

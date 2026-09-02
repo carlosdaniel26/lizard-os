@@ -30,10 +30,10 @@ void isr_scheduler(struct cpu_state *regs)
     scheduler(regs);
 }
 
-/* Free the kernel resources of any TERMINATED task that is no longer the one
- * we are running on. A TERMINATED task with a live real parent is a zombie: it
- * is left alone until sys_waitpid() collects its exit code (which sets reaped).
- * Corpses owned by idle (pid 1) have nobody to wait on them, so they go too. */
+/* Free the kernel resources of any TERMINATED task that is no longer the one we
+ * are running on. A dead task whose parent may still waitpid() it sits in
+ * TASK_STATE_ZOMBIE instead and is skipped here until task_waitpid() reads its
+ * exit code and flips it to TERMINATED. */
 static void reap_terminated(void)
 {
     struct list_head *pos, *tmp;
@@ -42,8 +42,6 @@ static void reap_terminated(void)
         struct task *t = container_of(pos, struct task, list);
         if (t == &idle || t == current_task || t->state != TASK_STATE_TERMINATED)
             continue;
-        if (!t->reaped && t->parent && t->parent != &idle)
-            continue; /* zombie - waitpid() has not collected it yet */
 
         list_del(&t->list);
         if (t->sibling.next)

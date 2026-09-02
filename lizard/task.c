@@ -267,27 +267,30 @@ void task_exit()
     if (me && me != &idle)
     {
         /* Re-parent any children onto idle (pid 1 / init). idle never calls
-         * waitpid, so reap_terminated() frees an idle-owned corpse directly. */
+         * waitpid, so a child that is already a zombie has nobody left to
+         * collect it - downgrade it to TERMINATED for the reaper. */
         struct list_head *pos, *tmp;
         list_for_each(pos, tmp, &me->children)
         {
             struct task *c = container_of(pos, struct task, sibling);
+            if (c->state == TASK_STATE_ZOMBIE)
+                c->state = TASK_STATE_TERMINATED;
             list_del(&c->sibling);
             list_add_tail(&c->sibling, &idle.children);
             c->parent = &idle;
         }
 
-        me->state = TASK_STATE_TERMINATED;
-
         if (me->parent && me->parent != &idle)
         {
-            /* a real parent may be parked in waitpid - let it collect us */
+            /* A real parent may still waitpid() us: stay a zombie until it
+             * reads exit_code. Wake it if it is already parked in waitpid. */
+            me->state = TASK_STATE_ZOMBIE;
             if (me->parent->state == TASK_STATE_WAITING && me->parent->wait_kind == WAIT_CHILD)
                 task_wake(me->parent);
         }
         else
         {
-            me->reaped = true; /* nobody will wait - hand straight to the reaper */
+            me->state = TASK_STATE_TERMINATED; /* nobody waits - straight to the reaper */
         }
     }
 
@@ -313,7 +316,7 @@ int task_waitpid(int pid, int *status)
             struct task *c = container_of(pos, struct task, sibling);
             if (pid > 0 && (int)c->pid != pid) continue;
             matches++;
-            if (c->state == TASK_STATE_TERMINATED)
+            if (c->state == TASK_STATE_ZOMBIE)
             {
                 zombie = c;
                 break;
@@ -328,7 +331,8 @@ int task_waitpid(int pid, int *status)
             if (status) *status = zombie->exit_code;
             list_del(&zombie->sibling);
             zombie->parent = NULL;
-            zombie->reaped = true; /* reap_terminated() frees pml4 / kstack / struct */
+            /* Exit code collected - let reap_terminated() free pml4 / kstack / struct. */
+            zombie->state = TASK_STATE_TERMINATED;
             return rpid;
         }
 

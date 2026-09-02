@@ -11,7 +11,7 @@
 
 struct file; /* lizard/file.h - tasks only hold pointers */
 
-#define USER_STACK_BASE  0x700000000000
+#define USER_STACK_BASE 0x700000000000
 #define USER_STACK_PAGES 64 /* 256 KiB - doomgeneric's BSP recursion wants room */
 
 /* Per-task open files. 0/1/2 are the tty and are not stored here; real
@@ -27,7 +27,7 @@ struct file; /* lizard/file.h - tasks only hold pointers */
 /* Round-robin quantum, in timer ticks (~ms at the 1 kHz PIT). */
 #define TASK_TIMESLICE 5
 
-#define TASK_USER   true
+#define TASK_USER true
 #define TASK_KERNEL false
 
 struct cpu_state {
@@ -62,16 +62,20 @@ struct cpu_state {
 #define TASK_STATE_RUNNING 0
 #define TASK_STATE_READY 1
 #define TASK_STATE_WAITING 2
-#define TASK_STATE_TERMINATED 3 /* also the zombie state: dead, not yet waited on */
+#define TASK_STATE_TERMINATED 3 /* dead: kernel resources are the reaper's to reclaim */
 #define TASK_STATE_NEW 4        /* created but not yet runnable (image still loading) */
+#define TASK_STATE_ZOMBIE 5     /* dead, but kept in the tree until the parent waitpid()s
+                                 * it; task_waitpid() reads exit_code then flips it to
+                                 * TERMINATED so the reaper frees the corpse */
 
 /* Why a WAITING task is off the run queue. task_tick() only auto-wakes
  * WAIT_SLEEP; the rest are woken explicitly by task_wake(). */
-enum {
+enum
+{
     WAIT_NONE = 0,
-    WAIT_SLEEP,  /* task_sleep() - wake when pit_ticks >= sleep_until */
-    WAIT_CHILD,  /* sys_waitpid() - wake when a child terminates      */
-    WAIT_INPUT,  /* blocked in sys_read() on the tty - wake on a line  */
+    WAIT_SLEEP, /* task_sleep() - wake when pit_ticks >= sleep_until */
+    WAIT_CHILD, /* sys_waitpid() - wake when a child terminates      */
+    WAIT_INPUT, /* blocked in sys_read(), on the tty - wake on a line  */
 };
 
 struct task {
@@ -85,7 +89,6 @@ struct task {
     u8 wait_kind; /* WAIT_* - valid while state == TASK_STATE_WAITING */
     bool is_user;
     bool on_heap; /* task struct was kmalloc'd - reaper should kfree it */
-    bool reaped;  /* zombie already collected by waitpid - reaper may free it */
 
     struct cpu_state regs;
     vaddr_t pml4;
