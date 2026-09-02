@@ -5,6 +5,7 @@
 #include <lizard/kmalloc.h>
 #include <lizard/panic.h>
 #include <lizard/setup.h>
+#include <lizard/task.h>
 #include <nolibc/stdbool.h>
 #include <nolibc/stdio.h>
 #include <nolibc/string.h>
@@ -110,6 +111,75 @@ struct dentry *vfs_lookup(struct dentry *parent, const char *name)
     return NULL;
 }
 
+/* Fold `in` against `base` into a clean absolute path in `out`.
+ *
+ * `base` is an absolute cwd ("/..."); if `in` is itself absolute, `base` is
+ * ignored. "." and ".." components and repeated slashes are collapsed purely
+ * lexically - lizard has no symlinks, so that matches what a real walk would
+ * do - and ".." at the root stays at the root. Returns 0, or -1 if the input
+ * or result doesn't fit (out is left untouched on failure).
+ */
+int vfs_resolve_path(const char *base, const char *in, char *out, size_t outsz)
+{
+    char work[TASK_CWD_MAX * 2];
+    size_t w = 0;
+
+    if (in[0] != '/')
+    {
+        for (const char *p = base; *p; p++)
+        {
+            if (w >= sizeof(work) - 1) return -1;
+            work[w++] = *p;
+        }
+        if (w == 0 || work[w - 1] != '/')
+        {
+            if (w >= sizeof(work) - 1) return -1;
+            work[w++] = '/';
+        }
+    }
+    for (const char *p = in; *p; p++)
+    {
+        if (w >= sizeof(work) - 1) return -1;
+        work[w++] = *p;
+    }
+    work[w] = '\0';
+
+    /* Walk the components, keeping a stack of the survivors. */
+    char *comps[TASK_CWD_MAX / 2];
+    int n = 0;
+    char *save = NULL;
+    for (char *tok = strtok_r(work, "/", &save); tok; tok = strtok_r(NULL, "/", &save))
+    {
+        if (tok[0] == '.' && tok[1] == '\0') continue;
+        if (tok[0] == '.' && tok[1] == '.' && tok[2] == '\0')
+        {
+            if (n > 0) n--;
+            continue;
+        }
+        if (n >= (int)(sizeof(comps) / sizeof(comps[0]))) return -1;
+        comps[n++] = tok;
+    }
+
+    size_t o = 0;
+    if (n == 0)
+    {
+        if (outsz < 2) return -1;
+        out[0] = '/';
+        out[1] = '\0';
+        return 0;
+    }
+    for (int i = 0; i < n; i++)
+    {
+        size_t l = strlen(comps[i]);
+        if (o + 1 + l + 1 > outsz) return -1;
+        out[o++] = '/';
+        memcpy(out + o, comps[i], l);
+        o += l;
+    }
+    out[o] = '\0';
+    return 0;
+}
+
 struct dentry *vfs_path_lookup(const char *path)
 {
     if (!path || *path == '\0') return NULL;
@@ -122,7 +192,9 @@ struct dentry *vfs_path_lookup(const char *path)
     }
     else
     {
-        // TODO: Support relative paths in here when CWD is implemented
+        /* The syscall layer folds relative paths against the task cwd via
+         * vfs_resolve_path() before calling in, so a relative path here is
+         * an internal caller with no cwd - resolve it from the root. */
         current_dentry = vfs_get_root();
     }
 

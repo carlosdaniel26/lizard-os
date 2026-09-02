@@ -1,6 +1,7 @@
 /* Odds and ends: the thin POSIX-ish shims doom's compiled sources reference
  * but that don't warrant their own file. Most are stubs - lizard has no
  * writable clock, directories, or TTY ioctls yet. */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -43,6 +44,28 @@ long lseek(int fd, long off, int whence)
 int isatty(int fd)
 {
     return fd == 0 || fd == 1 || fd == 2;
+}
+
+int chdir(const char *path)
+{
+    int rc = sys_chdir(path);
+    if (rc < 0)
+    {
+        errno = -rc;
+        return -1;
+    }
+    return 0;
+}
+
+char *getcwd(char *buf, size_t size)
+{
+    long n = sys_getcwd(buf, size);
+    if (n < 0)
+    {
+        errno = -n;
+        return NULL;
+    }
+    return buf;
 }
 
 int mkdir(const char *path, int mode)

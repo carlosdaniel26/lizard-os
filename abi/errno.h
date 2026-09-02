@@ -9,4 +9,6 @@
 #define EFAULT 14  /* bad address                 */
 #define ENOTDIR 20 /* not a directory             */
 #define EINVAL 22  /* invalid argument            */
+#define ERANGE 34  /* result too large            */
+#define ENAMETOOLONG 36 /* file name too long     */
 #define ENOSYS 38  /* function not implemented    */

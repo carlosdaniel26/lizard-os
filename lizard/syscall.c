@@ -1,6 +1,8 @@
 #include <abi/errno.h>
 #include <lizard/boot.h>
+#include <lizard/dentry.h>
 #include <lizard/framebuffer.h>
+#include <lizard/inode.h>
 #include <lizard/idt.h>
 #include <lizard/init.h>
 #include <lizard/isr_vector.h>
@@ -126,22 +128,14 @@ static long sys_open(long upath, long flags, long a2, long a3, long a4, long a5)
     (void)a2; (void)a3; (void)a4; (void)a5;
 
     char path[128];
-    char abspath[130];
+    char abspath[256];
     long err = copy_user_str(upath, path, sizeof(path));
     if (err) return err;
 
-    const char *p = path;
-    if (p[0] != '/')
-    {
-        abspath[0] = '/';
-        size_t n = strlen(path);
-        if (n > sizeof(abspath) - 2) n = sizeof(abspath) - 2;
-        memcpy(abspath + 1, path, n);
-        abspath[n + 1] = '\0';
-        p = abspath;
-    }
+    if (vfs_resolve_path(current_task->cwd, path, abspath, sizeof(abspath)) != 0)
+        return -ENAMETOOLONG;
 
-    struct file *f = vfs_open(p, (int)flags);
+    struct file *f = vfs_open(abspath, (int)flags);
     if (!f) return -ENOENT;
 
     int fd = fd_alloc(f);
@@ -257,8 +251,14 @@ static long sys_spawn(long upath, long uargv, long a2, long a3, long a4, long a5
     (void)a2; (void)a3; (void)a4; (void)a5;
 
     char path[128];
+    char abspath[256];
     long err = copy_user_str(upath, path, sizeof(path));
     if (err) return err;
+
+    /* Relative program paths (./doom, sub/prog) resolve against the caller's
+     * cwd, exactly like open(). */
+    if (vfs_resolve_path(current_task->cwd, path, abspath, sizeof(abspath)) != 0)
+        return -ENAMETOOLONG;
 
     /* Flatten the user argv (array of user char*, NULL-terminated) into one
      * kernel-stack buffer so spawn()/load_elf() never touch user memory. */
@@ -285,7 +285,7 @@ static long sys_spawn(long upath, long uargv, long a2, long a3, long a4, long a5
     }
     kargv[argc] = NULL;
 
-    int pid = spawn(path, argc ? kargv : NULL);
+    int pid = spawn(abspath, argc ? kargv : NULL);
     if (pid < 0) return -ENOENT; /* open / ELF / OOM - spawn() does not distinguish */
     return pid;
 }
@@ -340,6 +340,44 @@ static long sys_readdir(long fd, long ubuf, long max, long a3, long a4, long a5)
     return sink.n;
 }
 
+#define S_IFDIR_MASK 040000 /* inode->mode bit set for directories */
+
+static long sys_chdir(long upath, long a1, long a2, long a3, long a4, long a5)
+{
+    (void)a1; (void)a2; (void)a3; (void)a4; (void)a5;
+
+    char path[TASK_CWD_MAX];
+    char abspath[TASK_CWD_MAX];
+    long err = copy_user_str(upath, path, sizeof(path));
+    if (err) return err;
+
+    if (vfs_resolve_path(current_task->cwd, path, abspath, sizeof(abspath)) != 0)
+        return -ENAMETOOLONG;
+
+    struct dentry *d = vfs_path_lookup(abspath);
+    if (!d) return -ENOENT;
+
+    int is_dir = d->inode && (d->inode->mode & S_IFDIR_MASK);
+    dentry_put(d);
+    if (!is_dir) return -ENOTDIR;
+
+    memcpy(current_task->cwd, abspath, strlen(abspath) + 1);
+    return 0;
+}
+
+static long sys_getcwd(long ubuf, long size, long a2, long a3, long a4, long a5)
+{
+    (void)a2; (void)a3; (void)a4; (void)a5;
+    if (size <= 0) return -EINVAL;
+    if (!user_ptr_ok(ubuf, size)) return -EFAULT;
+
+    size_t len = strlen(current_task->cwd);
+    if (len + 1 > (size_t)size) return -ERANGE;
+
+    memcpy((char *)ubuf, current_task->cwd, len + 1);
+    return (long)len;
+}
+
 /* ---- dispatch ---------------------------------------------------------- */
 
 void syscall_handler_c(struct cpu_state *regs)
@@ -374,6 +412,8 @@ static int syscall_init(void)
     syscall_table[SYS_waitpid]   = sys_waitpid;
     syscall_table[SYS_yield]     = sys_yield;
     syscall_table[SYS_readdir]   = sys_readdir;
+    syscall_table[SYS_chdir]     = sys_chdir;
+    syscall_table[SYS_getcwd]    = sys_getcwd;
 
     /* DPL 3 interrupt gate to a dedicated stub that preserves RDI (arg1). */
     set_idt_gate(SYSCALL_ISR_INDEX, isr_syscall_stub, 0xEE);

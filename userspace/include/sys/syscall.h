@@ -20,6 +20,8 @@ int  sys_getpid(void);
 int  sys_open(const char *path, int flags);
 int  sys_close(int fd);
 long sys_lseek(int fd, long off, int whence);
+int  sys_chdir(const char *path);
+long sys_getcwd(char *buf, size_t size);
 
 struct fb_info; /* defined in <abi/syscall.h> */
 int          sys_fb_info(struct fb_info *out);

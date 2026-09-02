@@ -205,6 +205,13 @@ int spawn(const char *path, char *const argv[])
     task_create(t, (void (*)(void))0, name, 1, TASK_USER);
     t->on_heap = true;
 
+    /* A child starts life in its parent's working directory. */
+    if (current_task)
+    {
+        memcpy(t->cwd, current_task->cwd, sizeof(t->cwd));
+        t->cwd[sizeof(t->cwd) - 1] = '\0';
+    }
+
     /* Default argv is just the program name so argv[0] is always valid. */
     char *defargv[2] = {(char *)name, NULL};
     if (!argv || !argv[0])

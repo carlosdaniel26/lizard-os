@@ -52,6 +52,16 @@ long sys_lseek(int fd, long off, int whence)
     return __syscall3(SYS_lseek, fd, off, whence);
 }
 
+int sys_chdir(const char *path)
+{
+    return (int)__syscall1(SYS_chdir, path);
+}
+
+long sys_getcwd(char *buf, size_t size)
+{
+    return __syscall2(SYS_getcwd, buf, size);
+}
+
 int sys_fb_info(struct fb_info *out)
 {
     return (int)__syscall1(SYS_fb_info, out);

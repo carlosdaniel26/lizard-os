@@ -35,6 +35,10 @@ enum {
     /* --- directories ------------------------------------------------- */
     SYS_readdir = 15, /* (int fd, struct dirent *buf, int max)  -> count | -errno */
 
+    /* --- working directory ----------------------------------------- */
+    SYS_chdir  = 16, /* (const char *path)                     -> 0 | -errno     */
+    SYS_getcwd = 17, /* (char *buf, size_t size)               -> len | -errno   */
+
     SYS_NR_MAX
 };
 

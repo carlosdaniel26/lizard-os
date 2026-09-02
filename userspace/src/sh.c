@@ -1,6 +1,10 @@
 /* lizard's first userspace shell. Reads a line from the tty, splits it on
- * whitespace, runs a builtin or spawns /<name> and waits for it. No pipes,
- * redirection, globbing or job control yet - just the essentials. */
+ * whitespace, runs a builtin or spawns an external program and waits for it.
+ * There is no PATH search: an external command must name a path, so bare
+ * "doom" is rejected and "./doom" (or "/doom", "../bin/doom") runs it,
+ * resolved against the current directory the kernel tracks per task - "cd"
+ * moves it. No pipes, redirection, globbing or job control yet - just the
+ * essentials. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,32 +54,30 @@ static int read_line(char *buf, int cap)
     return len;
 }
 
-static void build_path(const char *cmd, char *path, int cap)
+/* An external command has to name a path - there is no PATH to search. Any
+ * command word containing '/' qualifies ("./doom", "bin/doom", "/doom",
+ * "../doom"); the kernel resolves it against the task's cwd on spawn. A bare
+ * "doom" does not, and the shell rejects it with a hint. */
+static int is_path(const char *cmd)
 {
-    if (cmd[0] == '/')
-    {
-        strncpy(path, cmd, cap - 1);
-    }
-    else
-    {
-        path[0] = '/';
-        strncpy(path + 1, cmd, cap - 2);
-    }
-    path[cap - 1] = '\0';
+    return strchr(cmd, '/') != NULL;
 }
 
 int main(void)
 {
     char line[LINE_MAX];
     char *argv[MAX_ARGS];
-    char path[128];
+    char cwd[128];
     int last = 0;
 
     printf("lizard shell - 'help' for builtins\n");
 
     for (;;)
     {
-        printf("lizard$ ");
+        if (getcwd(cwd, sizeof(cwd)))
+            printf("lizard:%s$ ", cwd);
+        else
+            printf("lizard$ ");
 
         int len = read_line(line, sizeof(line));
         if (len < 0)
@@ -90,14 +92,35 @@ int main(void)
 
         if (!strcmp(argv[0], "help"))
         {
-            printf("builtins: help  exit [code]  echo ...  clear  status  ls [dir]\n");
-            printf("anything else runs /<name> and waits for it\n");
+            printf("builtins: help  exit [code]  echo ...  clear  status  cd [dir]  pwd  ls [dir]\n");
+            printf("else: ./prog or path/prog runs an external program (no PATH)\n");
+            continue;
+        }
+
+        if (!strcmp(argv[0], "cd"))
+        {
+            const char *dir = argc > 1 ? argv[1] : "/";
+            if (chdir(dir) != 0)
+            {
+                printf("cd: %s: no such directory\n", dir);
+                last = 1;
+            }
+            else
+                last = 0;
+            continue;
+        }
+
+        if (!strcmp(argv[0], "pwd"))
+        {
+            if (getcwd(line, sizeof(line)))
+                printf("%s\n", line);
+            last = 0;
             continue;
         }
 
         if (!strcmp(argv[0], "ls"))
         {
-            const char *dir = argc > 1 ? argv[1] : "/";
+            const char *dir = argc > 1 ? argv[1] : ".";
             int fd = sys_open(dir, 0 /* O_RDONLY */);
             if (fd < 0)
             {
@@ -141,9 +164,15 @@ int main(void)
             continue;
         }
 
-        build_path(argv[0], path, sizeof(path));
+        if (!is_path(argv[0]))
+        {
+            printf("%s: not found (use ./%s to run it from here)\n",
+                   argv[0], argv[0]);
+            last = 127;
+            continue;
+        }
 
-        int pid = sys_spawn(path, argv);
+        int pid = sys_spawn(argv[0], argv);
         if (pid < 0)
         {
             printf("%s: not found\n", argv[0]);

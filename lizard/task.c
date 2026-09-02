@@ -41,6 +41,9 @@ void task_create(struct task *task, void (*entry_point)(void), const char *name,
     task->parent = NULL;
     task->wait_kind = WAIT_NONE;
 
+    task->cwd[0] = '/';
+    task->cwd[1] = '\0';
+
     task->pid = ++pid_counter;
     task->priority = priority;
     task->ticks_remaining = TASK_TIMESLICE;

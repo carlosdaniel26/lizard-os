@@ -6,6 +6,9 @@
 
 #define TASK_NAME_MAX_LEN 32
 
+/* Longest absolute path a task's cwd may hold, terminator included. */
+#define TASK_CWD_MAX 128
+
 struct file; /* lizard/file.h - tasks only hold pointers */
 
 #define USER_STACK_BASE  0x700000000000
@@ -101,6 +104,10 @@ struct task {
     u32 sleep_until; /* Absolute wake-up time in ms */
 
     struct file *fd_table[TASK_MAX_FDS]; /* NULL = free slot; see TASK_FD_BASE */
+
+    /* Current working directory: always an absolute, lexically-normalised path
+     * ("/" for a fresh task). spawn() copies the parent's down to the child. */
+    char cwd[TASK_CWD_MAX];
 };
 
 void task_create(struct task *task, void (*entry_point)(void), const char *name, u32 priority, bool is_user);

@@ -15,6 +15,10 @@ int set_root(struct block_dev *dev);
 int vfs_init();
 struct dentry *vfs_lookup(struct dentry *parent, const char *name);
 struct dentry *vfs_path_lookup(const char *path);
+
+/* Fold `in` against absolute cwd `base` into a normalised absolute path in
+ * `out` (see vfs.c). Returns 0, or -1 if it doesn't fit. */
+int vfs_resolve_path(const char *base, const char *in, char *out, size_t outsz);
 void *vfs_read_all(const char *path);
 
 /* Namespace operations (absolute paths). Return 0 on success, -1 on failure. */
