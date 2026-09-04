@@ -53,15 +53,13 @@ USERSPACE_SRC := $(wildcard userspace/lib/*.c userspace/lib/*.S userspace/lib/*.
 $(SH) $(HELLO) $(ARGTEST) $(DOOM_ELF): $(USERSPACE_SRC) userspace/Makefile
 	$(MAKE) -C userspace
 
-## Freely redistributable IWAD (Freedoom Phase 1), fetched on demand and staged
-## as doom1.wad. Swap in a real doom1.wad / doom2.wad here if you have one.
+## IWAD, staged as doom1.wad. Fetched once from the Akbar30Bill/DOOM_wads repo;
+## override DOOM_WAD_URL to stage a different one (doom2.wad, plutonia.wad, ...).
+DOOM_WAD_URL ?= https://raw.githubusercontent.com/Akbar30Bill/DOOM_wads/master/doom1.wad
 $(DOOM_WAD):
 	@mkdir -p $(dir $@)
-	@echo "fetching Freedoom (one-time)..."
-	curl -fsSL -o $@.zip https://github.com/freedoom/freedoom/releases/download/v0.13.0/freedoom-0.13.0.zip
-	cd $(dir $@) && unzip -o $(notdir $@).zip 'freedoom-0.13.0/freedoom1.wad' >/dev/null
-	mv $(dir $@)/freedoom-0.13.0/freedoom1.wad $@
-	rm -rf $@.zip $(dir $@)/freedoom-0.13.0
+	@echo "fetching $(notdir $(DOOM_WAD_URL)) (one-time)..."
+	curl -fsSL -o $@ $(DOOM_WAD_URL)
 
 ## ---- Root disk image (MBR + FAT16 partition) --------------------------------
 ## The kernel boots with root=ata0p0, so the image needs a real MBR partition

@@ -4,5 +4,5 @@
 # build output
 /doom
 
-# IWAD - put doom1.wad here, or emulation.mk fetches Freedoom as a fallback
+# IWAD - fetched by emulation.mk (DOOM_WAD_URL), or drop your own doom1.wad here
 /wad/
