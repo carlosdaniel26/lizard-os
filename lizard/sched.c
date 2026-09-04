@@ -46,10 +46,13 @@ static void reap_terminated(void)
         list_del(&t->list);
         if (t->sibling.next)
             list_del(&t->sibling);
+
         if (t->kernel_stack)
             buddy_free(t->kernel_stack - (KSTACK_PAGES * PAGE_SIZE), KSTACK_ORDER);
+
         if (t->pml4)
             pgtable_free_tree(t->pml4);
+        
         if (t->on_heap)
             kfree(t);
     }

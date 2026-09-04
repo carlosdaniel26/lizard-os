@@ -11,10 +11,20 @@ ESP_SIZE   := 48
 ESP_LABEL  := LIZEFI
 LOADER     := boot/BOOTX64.EFI
 
-## UEFI firmware (OVMF). VARS is copied to a writable per-tree file.
-OVMF_CODE  := /usr/share/OVMF/OVMF_CODE_4M.fd
+## UEFI firmware (OVMF). VARS is copied to a writable per-tree file. Distros
+## disagree on the path: Debian/Ubuntu ship /usr/share/OVMF/OVMF_{CODE,VARS}_4M.fd,
+## Arch/Fedora ship /usr/share/edk2/x64/OVMF_{CODE,VARS}.4m.fd. Pick the first hit.
+OVMF_CODE  := $(firstword $(wildcard \
+	/usr/share/OVMF/OVMF_CODE_4M.fd \
+	/usr/share/edk2/x64/OVMF_CODE.4m.fd \
+	/usr/share/edk2-ovmf/x64/OVMF_CODE.fd \
+	/usr/share/OVMF/OVMF_CODE.fd) /usr/share/OVMF/OVMF_CODE_4M.fd)
 OVMF_VARS  := ovmf_vars.fd
-OVMF_VARS_SRC := /usr/share/OVMF/OVMF_VARS_4M.fd
+OVMF_VARS_SRC := $(firstword $(wildcard \
+	/usr/share/OVMF/OVMF_VARS_4M.fd \
+	/usr/share/edk2/x64/OVMF_VARS.4m.fd \
+	/usr/share/edk2-ovmf/x64/OVMF_VARS.fd \
+	/usr/share/OVMF/OVMF_VARS.fd) /usr/share/OVMF/OVMF_VARS_4M.fd)
 
 ## /sbin is usually off a non-root PATH, so resolve these host tools explicitly.
 MKFS_FAT  := $(shell command -v mkfs.fat 2>/dev/null || echo /sbin/mkfs.fat)

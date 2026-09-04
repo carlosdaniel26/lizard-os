@@ -46,8 +46,14 @@ static void kbd_ring_push(u8 sc)
 
 int init_keyboard()
 {
-    PIC_unmaskVector(KEYBOARD_VECTOR);
+    /* Drain whatever the firmware left in the i8042 output buffer. While OBF
+     * (bit 0 of the status port) stays set the controller won't raise IRQ1, so
+     * a single stale byte here means the first keystrokes after boot are lost. */
+    while (inb(0x64) & 0x01)
+        (void)inb(KEYBOARD_DATA_PORT);
+
     isr_table[KEYBOARD_VECTOR] = &isr_keyboard;
+    PIC_unmaskVector(KEYBOARD_VECTOR);
     kprintf("keyboard initialized\n");
     return 0;
 }
