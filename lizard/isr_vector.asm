@@ -1,11 +1,5 @@
-section .note.GNU-stack noalloc noexec nowrite
-
-default rel
-extern isr_common_entry
-extern syscall_handler_c
-
-section .text
-
+; flat assembler (fasm) source.
+;
 ; Every entry path builds the same on-stack layout (matches struct cpu_state):
 ;
 ;   [ss][rsp][rflags][cs][rip]   <- pushed by the CPU
@@ -17,7 +11,19 @@ section .text
 ; No GPR (RDI in particular, which carries syscall arg1) is disturbed before it
 ; is saved, and the C side always sees a valid vec + errcode.
 
-%macro SAVE_GPRS 0
+format ELF64
+
+extrn isr_common_entry
+extrn syscall_handler_c
+
+public isr_syscall_stub
+public isr_common_stub
+public isr_stub_table
+
+section '.text' executable
+
+macro SAVE_GPRS
+{
     push r15
     push r14
     push r13
@@ -33,9 +39,10 @@ section .text
     push rcx
     push rbx
     push rax
-%endmacro
+}
 
-%macro RESTORE_GPRS 0
+macro RESTORE_GPRS
+{
     pop rax
     pop rbx
     pop rcx
@@ -51,16 +58,15 @@ section .text
     pop r13
     pop r14
     pop r15
-%endmacro
+}
 
 ; Dedicated syscall entry (int 0x80). int 0x80 never pushes an error code.
-global isr_syscall_stub
 isr_syscall_stub:
-    push qword 0            ; dummy errcode
-    push qword 0x80         ; vec
+    push 0                 ; dummy errcode
+    push 0x80              ; vec
     SAVE_GPRS
 
-    mov rdi, rsp            ; struct cpu_state * -> arg0
+    mov rdi, rsp           ; struct cpu_state * -> arg0
     call syscall_handler_c
 
     RESTORE_GPRS
@@ -78,29 +84,26 @@ isr_common_stub:
     add rsp, 16            ; discard vec + errcode
     iretq
 
-%macro STUB_ENTRY 1
-global isr_vector_%1
-isr_vector_%1:
-%if (%1 == 8) || (%1 == 10) || (%1 == 11) || (%1 == 12) || (%1 == 13) || (%1 == 14) || (%1 == 17) || (%1 == 21) || (%1 == 29) || (%1 == 30)
-    ; the CPU already pushed an error code for this vector
-%else
-    push qword 0           ; dummy error code
-%endif
-    push qword %1          ; vector number
+; The generated stubs are only reached through isr_stub_table below, so their
+; exact label names do not matter.
+rept 256 vec:0
+{
+    isr_vector_#vec:
+    if vec = 8 | vec = 10 | vec = 11 | vec = 12 | vec = 13 | vec = 14 | vec = 17 | vec = 21 | vec = 29 | vec = 30
+        ; the CPU already pushed an error code for this vector
+    else
+        push 0            ; dummy error code
+    end if
+    push vec             ; vector number
     jmp isr_common_stub
-%endmacro
+}
 
-%assign i 0
-%rep 256
-    STUB_ENTRY i
-    %assign i i+1
-%endrep
+section '.data' writeable
 
-section .data
-global isr_stub_table
 isr_stub_table:
-%assign i 0
-%rep 256
-    dq isr_vector_%[i]
-    %assign i i+1
-%endrep
+rept 256 vec:0
+{
+    dq isr_vector_#vec
+}
+
+section '.note.GNU-stack'

@@ -19,7 +19,7 @@ all: $(OBJ)
 
 ../$(BUILD)/lizard/%.asm.o: %.asm
 	@mkdir -p "$$(dirname $@)"
-	@nasm $(NASMFLAGS) $< -o $@
+	@$(AS) $< $@ >/dev/null
 	@echo "(AS) $<"
 
 -include $(OBJ:.o=.d)
