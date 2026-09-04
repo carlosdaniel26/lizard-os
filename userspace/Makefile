@@ -1,8 +1,8 @@
 ## Freestanding userspace. Layout:
-##   lib/       the tiny libc - sources (*.c, *.S) plus its build output
-##              (lib/*.o, lib/libc.a)
+##   lib/       the tiny libc - sources only (*.c, *.S, *.h)
 ##   src/       one .c per program
 ##   include/   public headers
+##   build/     libc objects + libc.a (generated)
 ##   bin/       one built ELF per src/ program; the disk image is staged from here
 ## -I .. puts the repo root on the path so <abi/syscall.h> resolves.
 .PHONY: all clean doom
@@ -14,32 +14,33 @@ CFLAGS  := -I include -I .. -ffreestanding -nostdlib -fno-pie -fno-stack-protect
 LDFLAGS := -nostdlib -no-pie -static -Wl,-Ttext,0x400000 -Wl,--build-id=none \
            -Wl,--gc-sections -e _start
 
+BUILD  := build
+
 LIBSRC := $(wildcard lib/*.c lib/*.S)
-LIBOBJ := $(patsubst lib/%.c,lib/%.o,$(filter %.c,$(LIBSRC))) \
-          $(patsubst lib/%.S,lib/%.o,$(filter %.S,$(LIBSRC)))
+LIBOBJ := $(patsubst lib/%.c,$(BUILD)/%.o,$(filter %.c,$(LIBSRC))) \
+          $(patsubst lib/%.S,$(BUILD)/%.o,$(filter %.S,$(LIBSRC)))
 BINS   := $(patsubst src/%.c,bin/%,$(wildcard src/*.c))
 
 all: $(BINS) doom
 
-lib/libc.a: $(LIBOBJ)
+$(BUILD)/libc.a: $(LIBOBJ)
 	ar rcs $@ $^
 
-bin/%: src/%.c lib/libc.a | bin
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< lib/libc.a
+bin/%: src/%.c $(BUILD)/libc.a | bin
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(BUILD)/libc.a
 
-lib/%.o: lib/%.c
+$(BUILD)/%.o: lib/%.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-lib/%.o: lib/%.S
+$(BUILD)/%.o: lib/%.S | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin:
-	mkdir -p bin
+bin $(BUILD):
+	mkdir -p $@
 
-doom: lib/libc.a
+doom: $(BUILD)/libc.a
 	$(MAKE) -C doom
 
 clean:
-	rm -rf bin
-	rm -f lib/*.o lib/libc.a
+	rm -rf bin $(BUILD)
 	$(MAKE) -C doom clean

@@ -1,5 +1,4 @@
-# libc build output (sources live alongside)
-lib/*.o
-lib/*.a
+# libc build output (objects + libc.a); sources live in lib/
+/build/
 # built programs
 /bin/
