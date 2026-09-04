@@ -421,6 +421,48 @@ static long sys_mkdir(long upath, long mode, long a2, long a3, long a4, long a5)
     return 0;
 }
 
+/* Shared body for SYS_unlink (want_dir == 0) and SYS_rmdir (want_dir == 1):
+ * resolve the path, reject the obvious wrong-type cases with a precise errno,
+ * then hand off to the matching VFS op. */
+static long do_remove(long upath, int want_dir)
+{
+    char path[128];
+    char abspath[256];
+    long err = copy_user_str(upath, path, sizeof(path));
+    if (err) return err;
+
+    if (vfs_resolve_path(current_task->cwd, path, abspath, sizeof(abspath)) != 0)
+        return -ENAMETOOLONG;
+
+    if (abspath[1] == '\0') return -EPERM; /* refuse to remove "/" */
+
+    struct dentry *d = vfs_path_lookup(abspath);
+    if (!d) return -ENOENT;
+    int is_dir = d->inode && (d->inode->mode & S_IFDIR_MASK);
+    dentry_put(d);
+
+    if (want_dir && !is_dir) return -ENOTDIR;
+    if (!want_dir && is_dir) return -EISDIR;
+
+    /* The VFS op only tells us pass/fail. For rmdir the overwhelmingly common
+     * failure on a directory that exists and is a directory is "not empty". */
+    if (want_dir)
+        return vfs_rmdir(abspath) == 0 ? 0 : -ENOTEMPTY;
+    return vfs_unlink(abspath) == 0 ? 0 : -EIO;
+}
+
+static long sys_unlink(long upath, long a1, long a2, long a3, long a4, long a5)
+{
+    (void)a1; (void)a2; (void)a3; (void)a4; (void)a5;
+    return do_remove(upath, 0);
+}
+
+static long sys_rmdir(long upath, long a1, long a2, long a3, long a4, long a5)
+{
+    (void)a1; (void)a2; (void)a3; (void)a4; (void)a5;
+    return do_remove(upath, 1);
+}
+
 /* ---- dispatch ---------------------------------------------------------- */
 
 void syscall_handler_c(struct cpu_state *regs)
@@ -458,6 +500,8 @@ static int syscall_init(void)
     syscall_table[SYS_chdir]     = sys_chdir;
     syscall_table[SYS_getcwd]    = sys_getcwd;
     syscall_table[SYS_mkdir]     = sys_mkdir;
+    syscall_table[SYS_unlink]    = sys_unlink;
+    syscall_table[SYS_rmdir]     = sys_rmdir;
 
     /* DPL 3 interrupt gate to a dedicated stub that preserves RDI (arg1). */
     set_idt_gate(SYSCALL_ISR_INDEX, isr_syscall_stub, 0xEE);

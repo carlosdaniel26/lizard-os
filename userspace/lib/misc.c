@@ -81,8 +81,24 @@ int mkdir(const char *path, int mode)
 
 int unlink(const char *path)
 {
-    (void)path;
-    return -1;
+    int rc = sys_unlink(path);
+    if (rc < 0)
+    {
+        errno = -rc;
+        return -1;
+    }
+    return 0;
+}
+
+int rmdir(const char *path)
+{
+    int rc = sys_rmdir(path);
+    if (rc < 0)
+    {
+        errno = -rc;
+        return -1;
+    }
+    return 0;
 }
 
 int access(const char *path, int mode)

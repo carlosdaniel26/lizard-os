@@ -30,6 +30,7 @@ static int fat16_create(struct inode *dir, struct dentry *dentry, int mode);
 static int fat16_mkdir(struct inode *dir, struct dentry *dentry, int mode);
 static int fat16_unlink(struct inode *dir, struct dentry *dentry);
 static int fat16_rmdir(struct inode *dir, struct dentry *dentry);
+static int fat16_truncate(struct inode *inode, u64 length);
 
 static int fat16_open(struct inode *inode, struct file *file);
 static int fat16_release(struct inode *inode, struct file *file);
@@ -43,6 +44,7 @@ static struct inode_ops fat16_inode_ops = {
     .mkdir  = fat16_mkdir,
     .unlink = fat16_unlink,
     .rmdir  = fat16_rmdir,
+    .truncate = fat16_truncate,
 };
 
 static struct file_ops fat16_file_ops = {
@@ -445,6 +447,31 @@ out:
     fat16_dir_write(fs, info->loc, ent);
 
     return done > 0 ? (ssize_t)done : -1;
+}
+
+/* Drop a file's data. Only length 0 is supported: free the whole cluster chain
+ * and clear the size / first-cluster fields in the on-disk directory entry.
+ * Called from vfs_open() for O_TRUNC and reachable later via ftruncate(). */
+static int fat16_truncate(struct inode *inode, u64 length)
+{
+    struct fat16 *fs = fs_of(inode);
+    struct fat16_inode_info *info = inode->private_data;
+    struct fat16_directory *ent = &info->ent;
+
+    if (is_dir(ent) || fs->dev->read_only) return -1;
+    if (length != 0) return -1; /* growing / partial truncate not implemented */
+
+    if (inode->size == 0 && ent->first_cluster_low == 0)
+        return 0; /* already empty - nothing on disk to touch */
+
+    if (fat16_cluster_valid(ent->first_cluster_low))
+        fat16_chain_free(fs, ent->first_cluster_low);
+
+    ent->first_cluster_low = 0;
+    ent->file_size_bytes = 0;
+    inode->size = 0;
+    fat16_entry_touch(ent);
+    return fat16_dir_write(fs, info->loc, ent);
 }
 
 /* ===== namespace ops ===== */

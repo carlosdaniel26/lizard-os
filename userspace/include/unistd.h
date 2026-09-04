@@ -9,6 +9,7 @@
 
 int   usleep(unsigned usec);
 int   unlink(const char *path);
+int   rmdir(const char *path);
 int   isatty(int fd);
 int   access(const char *path, int mode);
 int   getpid(void);

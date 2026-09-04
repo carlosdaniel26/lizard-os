@@ -13,6 +13,7 @@ struct inode_ops {
     int (*unlink)(struct inode *dir, struct dentry *dentry);
     int (*rmdir)(struct inode *dir, struct dentry *dentry);
     int (*rename)(struct inode *old, struct inode *new);
+    int (*truncate)(struct inode *inode, u64 length); /* only length 0 for now */
 };
 
 struct inode {

@@ -67,6 +67,16 @@ int sys_mkdir(const char *path, int mode)
     return (int)__syscall2(SYS_mkdir, path, mode);
 }
 
+int sys_unlink(const char *path)
+{
+    return (int)__syscall1(SYS_unlink, path);
+}
+
+int sys_rmdir(const char *path)
+{
+    return (int)__syscall1(SYS_rmdir, path);
+}
+
 int sys_fb_info(struct fb_info *out)
 {
     return (int)__syscall1(SYS_fb_info, out);

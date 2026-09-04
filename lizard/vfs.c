@@ -377,6 +377,19 @@ struct file *vfs_open(const char *path, int flags)
         return NULL;
     }
 
+    /* O_TRUNC on a writable open: drop the file's contents before the first
+     * write sees the old offset/size. Silently ignored for a read-only open,
+     * matching POSIX (behaviour there is unspecified). */
+    if ((flags & O_TRUNC) && (flags & (O_WRONLY | O_RDWR)) &&
+        d->inode->i_ops && d->inode->i_ops->truncate)
+    {
+        if (d->inode->i_ops->truncate(d->inode, 0) != 0)
+        {
+            dentry_put(d);
+            return NULL;
+        }
+    }
+
     struct file *file = zalloc(sizeof(struct file));
     if (!file)
     {

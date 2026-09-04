@@ -39,6 +39,8 @@ enum {
     SYS_chdir  = 16, /* (const char *path)                     -> 0 | -errno     */
     SYS_getcwd = 17, /* (char *buf, size_t size)               -> len | -errno   */
     SYS_mkdir  = 18, /* (const char *path, int mode)           -> 0 | -errno     */
+    SYS_unlink = 19, /* (const char *path)                     -> 0 | -errno     */
+    SYS_rmdir  = 20, /* (const char *path)                     -> 0 | -errno     */
 
     SYS_NR_MAX
 };

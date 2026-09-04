@@ -93,7 +93,7 @@ int main(void)
 
         if (!strcmp(argv[0], "help"))
         {
-            printf("builtins: help  exit [code]  echo ...  clear  status  cd [dir]  pwd  mkdir dir...  ls [dir]\n");
+            printf("builtins: help  exit [code]  echo ...  clear  status  cd [dir]  pwd  mkdir dir...  rmdir dir...  rm file...  ls [dir]\n");
             printf("else: ./prog or path/prog runs an external program (no PATH)\n");
             continue;
         }
@@ -138,6 +138,56 @@ int main(void)
                            : rc == -ENOENT ? "no such parent directory"
                            : rc == -ENOTDIR ? "not a directory"
                            : "cannot create");
+                    last = 1;
+                }
+            }
+            continue;
+        }
+
+        if (!strcmp(argv[0], "rm"))
+        {
+            if (argc < 2)
+            {
+                printf("rm: missing operand\n");
+                last = 1;
+                continue;
+            }
+            last = 0;
+            for (int i = 1; i < argc; i++)
+            {
+                int rc = sys_unlink(argv[i]);
+                if (rc < 0)
+                {
+                    printf("rm: %s: %s\n", argv[i],
+                           rc == -ENOENT ? "no such file"
+                           : rc == -EISDIR ? "is a directory"
+                           : rc == -ENOTDIR ? "not a directory"
+                           : "cannot remove");
+                    last = 1;
+                }
+            }
+            continue;
+        }
+
+        if (!strcmp(argv[0], "rmdir"))
+        {
+            if (argc < 2)
+            {
+                printf("rmdir: missing operand\n");
+                last = 1;
+                continue;
+            }
+            last = 0;
+            for (int i = 1; i < argc; i++)
+            {
+                int rc = sys_rmdir(argv[i]);
+                if (rc < 0)
+                {
+                    printf("rmdir: %s: %s\n", argv[i],
+                           rc == -ENOENT ? "no such directory"
+                           : rc == -ENOTDIR ? "not a directory"
+                           : rc == -ENOTEMPTY ? "directory not empty"
+                           : "cannot remove");
                     last = 1;
                 }
             }
